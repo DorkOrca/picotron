@@ -1,0 +1,694 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzowODowMyIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzMzIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwcm9jZ2VuLmx1YSM4OSwzMSIsd29y
+a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0icmF5Y2FzdC5sdWEjMTIsMTUiLHdvcmtzcGFjZV9p
+bmRleD0xfSx7bG9jYXRpb249ImludHJvLmx1YSM4OCw0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xv
+Y2F0aW9uPSJldGMubHVhIzEwLDEiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InN0YXJ0
+Lmx1YSMxOSwxMCIsd29ya3NwYWNlX2luZGV4PTF9fV1d
+:: etc.lua
+--[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
+-- fps - fish person shooter
+-- happy birthday, kovie!
+
+
+
+
+
+
+
+
+
+-- FUNCTIONS
+--Draw start screen
+
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzowODowMyJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+-----------------------------------------------------------XUG09OH19
+:: intro.lua
+--[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-23 22:34:26",revision=0,xstickers={}]]
+-- Intro after starting game
+
+-- Draw gradients for horizon
+function drawHorizon(offset, startI, endJ, color)
+    -- Fills follow a 4x4 map. example of the first one:
+    -- 1111
+    -- 0101
+    -- 1111
+    -- 0101
+    fills = {0b1111010111110101, 0b0101101001011010, 0b0101000001010000}
+
+    i = startI
+    j = endJ
+
+    height = (startI - endJ) / 3
+
+    for k=1,3 do
+        fillp(flr(fills[k]))
+        rectfill(0, i + flr(offset), 128, j + flr(offset), color)
+        i -= height
+        j -= height
+    end
+
+    fillp(0)
+end
+
+-- Draw a single building (just a rectangle)
+function drawBuilding(x, y, xOffset, yOffset, width, height, color)
+    rectfill(((x + xOffset) % (128 + width)) - width, (y + yOffset) - height, (0 + xOffset) % (128 + width), y + yOffset, color)
+end
+
+-- Draw a horizon and multiple buildings
+function drawBuildings(y, xOffset, yOffset, color)
+    rectfill(0, (y + yOffset % 128), 128, 128, color)
+    drawBuilding(0, y, xOffset, yOffset, 28, 64, color)
+    drawBuilding(0, y, xOffset + 32, yOffset, 28, 48, color)
+    drawBuilding(0, y, xOffset + 64, yOffset, 28, 56, color)
+    drawBuilding(0, y, xOffset + 96, yOffset, 28, 48, color)
+    drawBuilding(0, y, xOffset + 126, yOffset, 28, 56, color)
+end
+
+-- Intro animation structure
+function introAnim()
+    escapeCounter += 1
+    if(escapeCounter < 400) then
+       xOffset = -5*bobble(0, escapeCounter, 100, 500, 0, 0.25)
+       animCount1 = bobble(24, escapeCounter, 100, 40, 0.5, 1.25)
+    end
+    
+    if(yOffset < 24) then
+        animCount += 1
+        if(animCount < 80) then
+            yOffset = -bobble(0, animCount, 20, 500, 0, 0.25)
+        end
+    end
+
+    -- Background color white
+    rectfill(0,0,127,127,1)
+    -- Dynamic horizon shapes
+    rectfill(0, 112 + flr(-yOffset / 4), 128, 128, 0)
+    drawHorizon(yOffset / -4, 124, 80, 0x8e)
+    drawHorizon(yOffset / -4, 80, 56, 0xe2)
+    drawHorizon(yOffset / -4, 56, 22, 0x21)
+    drawBuildings(100, xOffset / 4, yOffset / -4, 0)
+    -- Entry building
+    map(0, 0, 0 + xOffset, 0, 24, 16)
+
+    for i=0,17 do
+        pal(7, 7)
+        spr(60, (((i * 8) + xOffset) % 136) - 8, 120 - yOffset, 1, 1)
+    end
+
+    spr(incFrame(escapeCounter, 75, 2, 90), animCount1, 90 - yOffset, 2, 3, true, false)
+    spr(123, animCount1 - 3, 113 - yOffset, 3, 1)
+
+    if(xOffset == 0) then
+        screenID = 3
+    end
+end
+
+function menuSelect()
+    if(btn(5)) then
+        screenID = 3
+    end
+    if(mode == 1) then
+        introAnim()
+    end
+end
+:: main.lua
+--[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-23 23:02:19",revision=15,xstickers={}]]
+include("start.lua")
+include("intro.lua")
+include("procgen.lua")
+include("raycast.lua")
+
+
+function _init()
+	startInit()
+	raycastInit()
+	procgenInit()
+	
+	screenID = 0
+
+   currentMap = seed.map
+end
+
+function _update()
+	
+end
+
+function _draw()
+	local c_tbl =
+	{
+		[0] = initiateMaze,
+		[1] = startScreen,
+		[2] = menuSelect,
+		[3] = drawRoom,
+	}
+
+	local func = c_tbl[screenID]
+    
+	if(func) then
+		func()
+	else
+		print("ERROR", 8)
+		print("Got lost! screenID: " .. screenID, 7)
+	end
+end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzowODowMyJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: procgen.lua
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-23 23:08:03",revision=19,xstickers={}]]
+-- CONTENT GENERATION
+--[[
+	Generate a map with walls at map edges + algorithmic maze generation 
+	Map consists of tables of equal width within a larger table
+	Root table maps Y coords while sub-tables map X coords and contain the values for walls / empty space
+--]]
+
+function procgenInit()
+	seed = generateMap(32, 32, 0, 0, 0, 0)
+	slowDraw = true
+end
+
+function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _tileset)
+	-- Nested table containing values for map cells
+	_genMap = {}
+	-- Nested table containing values for whether a given cell's state is finalized
+	-- 0: Not plotted
+	-- 1: Plotted but not finalized (surrounding cells have not been fully inspected yet)
+	-- 2: Plotted and finalized
+	_plotted = {}
+	-- Value for current map coords
+	_currentCoords = {x = 2, y = 2}
+
+	-- Set walls of map
+	-- Iterate through all Y positions
+	for i = 1, _height do
+		-- Initialize Y axis table
+		_genMap[i] = {}
+		_plotted[i] = {}
+		-- Iterate through all X positions on table
+		for j = 1, _width do
+			if(i == 1 or i == _height or j == 1 or j == _width) then
+				_genMap[i][j] = 2
+				_plotted[i][j] = 2
+			else
+				_genMap[i][j] = 1
+				_plotted[i][j] = 0
+			end
+		end
+	end
+
+	-- Ensure that starting cell (2, 2) is finalized as empty
+	_genMap[2][2] = 0
+	_plotted[2][2] = 0
+	
+	_plotComplete = false
+	
+	_genSeed = {
+		["map"] = _genMap,
+		["plot"] = _plotted,
+		["ready"] = _plotComplete,
+		["coords"] = _currentCoords,
+	}
+	
+	if (slowDraw == false) then
+		_seed = _genSeed
+		
+		while (_seed.ready == false) do
+			_seed = stageMaze(_seed)
+		end
+		
+		_genSeed = _seed
+	end
+	
+	return _genSeed
+end
+
+function initiateMaze()
+	_seed = seed
+	
+	if (slowDraw == true) then
+		if (_seed.ready != nil) then
+			_seed = stageMaze(seed)
+		end
+	else
+		_seed.ready = true
+	end
+	
+	seed = _seed
+	
+	if (seed.ready == true) then
+		screenID = 1
+	end
+end
+
+function stageMaze(_seed)
+	_genProg = generateMaze(_seed.map, _seed.plot, _seed.coords)
+	_seed.map = _genProg.genMap
+	_seed.plot = _genProg.plotted
+	_seed.coords = _genProg.coords
+    
+	currentMap = _seed.map
+
+	_seed.ready = _genProg.plotComplete
+    
+	if (drawMe == true) then
+		drawStage += 1
+		if(drawStage % drawSpeed == 0) then
+			drawMap(currentMap, #currentMap[1], #currentMap)
+			mapFrame = 0
+		end
+	else
+		print("Working...")
+	end
+	
+	return _seed
+end
+
+function generateMaze(_genMap, _plotted, _coords)
+	_map = _genMap
+	_coordinates = _coords
+	
+	_maxY = #_genMap[1]
+	_maxX = #_genMap
+	_options = {}
+	
+	_genProg = {}
+	
+	_genProg.plotComplete = false
+	
+	-- Set current coords to 0
+	_map[_coordinates.y][_coordinates.x] = 0
+	
+	-- List of all possible directions that lead the current cell to surrounding cells in cardinal directions
+	_directions =
+	{
+		{x = 2, y = 0, ix = 1, iy = 0,},
+		{x = 0, y = 2, ix = 0, iy = 1,},
+		{x = -2, y = 0, ix = -1, iy = 0,},
+		{x = 0, y = -2, ix = 0, iy = -1,},
+	}
+	
+	-- If current cell isn't finalized, then search surroundings for unexplored cell and move to it
+	if (_plotted[_coordinates.y][_coordinates.x] < 2) then
+		-- Check if neighboring cells are out-of-bounds and not yet explored; if not, then add them to list of potential options for dest cell
+		for i = 1, 4 do
+			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] == 0) then
+				_options[#_options + 1] = i
+			end
+		end
+	
+		-- If options list isn't empty...
+		if (#_options > 0) then
+			if (#_options > 1) then
+				--  Set choice to any of the option tables at random
+				_choice = _options[flr(rnd(#_options)) + 1]
+				-- Plot current cell as explored
+				_plotted[_coordinates.y][_coordinates.x] = 1
+				-- Plot intersecting cell as explored
+				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+			else
+				-- Set choice to the only choice available
+				_choice = _options[1]
+				-- Plot current cell as finalized
+				_plotted[_coordinates.y][_coordinates.x] = 2
+				-- Plot intersecting cell as explored
+				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+			end
+			-- Set intersecting square as empty space
+			_map[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 0
+			-- Set new coords
+			_coordinates.x += _directions[_choice].x
+			_coordinates.y += _directions[_choice].y
+		else
+			-- If options list is empty then mark the current cell as finalized
+			_plotted[_coordinates.y][_coordinates.x] = 2
+		end
+	elseif (_plotted[_coordinates.y][_coordinates.x] == 2) then
+		_options = {}
+	
+		-- Same as previous neighboring cell step, but look for any neighboring cell that isn't finalized, not just unexplored
+		for i = 1, 4 do
+			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] < 2) then
+				_options[#_options + 1] = i
+			end
+		end
+	
+		-- If there are free spaces to move to, then...
+		if(#_options > 0) then
+			-- Select an available direction at random
+			_choice = _options[flr(rnd(#_options)) + 1]
+			-- Set new coords
+			_coordinates.x += _directions[_choice].x
+			_coordinates.y += _directions[_choice].y
+		else
+			_solved = false
+			for i = 1, flr(#_genMap / 2) do
+				for j = 1, flr(#_genMap[1] / 2) do
+					if (_plotted[i * 2][j * 2] == 1 and _solved == false) then
+						_coordinates.x = j * 2
+						_coordinates.y = i * 2
+						_solved = true
+					end
+				end
+			end
+	
+			if (_solved == false) then
+				-- Done exploring! 
+				_genProg.plotComplete = true
+			end
+		end
+	end
+	
+	_genProg.genMap = _genMap
+	_genProg.plotted = _plotted
+	_genProg.coords = _coordinates
+		
+	mapPlot = _plotted
+	currentCoords.x = _coordinates.x
+	currentCoords.y = _coordinates.y
+		
+	return _genProg
+end
+:: raycast.lua
+--[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-23 22:58:16",revision=8,xstickers={}]]
+--Raycasting
+
+function raycastInit()
+	--Map width / height
+	cellSize = 16
+	h = 40
+
+	currentCoords = {x = 2, y = 2,}
+	mapPlot = {}
+	drawStage = 0
+	drawSpeed = 1
+	drawMe = true
+	
+	--Player variables
+	player =
+	{
+		xPos = cellSize * 2.5,
+		yPos = cellSize * 2.5,
+		xVel = 0,
+		yVel = 0,
+		zRot = 0,
+		FOV = 90,
+	}
+	
+end
+
+function raycast()
+    -- For each X position
+    for i = 0, 127 do
+        -- Find starting tile
+        px = player.xPos
+        py = player.yPos
+
+        x = player.xPos / cellSize
+        y = player.yPos / cellSize
+
+        pa = player.zRot / 360
+
+        -- Find ray direction (panoramic)
+        vx = cos(pa - (i - 64) / 512)
+        vy = sin(pa - (i - 64) / 512)
+
+        -- Find standard distance
+        dx = abs(1 / vx)
+        dy = abs(1 / vy)
+
+        -- Find increment value
+        ix = vx > 0 and 1 or -1
+        iy = vy > 0 and 1 or -1
+
+        -- Find initial offset
+        if (vx > 0) then
+            ox = (flr(x) - x + 1) / vx
+        else
+            ox = abs((x - flr(x)) / vx)
+        end
+
+        if (vy > 0) then
+            oy = (flr(y) - y + 1) / vy
+        else
+            oy = abs((y - flr(y)) / vy)
+        end
+
+        while true do
+            -- Horizontal intersection
+            if (abs(ox) < abs(oy)) then
+                x += ix
+                d = ox
+                ox += dx
+            -- Vertical intersection
+            else
+                y += iy
+                d = oy
+                oy += dy
+            end
+            if (d == nil or d == 0) then
+                errorD(d)
+            end
+
+            -- Check for collision
+            if (mapCollide(currentMap, flr(x), flr(y)) > 0 or x > #currentMap or y > #currentMap[1] or x <= 0 or y <= 0) then
+                _result = mapCollide(currentMap, flr(x), flr(y))
+                if(_result != 7) then
+                    line(i, 64 - h / d, i, 64 + h / d, _result)
+                end
+                break
+            end
+        end
+    end
+    printed = false
+end
+
+-- Get value from a map table - returns nil if out of range
+function mapCollide(_mapVal, _x, _y)
+    if (_x > 0 and _y > 0 and _x <= #_mapVal and _y <= #_mapVal[1]) then
+        return _mapVal[_y][_x]
+    else
+        return 7
+    end
+end
+
+-- Detect if edge of objects will be collided with after moving
+function mapObjectCollision(_map, _x, _y, _xDist, _yDist)
+    _result = {}
+    
+    -- Get floor of player's X position
+    _playerX = flr(_x)
+    _playerY = flr(_y)
+
+    -- Get floor of player's X position plus the provided offsets if player moves on X or Y axis
+    _objX = flr(_x + _xDist)
+    _objY = flr(_y + _yDist)
+    
+    -- If the player's offset X position and true Y position don't intersect with an occupied cell on the map...
+    if (_objX > 0 and _objX < #_map[1] and _playerY > 0 and _playerY < #_map) then
+        -- ...Then check if the player's new X position intersects with an occupied cell on the map using a ternary statement
+        -- If intersects, then mark as 0. If not, then mark as 1.
+        _result[x] = _map[_playerY][_objX] > 0 and 0 or 1
+    else
+        _result[x] = 0
+    end
+
+    -- Same as above but for true X position and offset Y position
+    if(_playerX > 0 and _playerX < #_map[1] and _objY > 0 and _objY < #_map) then
+        _result[y] = _map[_objY][_playerX] > 0 and 0 or 1
+    else
+        _result[y] = 0
+    end
+
+    -- Return table with X and Y values mapped to whether or not the new X / Y positions intersect with an occupied cell on the map
+    return _result
+end
+
+-- Used by move() function to calculate if edge of map will be collided with after moving 
+function mapEdgeCollision(_i, _dist, _maxDist)
+    if(flr(_i + _dist) > 0 and flr(_i + _dist) <= _maxDist) then
+        return _dist
+    else
+        return 0
+    end
+end
+
+function move(_x, _y, _xDist, _yDist)
+    _moveDist = {}
+    _mapObjects = mapObjectCollision(currentMap, _x, _y, _xDist, _yDist)
+
+    _moveDist[x] = _mapObjects[x] == 0 and 0 or mapEdgeCollision(_x, _xDist, #currentMap)
+    _moveDist[y] = _mapObjects[y] == 0 and 0 or mapEdgeCollision(_y, _yDist, #currentMap[1])
+
+    return _moveDist
+end
+
+-- Move player if arrows are pressed
+function movePlayer()
+    -- Rotate player
+    if(btn(0)) then
+        player.zRot += 5
+    elseif(btn(1)) then
+        player.zRot -= 5
+    end
+
+    -- Move player forward / backward, determining direction speed 
+    if(btn(2)) then
+        pa = player.zRot / 360
+        player.xVel = cos(pa)
+        player.yVel = sin(pa)
+        
+        _coords = move(player.xPos / cellSize, player.yPos / cellSize, player.xVel / cellSize, player.yVel / cellSize)
+
+        player.xPos += _coords[x] * cellSize
+        player.yPos += _coords[y] * cellSize
+
+    elseif(btn(3)) then
+        pa = player.zRot / 360
+        player.xVel = cos(pa)
+        player.yVel = sin(pa)
+
+        _coords = move(player.xPos / cellSize, player.yPos / cellSize, -player.xVel / cellSize, -player.yVel / cellSize)
+        
+        player.xPos += _coords[x] * cellSize
+        player.yPos += _coords[y] * cellSize
+    end
+end
+
+-- Map functions
+function drawMap(mapVal, width, height)
+    _prevX = 0
+    _prevY = 0
+    _mapWidth = 128 / width
+    _mapHeight = 128 / height
+
+    for i = 1, #mapVal do
+        for j = 1, #mapVal[i] do
+            -- rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
+            if(mapPlot[i][j] != 0 and i != 1 and i != #mapVal and j != 1 and j != #mapVal[i]) then
+                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, 12)
+            else
+                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
+            end
+            _prevX = j * _mapWidth
+        end
+        _prevX = 0
+        _prevY = i * _mapHeight
+    end
+
+    -- rectfill(currentCoords.x * _mapWidth, currentCoords.y * _mapHeight, (currentCoords.x * _mapWidth) - _mapWidth, (currentCoords.y * _mapHeight) - _mapHeight, 9)
+
+    -- circfill(((player.xPos / cellSize) - 1) * _mapWidth, ((player.yPos / cellSize) - 1) * _mapHeight, 1, 7)
+end
+
+function drawRoom()
+    cls(0)
+    rectfill(0,0,127,64,7)
+    raycast()
+    movePlayer()
+end
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzowODowMyJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: start.lua
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNS0xMC0yMyAyMjozNTozOSIsbW9k
+aWZpZWQ9IjIwMjUtMTAtMjMgMjI6MzY6NTciLHJldmlzaW9uPTIseHN0aWNrZXJzPXt9XV0KZnVu
+Y3Rpb24gc3RhcnRJbml0KCkKCXB1cGlsVHJ1ZVggPSAzNQoJcHVwaWxUcnVlWSA9IDUxCglwdXBp
+bFggPSBwdXBpbFRydWVYCglwdXBpbFkgPSBwdXBpbFRydWVZCglicm93VHJ1ZVggPSAyMAoJYnJv
+d1RydWVZID0gMTUKCWJyb3dYID0gYnJvd1RydWVYCglicm93WSA9IGJyb3dUcnVlWQoJCgktLU9m
+ZnNldCBmb3IgZmFjaWFsIGZlYXR1cmVzCgl4T2Zmc2V0ID0gMAoJeU9mZnNldCA9IDAKCXpPZmZz
+ZXQgPSAxNgoJb2Zmc2V0Q291bnRlciA9IDAKCWVzY2FwZUNvdW50ZXIgPSAwCgktLU9mZnNldCBt
+b2RlIDE6IElkbHkgYm9iYmxlCgktLU9mZnNldCBtb2RlIDI6IFJ1c2ggb2Zmc2NyZWVuIHRvIHRo
+ZSBsZWZ0Cgltb2RlID0gMQoJCgktLUFuaW1hdGlvbnMgZm9yIHN0YXJ0IHNjcmVlbgoJYW5pbUNv
+dW50ID0gMAoJYW5pbUNvdW50MSA9IDAKZW5kCgpmdW5jdGlvbiBzdGFydFNjcmVlbigpCiAgICBp
+ZGxlQW5pbSgpCiAgICBvZmZzZXRVcGRhdGUoKQplbmQKCmZ1bmN0aW9uIGlkbGVBbmltKCkKICAg
+IHBhbHQoMTQsIHRydWUpCiAgICBwYWx0KDAsIGZhbHNlKQogICAgCiAgICBjbHMoMSkKCiAgICAt
+LUJhY2tncm91bmQ6IGZpc2h5IGJsdWUKICAgIHJlY3RmaWxsKDAsMCwxMjcsMTI3LDcpCgogICAg
+LS1EcmF3IGNpcmNsZSBoZWFkCiAgICBjaXJjZmlsbCgtMTMwICsgeE9mZnNldCw0NiArIHlPZmZz
+ZXQsMzAwLDEyKQogICAgCiAgICAtLURyYXcgdGV4dAogICAgcHJpbnRYT2Zmc2V0ID0geE9mZnNl
+dCAvIDMKICAgIHByaW50WU9mZnNldCA9IHlPZmZzZXQgLyAzCiAgICBwcmludCgiZnBzIiw1OCAr
+IHByaW50WE9mZnNldCw5NiArIHByaW50WU9mZnNldCw3KQogICAgcHJpbnQoIihGSVNIIFBFUlNP
+TiBTSE9PVEVSKSIsMjMgKyBwcmludFhPZmZzZXQsMTAyICsgcHJpbnRZT2Zmc2V0LDcpCiAgICBw
+cmludCgicHJlc3MglyB0byBzdGFydCIsMzAgKyBwcmludFhPZmZzZXQsMTEyICsgcHJpbnRZT2Zm
+c2V0LDcpCgogICAgLS1EcmF3IGV5ZWxhc2gKICAgIHNwcig2NCwyNSArIHhPZmZzZXQsMzIgKyB5
+T2Zmc2V0LDExLDgpCiAgICAtLURyYXcgZmFjZSBtYXJraW5nCiAgICBzcHIoMTEsNzUgKyB4T2Zm
+c2V0LDczICsgeU9mZnNldCwzLDMpCiAgICAtLURyYXcgYW5kIGFuaW1hdGUgcHVwaWwgLyBpcmlz
+IGFuZCBleWVicm93CiAgICBicm93QW5pbWF0ZSgpCiAgICBwdXBpbEFuaW1hdGUoKQplbmQKCgot
+LSBBTklNQVRJT05TCi0tcmV0dXJuIGZyYW1lIG51bWJlciBnaXZlbiBhIGNvdW50ZXIsIGluaXRp
+YWwgZnJhbWUsIHdpZHRoIG9mIGZyYW1lcyBhbmQgZHVyYXRpb24gb2YgZWFjaCBmcmFtZSAoMzAg
+PSAxcykKZnVuY3Rpb24gaW5jRnJhbWUoY291bnRlciwgZnJhbWUsIHdpZHRoLCBkdXJhdGlvbikK
+ICAgIHJldHVybiBmcmFtZSArICh3aWR0aCAqIChmbHIoKHdpZHRoIC8gZHVyYXRpb24pICogKGNv
+dW50ZXIgJSBkdXJhdGlvbikpKSkKZW5kCgotLXNpbiBmdW5jdGlvbiBmb3IgdHdlZW4gZnJhbWVz
+CmZ1bmN0aW9uIHNpblR3ZWVuKGZybSwgc3BlZWRNdWx0LCBzdGFydCwgbGVuZ3RoKQogICAgc3Bl
+ZWQgPSA0ICogc3BlZWRNdWx0CiAgICAKICAgIHggPSBmcm0gLyBzcGVlZAoKICAgIC0td2hlbiBj
+YWxjdWxhdGluZyBzaW4sIDAuMjUgaXMgLTEgYW5kIC0uNzUgaXMgMQogICAgcmV0dXJuIDEgKyBz
+aW4oc3RhcnQgKyAoKHgpICogbGVuZ3RoKSkKZW5kCgotLUJvYmJsZSBhbmltYXRpb24gdmFsdWUg
+LSBnaXZlIHNwZWVkIGFuZCBkaXN0ICh0cnkgNiAvIDIpCi0tIGluaXRQb3M6IEluaXRpYWwgcG9z
+aXRpb24gb2Ygb2JqZWN0Ci0tIGZyYW1lOiBmcmFtZSBjb3VudGVyIHVzZWQgd2hlbiBjYWxsaW5n
+IHRoaXMgb2JqZWN0Ci0tIHNwZWVkOiBlZmZlY3RpdmVseSB0aGUgIm1heCBmcmFtZSIsIGRpdmlk
+ZWQgYnkgZnJhbWUgdG8gZ2V0IGFjdHVhbCBzcGVlZAotLSBkaXN0OiBtdWx0aXBsaWVyIGZvciBz
+aW5Ud2VlbiByZXN1bHRzCi0tIHN0YXJ0OiBzdGFydCBvZiBzaW5lIHdhdmUKLS0gICAwIC8gMC41
+OiBtaWQtc3dpbmcKLS0gICAwLjI1IC8gMC43NTogc3RhcnQgYXQgc2xvdyBwb3J0aW9uIG9mIHN3
+aW5nCi0tIGxlbmd0aDogRGVzaXJlZCBsZW5ndGggb2Ygc2luZSB3YXZlCi0tICAgMTogZnVsbCBz
+aW5lIHdhdmUKLS0gICAwLjU6IGhhbGYgYSBzaW5lIHdhdmUKLS0gICB0YWtlcyBhbnkgbnVtYmVy
+IGZyb20gCmZ1bmN0aW9uIGJvYmJsZShpbml0UG9zLCBmcmFtZSwgc3BlZWQsIGRpc3QsIHN0YXJ0
+LCBsZW5ndGgpCiAgICB4ID0gc2luVHdlZW4oZnJhbWUsIHNwZWVkLCBzdGFydCwgbGVuZ3RoKSAq
+IGRpc3QKICAgIHJldHVybiBpbml0UG9zICsgeAplbmQKCmZ1bmN0aW9uIG9mZnNldFVwZGF0ZSgp
+CiAgICAtLU1vZGUgMSA9IHN0YXJ0IHNjcmVlbgogICAgaWYobW9kZSA9PSAxKSB0aGVuCiAgICAg
+ICAgb2Zmc2V0Q291bnRlciArPSAxCiAgICAgICAgLS1ib2JibGUoKSBpcyBhbiBhbmltYXRpb24g
+dGhhdCB3aWxsIHdvYmJsZSBhIHZhcmlhYmxlIG9uIGEgc2luZSB3YXZlCiAgICAgICAgeE9mZnNl
+dCA9IGJvYmJsZSgwLCBvZmZzZXRDb3VudGVyLCA5LCA1LCAwLjI1LCAwLjUpIC0gNgogICAgICAg
+IHlPZmZzZXQgPSBib2JibGUoMCwgb2Zmc2V0Q291bnRlciwgMTQsIDUsIDAuMjUsIDAuNSkgLSA2
+CgogICAgICAgIC0tSWYgWCBpcyBwcmVzc2VkLi4uCiAgICAgICAgaWYoYnRuKDUpKSB0aGVuCiAg
+ICAgICAgICAgIC0tLi4uVGhlbiBjaGFuZ2UgbW9kZSB0byAyCiAgICAgICAgICAgIG1vZGUgPSAy
+CiAgICAgICAgZW5kCiAgICAtLU1vZGUgMiA9IHRyYW5zaXRpb25pbmcgdG8gaW50cm8gc2NyZWVu
+CiAgICBlbHNlaWYobW9kZSA9PSAyKSB0aGVuCiAgICAgICAgLS1TaGlmdCB0aGUgaGVhZCBhbmQg
+b3RoZXIgdGl0bGUgc2NyZWVuIGVsZW1lbnRzIG9mZnNjcmVlbiAKICAgICAgICBlc2NhcGVDb3Vu
+dGVyICs9IDIKCiAgICAgICAgeE9mZnNldCAtPSBlc2NhcGVDb3VudGVyCiAgICAgICAgek9mZnNl
+dCAtPSAwLjI1CgogICAgICAgIC0tUmVzZXQgZ2VuZXJhbC11c2UgdmFyaWFibGVzIHRoYXQgZG9u
+J3QgbmVlZCBwcmVzZXJ2ZWQgdmFsdWVzIGFuZCBwcm9jZWVkIHRvIHRoZSBpbnRybwogICAgICAg
+IGlmKGVzY2FwZUNvdW50ZXIgPiA0OCkgdGhlbgogICAgICAgICAgICB5T2Zmc2V0ID0gMAogICAg
+ICAgICAgICBlc2NhcGVDb3VudGVyID0gMAogICAgICAgICAgICBvZmZzZXRDb3VudGVyID0gMAog
+ICAgICAgICAgICBhbmltQ291bnQgPSAwCiAgICAgICAgICAgIGFuaW1Db3VudDEgPSAwCiAgICAg
+ICAgICAgIHNjcmVlbklEID0gMgogICAgICAgICAgICBtb2RlID0gMQogICAgICAgIGVuZAogICAg
+ZW5kCmVuZAoKLS1Ccm93IHR3aXRjaApmdW5jdGlvbiBicm93QW5pbWF0ZSgpCiAgICBpZihhbmlt
+Q291bnQgPCA0OCkgdGhlbgogICAgICAgIGJyb3dYID0gYm9iYmxlKGJyb3dUcnVlWCwgYW5pbUNv
+dW50LCA2LCAtMSwgMC4yNSwgMC43NSkKICAgICAgICBicm93WSA9IGJvYmJsZShicm93VHJ1ZVks
+IGFuaW1Db3VudCwgNiwgMiwgMC4yNSwgMC43NSkKCiAgICAgICAgYW5pbUNvdW50ICs9IDEKICAg
+IC0tIFVzZSBSTkcgdG8gZGV0ZXJtaW5lIGlmIGJyb3cgc2hvdWxkIGJlIHR3aXRjaGluZwogICAg
+ZWxzZWlmKGZscihybmQoMTAwKSkgPT0gMSkgdGhlbgogICAgICAgIGFuaW1Db3VudCA9IDAKICAg
+IGVuZAoKICAgIHNwcig3LGJyb3dYICsgeE9mZnNldCxicm93WSArIHlPZmZzZXQsNCwyKQplbmQK
+Ci0tUHVwaWwgd2lnZ2xlCmZ1bmN0aW9uIHB1cGlsQW5pbWF0ZSgpCiAgICAtLSBBbmltYXRlIHB1
+cGlsIGZvciAzNiBmcmFtZXMsIHRoZW4gZG9uJ3QgYW5pbWF0ZSBmb3IgMTIgZnJhbWVzLCB0aGVu
+IHN0YXJ0IGFnYWluCiAgICBpZihhbmltQ291bnQxIDwgMzYpIHRoZW4KICAgICAgICBwdXBpbFgg
+PSBib2JibGUocHVwaWxUcnVlWCwgYW5pbUNvdW50MSwgMS41LCAxLCAwLjI1LCAwLjc1KQogICAg
+ZWxzZWlmKGFuaW1Db3VudDEgPj0gNDgpIHRoZW4KICAgICAgICBhbmltQ291bnQxID0gMAogICAg
+ZW5kCgogICAgYW5pbUNvdW50MSArPSAxCgogICAgc3ByKDEscHVwaWxYICsgeE9mZnNldCxwdXBp
+bFkgKyB5T2Zmc2V0LDYsNCkKZW5k
+:: [eoc]
