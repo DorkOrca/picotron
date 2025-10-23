@@ -35,3 +35,7 @@ Tama-GOTCHA:
 - Minigame-style game where you make forgeries of faberge eggs
 - Progress:
   - Some art assets done - basically in the idea phase
+
+Add Rabbits:
+- All kinds
+- Pebbls
