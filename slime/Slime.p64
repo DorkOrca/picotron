@@ -1,0 +1,317 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoxMiIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzQiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lcy5sdWEjNjEiLHdvcmtzcGFj
+ZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lQW5pbWF0aW9ucy5sdWEjOSIsd29ya3NwYWNlX2lu
+ZGV4PTF9fV1d
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoxMiJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+OS0xOCAwMDo0OToyNiIscmV2aXNpb249M11dbHo0AJoDAABPNQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_APMMZkiQCE4I
+cAgeHxcXDghgCA5NBwhQCB5dDghABgDvDS4tHghQCA4NTghwaDBgAB3-EZZIgBhOGFAILh8XFx4I
+MAg_TQcOCCAIDg0ODW4IMKgQUAAd8A0pKLAIDhcIkAgOLxcHCIAIDj0IgAgeHQ4IgAg_DwD-AA0o
+kAgeCMAYsBjwDgjwCl8AHYEnWHAYDi8XF-EAMC4tBwYBkQgePQgwCAAYAGgAr5AILggwCGAo8FNc
+AB35CTIIAAjgCAAYwAgODxc4gAguDRcIgBgOLccAAF8AT7Ao8CRdAB0ReMgBFGC9AD8eTQfCAQQf
+IFoAHWB0SJAILhekAEA-Fw4YHAIfB1oAAx9AWgAdH2R8Ag4xDg0eYQB-Hg0_CHBoUGEAHR9WYQAC
+IQ5tWwABBgAwDQ5NYACfbghwCA0_CJBIxAAeH0bEAA5ADQ5dDhMAED0fAG8NXghwCE5pACVADg8X
+J2wAJx0nagACjgESB2oAARMAH01pAC7wEEcIcAgvFzcIYAgPDi8XJwhQCB8OPxcnCEAIHw5PFxc-
+ATAPDk5pAjAdPgeMAI89DgcIcAg9DnEAJfAFLxcfDghwCDcPFw8ODxcIYAhHDg82AXJnHghACHcO
+BQC-UAhnCGAIZwhwCEdoACUwDxc-aABQBy8XFw_QATAHTxczATAXXg9kAP4FF14NCEAIJ04NCFAI
+Jy4NCGAINy5uAA8ZAiMBmwERB3UCBgYAQFAIB00dAI8nHR4IcAgnHWkAIR8GGQIkL-A1agAdHxd8
+BQEKugQgCA4EAHENBwigCB4NDwBv0AjgCPAHawAdUQgI4AjQTQCTDxceCKAIBw0OXQAQLoAAQB0e
+CIBuAgMFACAHLX8AIBcOOgUfFmsAHcA8CAAIkBgACHA4DxfFAmEPDhcuCGDkAC0YcJkFHyhfAB0w
+JFiAnwGAFw4NGFAIDk0cARBAMAMQCNoCAFkAAFkGEUBdAE9gCPBRXwAeDxAHBZCQCC4NCKAoDgc4
+Ac8NCMAY8AAY8A8I8AViAB0f8DEA----------2RZkeQB0AHcAdgAgBTUAeAB0AEAH9QB2AHcGcw
+swAeDzEA------------------------------------------------i1BtPTh9fQ==
+:: main.lua
+--[[pod_format="raw",created="2025-09-18 00:49:08",modified="2025-09-22 22:24:31",revision=77]]
+include("slimes.lua")
+
+-- 	World functions
+
+
+-- Loops
+function _init()
+	generateSlime()
+end
+
+function _update()
+	updateSlimes()
+	physics()
+	spawnSlimes()
+end
+
+function _draw()
+	cls(31)
+	rectfill(0,0,480,180,15)
+	rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
+	drawSlimes()
+end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoxMiJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoxMiJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: slimeAnimations.lua
+--[[pod_format="raw",created="2025-09-18 20:12:26",modified="2025-09-19 00:11:21",revision=66]]
+function drawSlimeJump()
+	if angle and _slime.y < floor then
+		frame = flr((angle - 22.5) / 45) % 8 + 1
+		_slime.sprite = slimeRotation[frame]
+	end
+end
+
+slimeFlopR = {1, 7, 6, 7,}
+slimeFlopL = {1, 6, 7, 6,}
+slimeBounce = {}
+
+function drawSlimeFlop()
+	if _slime.yLast then
+		if _slime.yLast != _slime.y and _slime.y == floor then
+			_slime.frame = 16
+		end
+	end
+	
+	if _slime.frame > 0 and _slime.y >= floor then
+		_slime.frame -= 1
+		if angle > 270 or angle <= 90 then
+			_slime.sprite = slimeFlopR[flr(_slime.frame / 4) + 1]
+		else
+			_slime.sprite = slimeFlopL[flr(_slime.frame / 4) + 1]
+		end
+	elseif _slime.y >= floor then
+		_slime.sprite = 1
+	end
+end
+:: slimes.lua
+--[[pod_format="raw",created="2025-09-18 20:00:44",modified="2025-09-22 22:24:42",revision=65]]
+include("slimeAnimations.lua")
+
+slimes = {}
+
+-- Gravity variables
+floor = 180
+gravity = 3
+density = 0.1
+dampening = 0.6
+
+dt = 1/60
+
+spawnFrequency = 180
+spawnTimer = spawnFrequency
+
+slimeRotation = 
+{
+	3,
+	4,
+	5,
+	18,
+	19,
+	20,
+	21,
+	17,
+}
+
+nameParts =
+{
+	nameStart = 
+	{
+		"Ba","Bi","Bu","Be","Bo",
+		"Da","Di","Du","De","Do",
+		"Ga","Gi","Gu","Ge","Go",
+		"Ja","Ji","Ju","Je","Jo",
+		"Ka","Ki","Ku","Ke","Ko",
+		"Pa","Pi","Pu","Pe","Po",
+		"Za","Zi","Zu","Ze","Zo",
+	},
+	nameMid =
+	{
+		"mba","mbi","mbo",
+		"nba","nbi","nbo",
+		"sba","sbi","sbo",
+		"tba","tbi","tbo",
+		"yba","ybi","ybo",
+	},
+	nameEnd =
+	{
+	"ba","bi","bu","be","bo",
+	"da","di","du","de","do",
+	"ga","gi","gu","ge","go",
+	"ja","ji","ju","je","jo",
+	"ka","ki","ku","ke","ko",
+	"ma","mi","mu","me","mo",
+	"na","ni","nu","ne","no",
+	"pa","pi","pu","pe","po",
+	"za","zi","zu","ze","zo",
+	}
+}
+
+function physics()
+	for i=1,#slimes do
+		if slimes[i].animFreeze == false then
+			_slimeX = slimes[i].x
+			_slimeY = slimes[i].y
+	
+			_speed = slimes[i].speed
+			_velocity = slimes[i].velocity
+			
+			if _velocity < gravity then
+				_velocity += density
+			end
+			
+			slimes[i].xLast = _slimeX
+			slimes[i].yLast = _slimeY
+			
+			_slimeX += _speed
+			_slimeY += _velocity
+	
+			-- Ensure that position is above world floor
+			if _slimeY > floor then
+				_slimeY = floor
+				_speed *= dampening
+				_velocity *= -dampening
+			end
+			
+			-- Wrap around on X axis
+			if _slimeX < 0 then
+				_slimeX += 480
+			elseif _slimeX > 480 then
+				_slimeX -= 480
+			end
+			
+			slimes[i].x = _slimeX
+			slimes[i].y = _slimeY
+			slimes[i].speed = _speed
+			slimes[i].velocity = _velocity
+		end
+	end
+end
+
+-- Main functions
+-- 	Slime generation
+function generateName()
+	_name = ""
+	
+	_nameParts =
+	{
+		nameParts.nameStart[flr(rnd(#nameParts.nameStart)) + 1],
+		nameParts.nameMid[flr(rnd(#nameParts.nameMid)) + 1],
+		nameParts.nameEnd[flr(rnd(#nameParts.nameEnd)) + 1],
+	}	
+
+	for i=1,3 do
+		_name = _name.._nameParts[i] 
+	end
+	return _name
+end
+
+function generateSlime()
+	slimes[#slimes+1] =
+	{
+		name = generateName(),
+		x = flr(rnd(400)) + 40,
+		y = 90,
+		xLast = x,
+		yLast = y,
+		sprite = 1,
+		frame = 0,
+		speed = 0,
+		velocity = 0,
+		animFreeze = false,
+		inertia = 100,
+		size = 1,
+		width = 4,
+		height = 7,
+	}
+end
+
+function spawnSlimes()
+	spawnTimer -= 1
+	
+	if spawnTimer <= 0 then
+		generateSlime()
+		spawnTimer = spawnFrequency
+	end
+end
+
+-- 	Slime behavior
+function updateSlimes()
+	for i=1,#slimes do
+		_slime = slimes[i]	
+		
+		if _slime.y >= floor and flr(rnd(500)) == 0 then
+			slimeJump(_slime)
+		end
+		
+		slimes[i] = _slime
+	end
+	
+	slimeMerge()
+end
+	
+function slimeJump(_slime)
+	if flr(_slime.y) >= 180 and abs(_slime.velocity) < 0.1 then
+		_slime.velocity = -flr(rnd(5) + 2)
+		_slime.speed = flr(rnd(10) - 5)
+	end
+end
+
+function slimeMerge()
+	for i=1,#slimes do
+		for j=i,#slimes do
+			if j < #slimes then
+				_slime1 = slimes[j]
+				_slime2 = slimes[j+1]
+			
+				_left = _slime1.x - _slime1.width < _slime2.x + _slime2.width
+				_right = _slime1.x + _slime1.width > _slime2.x - _slime2.width
+				_bottom = _slime1.y > _slime2.y + - _slime2.height
+				_top = _slime1.y - _slime1.height < _slime2.y
+				
+				if _left and _right and _top and _bottom then
+					_slime1.speed += _slime2.speed
+					_slime1.velocity += _slime2.velocity
+					table.remove(slimes, j+1)
+				end
+			end
+		end
+	end
+end
+
+--		Slime drawing
+function drawSlimes()
+	for i=1,#slimes do
+		_slime = slimes[i]
+		
+		if _slime.yLast != nil then
+			angle = (atan2(_slime.yLast - _slime.y, _slime.xLast - _slime.x) * 360)
+		end	
+		
+		drawSlimeJump()
+		drawSlimeFlop()
+
+		spr(_slime.sprite, _slime.x - 8, _slime.y - 15)
+	end
+end
+:: [eoc]

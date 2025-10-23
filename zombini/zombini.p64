@@ -1,0 +1,1244 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoyOSIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzM5LDI5Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJibHVyLmx1YSMyOCwxOCIsd29y
+a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iY29sbGlzaW9uLmx1YSMxOTEsMTciLHdvcmtzcGFj
+ZV9pbmRleD0xfSx7bG9jYXRpb249InNoYWRpbmcubHVhIzE0NSwxMiIsd29ya3NwYWNlX2luZGV4
+PTF9LHtsb2NhdGlvbj0iZW5lbXkubHVhIzcxLDIiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRp
+b249Im1vdmVtZW50Lmx1YSMxNCw0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwbGF5
+ZXIubHVhIzIxNiwxNSIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iZ2Z4LzAuZ2Z4Iix3
+b3Jrc3BhY2VfaW5kZXg9Mn0se2xvY2F0aW9uPSJnZngvMS5nZngiLHdvcmtzcGFjZV9pbmRleD0y
+fSx7bG9jYXRpb249Im1hcC8wLm1hcCIsd29ya3NwYWNlX2luZGV4PTN9LHtsb2NhdGlvbj0ibWFw
+LzEubWFwIix3b3Jrc3BhY2VfaW5kZXg9M30se2xvY2F0aW9uPSJtYXAvMi5tYXAiLHdvcmtzcGFj
+ZV9pbmRleD0zfSx7bG9jYXRpb249InNmeC8wLnNmeCIsd29ya3NwYWNlX2luZGV4PTR9fV1d
+:: blur.lua
+--[[pod_format="raw",created="2025-10-04 05:49:37",modified="2025-10-05 06:45:15",revision=16,xstickers={}]]
+--[[
+	Takes a table with the following:
+
+		- Position ints labeled "x" and "y"
+		- An empty table element labeled "blur"
+
+	...and adds past iterations of the X and Y values to the table.
+
+	Uses a "count" value to determine the quantity of iterated x/y pairs.
+--]]
+
+
+-- Initializes blur table, setting iterated pairs to match current x / y variables.
+-- Helps to avoid nil errors that occur when calling an iterated pair that doesn't exist.
+function blurSetup(element, count)
+	for i = 1, count do
+		add(element.blur, {
+			element.x,
+			element.y,
+		})
+	end
+	
+	return element
+end
+
+-- Cycles iterated pairs down the list. This should be called right before changing x / y.
+function blur(element, count)
+	for i = count, 2, -1 do
+		element.blur[i].x = element.blur[i - 1].x
+		element.blur[i].y = element.blur[i - 1].y
+	end	
+	
+	element.blur[1].x = element.x
+	element.blur[1].y = element.y
+end
+:: collision.lua
+--[[pod_format="raw",created="2025-10-08 00:26:05",modified="2025-10-23 01:56:49",revision=260,xstickers={}]]
+--MODULE: AABB collision
+function drawObjectIntersects(_obj, _color)
+	_x = _obj.x
+	_y = _obj.y
+	_width = _obj.width
+	_height = _obj.height
+	_size = _obj.size
+	
+	_x1, _y1, _x2, _y2 = 0, 0, 0, 0
+	
+	if _size != nil then
+		_x1 = _x - _size
+		_y1 = _y - _size
+		_x2 = _x + _size
+		_y2 = _y + _size
+	elseif _width != nil then
+		_x1 = _x
+		_y1 = _y
+		_x2 = _x + _width
+		_y2 = _y + _height
+	end
+	
+	if _x1 != nil and _y1 != nil and _x2 != nil and _y2 != nil then
+		line(_x1, _y1, _x2, _y1, _color)
+		line(_x1, _y1, _x1, _y2, _color)
+		line(_x2, _y2, _x2, _y1, _color)
+		line(_x2, _y2, _x1, _y2, _color)
+	end
+end
+
+function drawNeighborIntersects(_obj, _color1, _color2, _color3)
+	_cells, _collidable = fetchNeighbors(_obj)
+	
+	_empty = {}
+	_blocked = {}
+	_collided = {}
+	
+	
+	for _i = 1, #_cells do
+		_intersects = objectIntersects(_obj, _cells[_i], 1)
+		_intersecting = _intersects[1] and _intersects[2] and _intersects[3] and _intersects[4]
+		
+		if _collidable[_i] == false then
+			add(_empty, _cells[_i])
+		elseif _collidable[_i] == true and not _intersecting then
+			add(_blocked, _cells[_i])
+		elseif _collidable[_i] == true and _intersecting then
+			add(_collided, _cells[_i])
+		end
+	end
+	
+	if _empty[1] then
+		for _i = 1, #_empty do
+			drawObjectIntersects(_empty[_i], _color1)
+		end
+	end
+	
+	if _blocked[1] then
+		for _i = 1, #_blocked do
+			drawObjectIntersects(_blocked[_i], _color2)
+		end
+	end
+	
+	if _collided[1] then
+		for _i = 1, #_collided do
+			drawObjectIntersects(_collided[_i], _color3)
+		end
+	end
+end
+
+-- _mod is optional
+function objectIntersects(_obj1, _obj2, _mod)
+	_mod = not _mod and 0 or _mod
+	if _obj1.size != nil and _obj2.width != nil then
+		
+		-- From object's perspective:
+		--    Intersecting on left, right, top and bottom edges
+		_intersects =
+		{
+			_obj1.x - _obj1.size < _obj2.x + _obj2.width + _mod,
+			_obj1.x + _obj1.size >= _obj2.x - _mod,
+			_obj1.y - _obj1.size < _obj2.y + _obj2.height + _mod,
+			_obj1.y + _obj1.size >= _obj2.y - _mod,
+		}
+
+		return _intersects
+	elseif _obj1.width != nil and _obj2.width != nil then
+		return _obj1.x > _obj2.x + _obj2.width and
+				 _obj1.y > _obj2.y + _obj2.height and true or
+				 _obj1.x + _obj1.width < _obj2.x and
+				 _obj1.y + _obj1.height < _obj2.y
+	end
+end
+
+function intersectDifference(_obj1, _obj2)
+	if _obj1.size != nil and _obj2.width != nil then
+		
+		-- From object's perspective:
+		--    Intersecting on left, right, top and bottom edges
+		_intersects =
+		{
+			(_obj2.x + _obj2.width) - (_obj1.x - _obj1.size),
+			(_obj1.x + _obj1.size) - _obj2.x,
+			(_obj2.y + _obj2.height) - (_obj1.y - _obj1.size),
+			(_obj1.y + _obj1.size) - _obj2.y, 
+		}
+
+		return _intersects
+	elseif _obj1.width != nil and _obj2.width != nil then
+		-- TODO: Build out intersect diff for square aabb colllision
+		return nil
+	end
+end
+
+function fetchNeighbors(_obj)
+	_leftCell = getMapCell(_obj.x, _obj.y, -1, 0)
+	_rightCell = getMapCell(_obj.x, _obj.y, 1, 0)
+	_topCell = getMapCell(_obj.x, _obj.y, 0, -1)
+	_botCell = getMapCell(_obj.x, _obj.y, 0, 1)
+	_sameCell = getMapCell(_obj.x, _obj.y, 0, 0)
+	_tlCell = getMapCell(_obj.x, _obj.y, -1, -1)
+	_trCell = getMapCell(_obj.x, _obj.y, 1, -1)
+	_blCell = getMapCell(_obj.x, _obj.y, -1, 1)
+	_brCell = getMapCell(_obj.x, _obj.y, 1, 1)
+	
+	_cells = {
+		_leftCell,
+		_rightCell,
+		_topCell,
+		_botCell,
+		_sameCell,
+		_tlCell,
+		_trCell,
+		_blCell,
+		_brCell,
+	}
+	
+	_leftSprite = fget(getMapSprite(_obj, -1, 0), 0)
+	_rightSprite = fget(getMapSprite(_obj, 1, 0), 0)
+	_topSprite = fget(getMapSprite(_obj, 0, -1), 0)
+	_botSprite = fget(getMapSprite(_obj, 0, 1), 0)
+	_sameSprite = fget(getMapSprite(_obj, 0, 0), 0)
+	_tlSprite = fget(getMapSprite(_obj, -1, -1), 0)
+	_trSprite = fget(getMapSprite(_obj, 1, -1), 0)
+	_blSprite = fget(getMapSprite(_obj, -1, 1), 0)
+	_brSprite = fget(getMapSprite(_obj, 1, 1), 0)
+	
+	_collidable = {
+		_leftSprite,
+		_rightSprite,
+		_topSprite,
+		_botSprite,
+		_sameSprite,
+		_tlSprite,
+		_trSprite,
+		_blSprite,
+		_brSprite,
+	}
+	
+	return _cells, _collidable
+end
+
+-- Get current map cell containing an object given its x / y coords
+function getMapSprite(_obj, _xMod, _yMod)
+	_x = _xMod != nil and _xMod or 0
+	_y = _yMod != nil and _yMod or 0
+	return mget(_obj.x // 16 + _x, _obj.y // 16 + _y)
+end
+
+function getMapCell(_x, _y, _xMod, _yMod)
+	_xMod = _xMod != nil and _xMod or 0
+	_yMod = _yMod != nil and _yMod or 0
+	
+	_cell = {
+		x = (_x // 16 + _xMod) * 16,
+		y = (_y // 16 + _yMod) * 16,
+		width = 16,
+		height = 16,
+	}
+	
+	return _cell	
+end
+
+function getCellFlag(_x, _y, _flag)
+	for i = 1, #layers do
+		memmap(layers[i].bmp, 0x100000)
+		_sprite = mget(_x // 16, _y // 16)
+		_flagSet = _flagSet == true and true or fget(_sprite, _flag)
+	end
+	
+	return _flagSet
+end
+
+-- Add a table to the provided object with presumed edges of box collider, for use in collision functions
+-- Top-left, top-right, bottom-left, bottom-right
+function boxCollider(_obj)
+	if _obj.width and _obj.height then
+		_col =
+		{
+			[1] = {
+				x = _obj.x,
+				y = _obj.y,
+			},
+			[2] = {
+				x = _obj.x + _obj.width,
+				y = _obj.y,
+			},
+			[3] = {
+				_obj.x,
+				_obj.y + _obj.height,
+			},
+			[4] = {
+			x = _obj.x + _obj.width,
+			y = _obj.y + _obj.height,
+			},
+		}
+	elseif _obj.size then
+		_col =
+		{
+			[1] = {
+				x = _obj.x - _obj.size,
+				y = _obj.y - _obj.size,
+			},
+			[2] = {
+				x = _obj.x + _obj.size,
+				y = _obj.y + _obj.size,
+			},
+			[3] = {
+				x = _obj.x - _obj.size,
+				y = _obj.y + _obj.size,
+			},
+			[4] = {
+				x = _obj.x + _obj.size,
+				y = _obj.y + _obj.size,
+			},
+		}
+	else
+		error("collision.lua/boxCollider(): Unable to identify object type.")
+	end
+
+	_obj.collision = _col
+	
+	return _obj
+end
+
+-- Return a table containing colliders that have intersected
+-- Box: Top-left, top-right, bottom-left, bottom-right
+function checkCollision(_obj)
+	if _obj.collision then
+		_collideList = {}
+		
+		_mapBorders = {
+			{x = 0, y = 0,},
+			{x = mapWidth, y = 0,},
+			{x = 0, y = mapHeight,},
+			{x = mapWidth, y = mapHeight,},
+		}
+		
+		for i = 1, #_obj.collision do
+			_collider = _obj.collision[i]
+			-- Check for intersections with cells that have flag 0 enabled
+			_collideDetected = getCellFlag(_collider.x, _collider.y, 0)
+			add(_collideList, _collideDetected)
+		end
+		
+		return _collideList
+	else
+		error("collision.lua/checkCollision(): Unable to detect collider for this object.")
+	end
+end
+:: enemy.lua
+--[[pod_format="raw",created="2025-10-11 00:15:30",modified="2025-10-23 01:27:50",revision=207,xstickers={}]]
+include("blur.lua")
+include("collision.lua")
+include("movement.lua")
+
+moveOptions =
+{
+	[0] = moveForward,
+	[1] = moveWait,
+}
+
+function enemyInitialize(_x, _y, _size, _color)
+	_enemy =
+	{
+		x = _x,
+		y = _y,
+		blur = {},
+		blurCount = 5,
+		blurDist = 1,
+		blurSize = 2,
+		speed = 1,
+		incVel = 0.3,
+		decVel = 0.2,
+		maxVel = 1.5,
+		moveStep = -1,
+		moveType = function() end,
+		animTimer = 0,
+		z = 0,
+		angle = 0,
+		size = 5,
+		color = 27,
+	}
+	
+	_enemy = blurSetup(_enemy, _enemy.blurCount)
+	
+	_enemy = boxCollider(_enemy)
+	
+	return _enemy
+end
+
+function enemyMove(_enemy)
+	
+	blur(_enemy, _enemy.blurCount)
+	
+	if _enemy.moveStep == -1 then
+		_enemy.moveType = moveOptions[flr(rnd(#moveOptions + 1))]
+		_enemy.moveStep += 1
+	end
+	
+	_enemy = _enemy.moveType(_enemy)
+	
+	_enemy = boxCollider(_enemy)
+	
+	_collides = checkCollision(_enemy)
+	_collided = false
+	
+	for i = 1, #_collides do
+		if _collided != true then
+			_collided = _collides[i] == true and true or false
+		end
+	end
+	
+	if _collided then
+		_enemy = moveBack(_enemy)
+		_enemy.moveStep = -1
+	end
+	
+	return _enemy
+end
+
+function enemySpawn(_enemyList, _enemy)
+	
+end
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoyOSJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAwMToxNzozMCIscmV2aXNpb249MjI2XV1sejQARREAAFVKAADzIXtbMF09e2JtcD1weHUA
+QyAQEATwVgcQB8AX0BfABxAH8FYsZmxhZ3M9MCxwYW5feAgAynk9MCx6b29tPTl9LD4ASA8WBQ4C
+AFcVDxUFDQIA-wT9DAUOXQUObQVtBf0iBQ7tBf1XYgAcoQXvFQ8WBd8VBe5sAPMGDa4FLgWuDQXe
+Be4NBV4FDV4FfgVeDwCDHgUNngU_BZ4PAB-eagAc0u8VBd4FDxbuBZ4FDR5pAELeBQ3uZgBCDW4F
+bg8Akq4FDQ4FDb4FHg8AP94FDWgAHD--FfAyABwbBWcBKh4FZwH0CxXtDgXdBe0OBS0OBY0FPQVd
+DgUdDgWdBS0FGQCx3QVNDgV9DgU9BY0PAA_BACwbDucBMA0F3d0BkN0FDo0FDj0FHfUBZS0FDi0F
+rRkAMO0FfRsAQg6NBU0PAA_DABzwBb8ZBA4EHhQPFCQNJA00DgQODSQNBgDSNA0EHSQdBB0kDQ4U
+DRwAAggAJmQNJQAkJB0lAAICAAMrAC4kDUgAG2QjAJQdBA0PFQ0EDQwEABMtAgADwAAfMfYBFnID
+BS4FLgV_QQFHBV4FDgIAQT4FDmUGAFAFDjUOFUkDQg41DjXsAWUOBQ6FPoUMAAAYAA8eABofHqAC
+HsNXBQ8W7xUF-iIFDxb7Akr_CwUOAgAqDQUCAA9mABxg9YIPFSUOAgBJ9QIOBQIASPUBDgUCAAHH
+AAkQABEuAgAfDnMAHQ94Ax0jDxVqAA6CAA_xAAoA0wAD3AAfgu8EJcROBY4PFgU_DQV_Be7RBHAF
+rgUuDQUu8QQQHhsAFY4ZAB8OnAE6It8VAQKljgU_BQ8WfgUNTuwEM_4FLiAFhF4FPgWOBQ0uGQAA
+tgIHAgA_HQUNgwAP7wOHBysABiUAIw4USQAP7AMcLx8VrwMYD_sDafEPPw8PFg8PDxaPD38WDw-v
+Fg8P3xYF-gAPD_4N3gXuAgAy-gANDQCvfpUOFQ61DhUOFWUASE-uFW6VYwAgUG8ZDxQ-MgLzEA8U
+DuQOVA5kDgTtDiQNRA1EDvQDDkQOVO1kDWQN9AAbAIo0DUQN9AUNBAIAbz0PFU0MTesBHCYEX3sA
+cfQHDmQO-QBeAHEJDkQORP0AdwAHFwAPdQBDJf0BdAAwNP0BdAD3AeQNZA507UQNRA00DeQdBA0C
+AB5dcgAPYQEgGg1hAUI0DQTteABfDlQOhN15ADcgDxkEBBAOAgAxDxkUCABwNA0EDQ4kDgYAtDQO
+BB4kHgQeJA4NHAACCAAmZA4lACQkHiUAAgIAAysALiQOSAA5ZA4kAgAnDRQlACMNFEkADw4EagIb
+CAozCCsFDlUIEX62Bi-_A0cDHEHVHxWlQQBRhQ41DrUKAC7VHhIAMRUOJYkAAQ4ABQoABAIAEdWt
+AAcCAA_-BwYPjgdEWQUe1Q4FAgA1FQ7VCgAzJQ4VIABBtQ41Dl4BLw6lEgABD54AHC-w8DEATQD1
+C-AGDg8WBT0VLQUeDQ8PBw0FLQ5FDg08XwdQHiUeDUwJALAOHQwHDQUNHB0FDQgAgDwFDQwNFQ0c
+CwAwDSUtFwAADADxCgwHBR0MHRUNHAUNLA0FLRUOPSwNJQ0VHh0QAGAOJS4VHSxlCBIuKgAwDRUO
+CABgLBUtBQ4sSgBgFQ0VDiwNLQB-DjUtHA0FHCMHHQATBlMFDxUAPwgAIE8W3wACBgDxES8WFR8V
+VR41LgBuAC4QPw8HDxYOAD0PDwUODUwNDgVNUw7QVR5VDgBuAA0MBQ4APQUAIU0FGwBFBS0VHjwA
+ARkAIjwHNQAAPQC-VR5dBQ4AXgBVDgCJBJIEIwCUHgQODxUOBA4MBAATLgIADsYAD6YCFA8xAP--
+--_ID8kE-23wEEBWcBZfFhZABh5VHgYgBg4VVhUOBgAGDgUOFgUeBSYHAAANAPEDBg4WDgUWBRYF
+BgUOBj4GDgUGDAA7fgUGFABxFgUOFg4GDhYAEgZFAPABBh4FBgUADgYFHjYeBQYOEBYA-wM_BRYO
+BSAFHlYeBUAVXhVwVUC4AB2EDx8EEA4EkA4GAGYEDxSQBA0TAAUMACMEDRIALw4EHgAMJgQNGAAv
+DgSSAB0zAAYVAgBaIA8WHxUEADMgBRECAA8KAAExMBYOAgAv8JMgAh4PswLxI18VtAIwHVEdXQJE
+DZENBQYAFbEEAACQAhORigIUcYgCHzGIAi1gBw8P0AcOAwAxDg8WBwCiDdAHDkcOBy4dHggA8QAX
+HgdeBw4nHideDQ4nHhcgAAQzAAAsAB-QYQEeDzEA-xPyABVVcBUPFjYOFUAFHgYFHugBIw4GywRH
+Bg4FELgEExDMBAoUACMOBs0EAC4AEgZHADAGHgU6AlEVDjYOFToCz1UOBgVAFQZOFXBV8PQUHSPw
+Bz8CCDwCJPAeCgAFJgIv8AdZABzR-xYA9gD_AP8VAPBw-gsAL-0AQwAc-xN-FnB2XhB_Vh5-FV4W
+cF0e0B3wUG6AZi5QbiYeMG0uFh4QUQAc9wrwEA8W4AYewA4WHqAPFR4WHpAdHhYOoB0OBQBSsB0O
+Bg4FAGkNDgYOwA0KAB8QZgIeDzEA-xKnYC8VHxYWDqAfFYUBgMAdDtANDuANAgAv8GCDAB4PMQD-
+-------V_AJkDxT0Dw50-gDkDvQP-gFkDg4AD0wAHPELJy8PBy4HDjceNx4HHgcOBw5XHiceJy4X
+HhcQAAAWAEA3HhcODADxBycOFy4XHiceFx4XPgcONw43DgcODx9YDAACAGAHDQ4HDkdlDAALAHA3
+HicODTcNhgwgDg1YABAXHwBgJw4NJw43CgADFgAhJx43ABANQgBvHjcNDg1HqRkg8AVeFS4VHgBe
+EC4Q-gElHhUuFT4gHg0A8AwEFY4VLhAuJS4QfiAOFW4VThAuFR4QLhVOEG4dAP8AHgUeFW4QHgAe
+EA4lziBeeAAd-0USTQ8dHQ5NDxJdDB0MrQ4MHQwOjQ4MPQwObQ4MXQwOPR4MfQweHRydHH0efR49
+HD0eHRwOfQ4cPQwOXQ4MbQwOPQ4MjQwOHQ4MrQwdDL0MHQxdDt39AB1aCA8YCA4CABEoAgATSAgA
+HggCAA8wAHoP8AAc-14WVwUfFkUXBicGBz4VDgUnJgcGBV4FBxZHZQ4GFwY3DhUuFUcWBxUOBS4F
+JjcGHiUeBXdlHlUOJwYHBhcuJQ4FFwZHNS4FFjcGBwVuFwYXBhcVLhUOJxYndQYHBjcGHhUuBUcW
+ByUOBS4HFjcGnAAc8RUnDxdnDlcuRy43TidOF24HbgcPDk4NDw8NTg0MBw0uDScNLg3iApsNDg1X
+DWcNZw4vAAApAA8tAAUfN1QETRG0VARAJP4ANE4EWqT_ALQOEAAPUAAckA8PJx4HLlcuJ0EEUA4n
+DgceCgAwRx4HPwRQLgceRw5ZBCEHDlEEoS4XHjcOBz5nLidRBCAOh0IEcicuJy4NFw1TBBEHKAQg
+HjcOAeIORw4NBz4nDQ4HLg1XLkAEfwcehw0ODTeTIh0pLxUjBDAuFR4lBBAQJQRg3hA_Fd4QJAQT
+riIEMC4VHmsEEBBrBCj_BmkEHwGeAU0M6AMwLhgeAgADVgM4HggOAgA-GA4ILABuHwjhABzwJyZH
+HxY1HlcGBxUeBQ4VNxYXFU4FByYXBgclTmcGBQ41HhYnBhdOJRcWFxYFHkUGJwYnVV4lDhsA8ARV
+BjcWByU_BQcmNwU_JRcGR04V8APwBRYHFR41NwYnBQ4VHhUHBlcOFT4FPgAPmAAcNxcvF6IDAQIA
+YA8Obh1ODa4DFBepA0gtRy1HygMBAgAfDScAAR8nKgJNBDceUSQOJA8fBwAQDd8dcaQOJA0kDmQM
+AAAEAA0GAAgeAAAMAAMCAAMeAAYCAA-AAE3wDE8VBQAuEAVOBSBeEAUOBRBeAAUuAA4AjhBuAJEo
+8AUgBV4gBU4ADgUQThAFPhCOIAXuMCcA-wmuIH4FAM4FAJ4QBRCeBR4ATgUQLhB_AG6vAB4PMQDg
+ODQPFOkBCe8BHw5OAgEgDaQcAi0NJDUAAwYAANwoJQ7kTAIPNAJOcCAFXxUQBV4WAtk_AAVeEG4Q
+BRAFvgAeGgKA3gCeBRAFAD4ZAlEeAE4AvmgCkW4QXhAFLgUATmcCrwUQbhA_AC4F3gCzAB4PMQD-
+1vECB1aHJicWJyYXFkcGRxYHBlc6CgYIAFBHFgcWRyAAwSY3VvcCVjcmFyYnFhUACykAMVcGB0MA
+ERdPAD_HVgfrAB4PMQD-----6ZEEDx8PDxUGnxYJAFEFDxYWjgoA-w0uFn4PFAQPDwUuhQ8UBN8P
+AA8UFL8fEB8UtPCAYwAc-wcvFpVeDxV1Df4D9QAPD9EMDx-dC-QARwAeAHAqTA8fBIAIAIE1Dw8E
+DxSATwYAry8fFA8UkCQe8ItqAR4PMQB-8SY5CA8XUA8WCA8XFwgOBw8OCCcIDg8WBw8YCAMPEw8Y
+CA8TAw0IDg8UDw4IBwQNCA4DDRMIDh4AkRQXDAMPDggNBBAAwg0DDQ8VBw8WBw0TDRcA-wwfFQ8O
+CA8WAAgOJwgORwgPDhAPGAggDw4I8DilAB3UQQ8Wtw4ADgcEDxQEDQIAWAcOBwQNAgASF4s3BAIA
+3wwHDge8Bw4ADrcO8EExJB5gFRUfFgWAVC0BAgASYAcAwA4FHlCeYH5glVCVUGEvV1AOBQ5FHgAQ
+cG0uXy6QPvA2cQAcMCCUUN0AEg4CAFBQnmB0cAIAMA5UDgYA7wQOFA4EDoAOBB4EDvBVRQIeD6cC
+svABCVAPFgQJFwQJBw8ZBCcICaUCERmlAhAZpQLyBQ4ICQ8UDxkEBwQOBAkDDhMECQ0EpAJgDQgO
+BAgJuwISDqICsQ4TDgMNBA4EHxUJoALPCScECUcEDRANBCANnQIg8AUVHxsHBh6APhMHAw5QAy4T
+HgMOQGMA8Bk_DxMDQAMdAy4TDgMHMAceDRMODS4HMA0jHRMNAw0GMAZODS4dMA0DLABQHgMODUA6
+A-8BHQMdYAcNAw0TBg2QDRYH8P8QHYIwd2CXUBYHBgIA8wRgdmAGdwZQl1CXUAaHUAcGZwZQGgBv
+BxZgdvBE6AEeDzEA4fAFJg8dIA5QDiANDg0ADQoNAA4QDQp9BPAMDxIHDQcMBw0HDQAPFgwEDQcN
+Dg8UDgsNDg0MZgJgBA4EDA0OFgDADA4ECxcNBw0EDgwLEwASDioF8AYODA8VDQ4NCQwKDAkMDgcP
+Fg0HDRe1BBAMLQDPEAwwDQcNMAyADPAosgAc8BZAWHCYQLgg2BDYAAgPGMgeyA4YDsgeCA6oPggO
+iA4IDgIeCA5oCAAjAC78E1IOCB4QAg0Aoj4CIAKeAkASDgICAC9wUuUmHbDwBA8YqCAOCA6YIFIA
+IIggcAAEAgBQIA4CriBkGJJiIA5IDgJOIFgdAAAOAAMiADBYHkgOAIJYIB4oLkggAhYAQQgOODAH
+ABACohg-QC4Q-hkdS-AA_CGUFY-_AfIA-gEIDjMVARMCCAARWAYAsbgOAg7YDtgOAg64EAAfSF4X
+HlDwALgwqAAHEJjjACYIDgIAcAIgrgIOIGJrGXMgTgIOSA4gGQASWCcAUR5IDiA4DwAQSAsAc1ge
+KA4CIEhTAQAaAAGrAG8CMF4QLkA9Ax4PMQD------315Bf8WAOYFDgIAgR4GDgYOBg8VBwAQDQYA
+YOYONi4mLgAwAEJFUAUtBR4W1jkjBQ0GADAOBg74OQEEAAAMADIOLQUEAAgYADIWBQ0GQgEGAAdM
+AAJcAD-mBe68AByZ3xYFANYOAAUOAgAaALsAIAYOJABzBi4mLjYOAHIASA4WDgC-ADcWDgCyABUA
+sgAaBhgACL8AGRZNAANfAF-WDgDeBaQHH34F-xYB1g7mAgBfHtYF7vBQAB9_7xYF1h7mDgIAT9b_
+AQVQAB8f8DEAnFBtPTl9fQ==
+:: gfx/1.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA3IDIwOjQ3OjUyIixtb2RpZmllZD0iMjAyNS0x
+MC0yMiAyMjowNjoyNiIscmV2aXNpb249Nl1dbHo0AOUCAADNNAAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMp5PTAsem9vbT05fSw_APA8AAECAwQF
+BgcICQoLDA0ODw8fAAEPEw8UDxUPFgYPGB8ZAw8QDxICDxYvAAEPFQ8ABQ8WAhQfEwEPFQVfAB8V
+ARARHwAADxAPEQ8SNwDwHwAPFg8XDxgPGQ8aDxsPHA8dDx4PHx8TEQAPAAUOAgQLAwwNAgQRNwAC
+AQADDxNbAL8ADxRnABcxBwD3cLsAHC-w8DEA---------------UgDC2IMYgJhcGAgB5ByAWpyAG
+twMA-wjFIAanBiAWlwYgxkCWBcAFDxagBS4FAJcAHg8xAP----------8nkF-xYA5gUOAgCBHgYO
+Bg4GDxUHANINBg0etg4GHgYFDXUNEgDxAAVuDQY_BgUOVg0GHgUGDgoAMw4GDgsAFB4KABOGCAAV
+BgIAEQU_ABUOAgAAUACvBQ2FDQUGDuYF7roAHJnfFgUA1g4ABQ4CAEMADxUeuAABcwCwAA0WDpYO
+AA4WDmVnAFAADR4FbngAfwAGBQ52DgUJAA0CTAACuwAyAAYNZAAyDgUeQgAhDXVUAG-WDgDeBQCf
+Av9m8AEOBg7mDjYuJi4WDhYOBS0FBAAwHhYFaAITDQYAYg4GDg0FLQQAAAwAMg4tBQQACBgAIBYF
+3wETDQYAB0wAAlwAD6ECNgq7AAI-AnMGLiYuNg4AcgBIDhYOAL8ANxYOALIAFQCyABoGGAAIvwAZ
+Fk0AA18AD6gCI44ABf8WAdYO5gIAXx7WBe7wUAAe9AEhBQ8Wlg4FEA61DhAGFQ4FAgAoBhAsBAEP
+AB_WBgACADkAfwUOlg4F8CF8AB3EAwUPFlYOBVAOdQ5QfAAkBlB4AAELAB9WBgAaAUkAbw5WDgXw
+AzwDHg8xAP--------------------------------8EUG09OX19
+:: gfx/kitchen.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA3IDIwOjEzOjIwIixtb2RpZmllZD0iMjAyNS0x
+MC0wNyAyMDo0Njo1NyIscmV2aXNpb249N11dbHo0AFACAAA8NAAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+----------8GUDC2IAa3AwAVxwIAsAa3IMUgBqcGILcGBwDvQAZ3BgXABQ8WoAUuBQCQAB4PMQD-
+----------J5Bf8WAOYFDgIAgR4GDgYOBg8VBwDSDQYNHrYOBh4GBQ11DRIA8QAFbg0GPgYFDlYN
+Bh4FBg4KADMOBg4LABQeCgAThggAFQYCABEFPgAVDgIAAFAArwUNhQ0FBg7mBe66AByZ3xYFANYO
+AAUOAgBDAA8VHrgAAXMAsAANFg6WDgAOFg5lZwBQAA0eBW54AH8ABgUOdg4FCQANAkwAArsAMgAG
+DWQAMg4FHkIAIQ11VABv1g4A3gUAnwL-ZvABDgYO5g42LiYuFg4WDgUtBQQAMB4WBWgCEw0GAGIO
+Bg4NBS0EAAAMADIOLQUEAAgYACAWBd8BEw0GAAdMAAJcAA_hAjYKuwACPwJzBi4mLjYOAHIASA4W
+DgC-ADcWDgCyABUAsgAaBhgACL8AGRZNAANfAA_oAiOOAAX-FgHWDuYCAF8e1gXu8FAAHvQBIQUP
+FpYOBRAOtQ4QBhUOBQIAKAYQLAQBDwAflgYAAgA5AH8FDpYOBfAhfAAdxAMFDxZWDgVQDnUOUHwA
+JAZQeAABCwAfVgYAGgFJAG8OVg4F8AM8Ax4PMQD---------------------------------BFBt
+PTh9fQ==
+:: gradient.lua
+--[[pod_format="raw",created="2025-10-10 19:25:39",modified="2025-10-10 19:48:38",revision=29,xstickers={}]]
+-- MODULE: Color shading lookup table
+--[[
+	Black = 0, full color = 5.
+--]]
+
+shadingLookupTable =
+{
+	[0] =
+	{
+		0, 0, 0, 0, 0,
+	},
+	[1] =
+	{
+		0, 0, 0, 0, 1,
+	},
+	[2] =
+	{
+		0, 0, 0, 1, 2,
+	},
+	[3] =
+	{
+		0, 0, 1, 19, 3,
+	},
+	[4] =
+	{
+		0, 0, 21, 20, 4,
+	},
+	[5] =
+	{
+		0, 0, 0, 21, 5,
+	},
+	[6] =
+	{
+		0, 21, 5, 22, 6,
+	},
+	[7] =
+	{
+		0, 21, 22, 6, 7,
+	},
+	[8] =
+	{
+		0, 1, 2, 24, 8,
+	},
+	[9] =
+	{
+		0, 21, 4, 25, 9,
+	},
+	[10] =
+	{
+		0, 21, 4, 25, 10,
+	},
+	[11] =
+	{
+		0, 1, 19, 3, 11,
+	},
+	[12] =
+	{
+		0, 1, 19, 16, 12,
+	},
+	[13] =
+	{
+		0, 0, 1, 18, 13,
+	},
+	[14] =
+	{
+		0, 0, 21, 2, 14,
+	},
+	[15] =
+	{
+		0, 21, 5, 22, 15,
+	},
+	[16] =
+	{
+		0, 0, 1, 19, 16,
+	},
+	[17] =
+	{
+		0, 0, 1, 19, 17,
+	},
+	[18] =
+	{
+		0, 0, 0, 1, 18,
+	},
+	[19] =
+	{
+		0, 0, 0, 1, 19,
+	},
+	[20] =
+	{
+		0, 0, 0, 21, 20,
+	},
+	[21] =
+	{
+		0, 0, 0, 0, 21,
+	},
+	[22] =
+	{
+		0, 0, 21, 5, 22,
+	},
+	[23] =
+	{
+		0, 21, 2, 14, 23,
+	},
+	[24] =
+	{
+		0, 0, 1, 2, 24,
+	},
+	[25] =
+	{
+		0, 0, 21, 4, 25,
+	},
+	[26] =
+	{
+		0, 1, 3, 11, 26,
+	},
+	[27] =
+	{
+		0, 1, 19, 3, 27,
+	},
+	[28] =
+	{
+		0, 1, 16, 12, 28,
+	},
+	[29] =
+	{
+		0, 1, 18, 13, 29,
+	},
+	[30] =
+	{
+		0, 0, 21, 2, 30,
+	},
+	[31] =
+	{
+		0, 21, 20, 4, 31,
+	},
+}
+:: log.txt
+--[[pod_format="raw",created="2025-10-08 18:44:14",modified="2025-10-08 18:59:27",revision=1909]]
+falsefalsefalsefalse
+:: log1.txt
+--[[pod_format="raw",created="2025-10-08 19:04:09",modified="2025-10-08 22:11:23",revision=34830]]
+Cell 1: 272.0,288.0,16,16   Cell 2: 304.0,288.0,16,16   Cell 3: 288.0,272.0,16,16   Cell 4: 288.0,304.0,16,16   
+:: main.lua
+--[[pod_format="raw",created="2025-10-04 00:27:00",modified="2025-10-23 01:19:50",revision=160,xstickers={}]]
+include("player.lua")
+include("enemy.lua")
+include("shading.lua")
+
+function _init()
+	playerInitialize()
+	
+	enemy = enemyInitialize(210, 300, 7, 27)
+	enemy2 = enemyInitialize(10, 10, 7, 17)
+	
+	enemies =
+	{
+		enemy,
+		enemy2,
+	}
+	
+	layers = fetch("map/2.map")
+	lightLevel = 5
+	memmap(layers[3].bmp, 0x100000)
+	--TODO: Remove this debug variable
+	hideVisuals = false
+end
+
+function _update()
+	playerMove()
+	player = toolWield(player)
+	
+	shadeTest()
+	
+	camera(player.x - 240, player.y - 135)
+	
+	if enemies[1] != nil then
+		for _i = 1, #enemies do
+			enemies[_i] = enemyMove(enemies[_i])
+		end
+	end
+	
+	if t()%60 == 0 then
+		enemySpawn(enemies, enemy)
+	end
+end
+
+function _draw()
+	cls(0)
+	setShade(lightLevel)
+	map(layers[4].bmp)
+	map(layers[3].bmp)
+	map(layers[2].bmp)
+	map(layers[1].bmp)
+	objectDraw(player)
+	toolDraw(player)
+	
+	_h = stat(1)
+	
+	
+	print(_h, player.x - 238, player.y - 133, 1)
+	print(_h, player.x - 238, player.y - 134, 7)
+	
+	if enemies[1] != nil then
+		for _i = 1, #enemies do
+			_enemy = enemies[_i]
+			
+			objectDraw(_enemy)
+			
+			enemies[_i] = _enemy
+		end
+	end
+end
+
+
+function shadeTest()
+	if keyp("e") then
+		lightLevel = lightLevel < 5 and lightLevel + 1 or 5
+	end
+	
+	if keyp("q") then
+		lightLevel = lightLevel > 1 and lightLevel - 1 or 1
+	end
+end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoyOSJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0wNyAwMTo0Mjo1NCIscmV2aXNpb249MTI2XV1sejQAXgEAAO0gAADwCHt7Ym1wPXVzZXJkYXRh
+KCJpMTYiLDMyAwAvIjABAE4-NDEwAQAID4AA-0ZMNjA0OQQAHzABAFhMYTA0OQQAD3ABVC45Y2wA
+DxwAACI0MgQAD4AAZQWoAR8xBAA5DmQALDQwgAAKMAAPAQA9DIAADxwAAA8BADxAYzA0MgQAD4AA
+ZQ_AA-sPgAXzD4AA----------_d9gsiKSxoaWRkZW49ZmFsc2UscGFuX3g9NTQuNgEAETcWAFl5
+PS0xMRgAkyx0aWxlX2g9MQoAEHcKAK96b29tPTAuNX0sdhBaIjEyBAAjMDLzDAQEABczHAAOAQAP
+gADmLzEyBABDD4AACQkEAB8xBABDD4AAFS8wMQQARB80BAAAHzEEAAAfNAQA-20fOQQARB80BAAA
+HjkEAC8xMoADbA_AAGwPAQA9D4AAEQ8BAEkPgAD-----------8kD3YQQ1AwLjV9fQ==
+:: map/1.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA2IDIwOjQ5OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0wNiAyMTozMDowNCIscmV2aXNpb249MTRdXWx6NACKAQAA5SAAAPAIe3tibXA9dXNlcmRhdGEo
+ImkxNiIsMzIDAC8iMAEANiIxMgQAAAEANTUxMAEAFzQMAC41MSwALzEyBAA5TzYwNDkEAA0IMABP
+MDAxMQQAOU82MDRhBAANCDAAHzABADYA2AAAXAAPLAAbTzYwNTEEADEPgAAhAjgADwEANQ_AAB8O
+LAAPgAFhLzQxBAAxD4AABy80MIABBwicAw8BAC0OgAAPLAARDwAD-3AvMTKABWwPgAA9H2EEAA0I
+MAAfMAEANg8AByMPgAD----------3X1CyIpLGhpZGRlbj1mYWxzZSxwYW5feD0zOC42AQARNxUA
+SHk9LTkWAKM2LHRpbGVfaD0xCgAQdwoAj3pvb209MX0schBSBQEAEzLnDA8EAAUuMzABAA_AAOkf
+MQQAPB80BAAQFzEEAB80BAD-bC8xOQQALUY2MDA4UAAPBAD-nx85BAA8HzQEABAXOQQAD4AF7Q_A
+AE0fOIAAaRE2JAQvMDSAAP----------DQ9yED9QbT0xfX0=
+:: map/2.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA2IDIxOjAxOjU2Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAwMToxNzozMSIscmV2aXNpb249NzZdXWx6NAC0AgAAxQgAAPYle3tibXA9cHh1AEyAICAA
+-wAA---SADgALgAALGhpZGRlbj1mYWxzZSxwYW5feD0tODQuMwEAARYAdnk9LTg5LjYBAJMsdGls
+ZV9oPTEKABB3CgCKem9vbT0xfSxwAHG-AAAfUgAfBgDyB1MAAAAAwJIAAAGVAAMAAADQABkAAAAM
+AGHBQADAQBgPABweBgAVQAwAYgWVAABwYScA8QEBAAAAegEAesEAlQAAcWEYVwBlAAAAA5UADADf
+AHnBAHjBAECBAEDBr-EABEYyMi45AQAUN-IALzQx8gAkcBIAAApJYBQGALSgEgAAAEkAAEnACgkA
+HhASAC5RYCQADzYADxNBNgB_BAAAAEAABDwAD3IAPQjYAIAJAAAABwAAEwYAUQMUAAAVCQBBAAAA
+UZcBEUEGAHFRAA0AAAAPnAAfDx4AABILRQBBAAAAFyQAHx8kAAQTDyQAHwkeAAIXF0IADmYADiQA
+HxckAAofHyQAEAK0AD8TAAH5AAcCLQAfBksADhQWPwAPJwAHFQHYAA8kAAURHwwAAj4BHx8kAAQC
+rQEQFAkAHwK3AAcfGBIANB8DawMDNjkuMAEABFsEGDVwBB80aAMZ9wESAAACAAgEAAADAAESABIR
+DwDxBhEAEgEACgQAAQEAPwQAMAwAAQsACgYAHxAMAAVhEGABCgAKBgBRPwQAEgk-ABkJZgAaFHIA
+YAQ4AAAKYF8BYQxgCB0AAR4AfwMEAAAIAAMkAAHnAIUAAI0AAB0AAIAAAIgGAAg8AB8QPAAEIB0A
+PwAaHTkAH4g8ABYNeAAvAYB1AGAvAIDtAFg-iAAEbAAXEI0GAC8DpWMAGC4BHTAAD2MADR8dYwAb
+LwCFMwAYHwgkAApfAQsACAwhAAdPGWAKCh4AAy8QOBgAEBYYGAAPVAg_UG09MX19
+:: movement.lua
+--[[pod_format="raw",created="2025-10-15 22:53:01",modified="2025-10-18 02:00:20",revision=93,xstickers={}]]
+include("collision.lua")
+
+function moveRandAngle(_obj)
+	_obj.angle = flr((rnd(360) + 1)) / 360
+	
+	return _obj
+end
+
+function moveSetBase(_obj)
+	_obj.bx = _obj.x
+	_obj.by = _obj.y
+	
+	return _obj
+end
+
+function moveCheckBase(_obj, _dist)
+	
+end
+
+function moveForward(_obj)
+	if _obj.moveStep == 0 then
+		_obj = moveRandAngle(_obj)
+		_obj.animTimer = flr(rnd(4) + 2) * 60
+	end
+	
+	_obj.moveStep += 1
+	
+	_vx = cos(_obj.angle) * _obj.speed
+	_vy = sin(_obj.angle) * _obj.speed
+	
+	_obj.x += _vx
+	_obj.y += _vy
+	
+	if _obj.moveStep >= _obj.animTimer then
+		_obj.moveStep = -1
+	end
+	
+	return _obj
+end
+
+function moveBack(_obj)
+	_vx = cos(_obj.angle) * _obj.speed
+	_vy = sin(_obj.angle) * _obj.speed
+	
+	_obj.x -= _vx
+	_obj.y -= _vy
+	
+	return _obj
+end
+
+function moveWait(_obj)
+	if _obj.moveStep == 0 then
+		_obj.animTimer = flr((rnd(2) + 1) * 60)
+	end
+	
+	_obj.moveStep += 1
+	
+	if _obj.moveStep >= _obj.animTimer then
+		_obj.moveStep = -1
+	end
+	
+	return _obj
+end
+:: player.lua
+--[[pod_format="raw",created="2025-10-04 00:27:14",modified="2025-10-23 01:36:45",revision=681,xstickers={}]]
+include("blur.lua")
+include("collision.lua")
+
+function playerInitialize()
+	player =
+	{
+		x = 240,
+		y = 135,
+		blur = {},
+		blurCount = 5,
+		blurDist = 1,
+		blurSize = 2,
+		xVel = 0,
+		yVel = 0,
+		incVel = 0.5,
+		decVel = 0.25,
+		maxVel = 2,
+		z = 0,
+		zMod = 0.2,
+		rot = 0,
+		size = 5,
+		color = 7,
+	}
+	
+	player = blurSetup(player, player.blurCount)
+end
+
+function playerMove()
+	x = player.x
+	y = player.y
+	xVel = player.xVel
+	yVel = player.yVel
+	incVel = player.incVel
+	decVel = player.decVel
+	maxVel = player.maxVel
+	
+	mapWidth = 512
+	mapHeight = 512
+	
+	-- Surrounding cells - uses collision.lua to ID them
+	cells, collidable = fetchNeighbors(player)
+	
+	-- Adjust x velocity if left or right is pressed
+	if (btn(0) or key("a")) and (not btn(1) and not key("d")) then
+		xVel -= incVel
+	elseif (btn(1) or key("d")) and (not btn(0) and not key("a")) then
+		xVel += incVel
+	else
+		xVel = xVel < 0 and xVel + decVel or xVel > 0 and xVel - decVel or 0
+	end
+	
+	-- Adjust y velocity if up or down is pressed
+	if (btn(2) or key("w")) and (not btn(3) and not key("s")) then
+		yVel -= incVel
+	elseif (btn(3) or key("s")) and (not btn(2) and not key("w")) then
+		yVel += incVel
+	else
+		yVel = yVel < 0 and yVel + decVel or yVel > 0 and yVel - decVel or 0
+	end
+	
+	-- Cap velocity
+	xVel = xVel <= -maxVel and -maxVel or xVel >= maxVel and maxVel or xVel
+	yVel = yVel <= -maxVel and -maxVel or yVel >= maxVel and maxVel or yVel
+	
+	blur(player, player.blurCount)
+	
+	-- prevent fractional velocities below minimum decrease value
+	xVel = xVel < decVel and xVel > -decVel and 0 or xVel
+	yVel = yVel < decVel and yVel > -decVel and 0 or yVel
+	
+	-- Check for collides with map boundaries, and don't increase speed if currently colliding
+	if player.xVel != 0 and player.yVel != 0 then
+		x = x <= mapWidth - player.size and x >= 0 + player.size and x + xVel / 1.5 or x
+		y = y <= mapHeight - player.size and y >= 0 + player.size and y + yVel / 1.5 or y
+	else
+		x = x <= mapWidth - player.size and x >= 0 + player.size and x + xVel or x
+		y = y <= mapHeight - player.size and y >= 0 + player.size and y + yVel or y
+	end
+	
+	-- Contain player within bounds of map
+	x = x > mapWidth - player.size and mapWidth - player.size or x < 0 + player.size and 0 + player.size or x
+	y = y > mapHeight - player.size and mapHeight - player.size or y < 0 + player.size and 0 + player.size or y
+	
+	-- Set player's position and velocity variables
+	player.x = x
+	player.y = y
+	player.xVel = xVel
+	player.yVel = yVel
+	
+	-- Check for collides with map walls, and don't increase speed if currently colliding
+	for _i = 1, #_cells do
+		intersected = objectIntersects(player, cells[_i])
+		intersecting = intersected[1] and intersected[2] and intersected[3] and intersected[4]
+		intDiff = intersectDifference(player, cells[_i])
+		
+		if collidable[_i] == true and intersecting then
+			-- Check cardinals
+			for _j = 1, #intersected do
+				if _j == 1 and _i == 1 and player.xVel < 0 then
+					player.x = cells[_i].x + cells[_i].width + player.size
+					player.xVel = 0
+				end
+				
+				if _j == 2 and _i == 2 and player.xVel > 0 then
+					player.x = cells[_i].x - player.size - 1
+					player.xVel = 0
+				end
+				
+				if _j == 3 and _i == 3 and player.yVel < 0 then
+					player.y = cells[_i].y + cells[_i].height + player.size
+					player.yVel = 0
+				end
+				
+				if _j == 4 and _i == 4 and player.yVel > 0 then
+					player.y = cells[_i].y - player.size - 1
+					player.yVel = 0
+				end
+			end
+			
+			-- Check diagonals
+			-- TODO: Bug: _i 8 clips when approaching with bottom edge of player aligned with top edge of wall
+			if intDiff then
+				if _i == 6 then
+					if intDiff[1] < intDiff[3] then
+						player.x = cells[_i].x + cells[_i].width + player.size
+						player.xVel = 0
+					elseif intDiff[1] >= intDiff[3] then
+						player.y = cells[_i].y + cells[_i].height + player.size
+						player.yVel = 0
+					end
+				end
+				
+				if _i == 7 then
+					if intDiff[2] < intDiff[3] then
+						player.x = cells[_i].x - player.size - 1
+						player.xVel = 0
+					elseif intDiff[2] >= intDiff[3] then
+						player.y = cells[_i].y + cells[_i].height + player.size
+						player.yVel = 0
+					end
+				end
+				
+				if _i == 8 then
+					if intDiff[1] < intDiff[4] then
+						player.x = cells[_i].x + cells[_i].width + player.size
+						player.xVel = 0
+					elseif intDiff[1] >= intDiff[4] then
+						player.y = cells[_i].y - player.size - 1
+						player.yVel = 0
+					end
+				end
+				
+				if _i == 9 then
+					if intDiff[2] > intDiff[4] then
+						player.y = cells[_i].y - player.size - 1
+						player.yVel = 0
+					elseif intDiff[2] <= intDiff[4] then
+						player.x = cells[_i].x - player.size - 1
+						player.xVel = 0
+					end
+				end
+			end
+		end
+	end
+end
+
+function objectDraw(object)
+	circfill(object.x, object.y + 2, object.size, object.color - 2)
+	
+	for i = object.blurCount, 1, -1 do
+		if i % object.blurDist == 0 and object.blur[i].y then
+			_size = object.size - (i / object.blurCount) * (object.size / object.blurSize)
+			circfill(object.blur[i].x, object.blur[i].y + 2, _size, object.color - 2)
+		end
+	end
+	
+	circfill(object.x, object.y + 1, object.size, object.color - 1)
+	
+	for i = object.blurCount, 1, -1 do
+		if i % object.blurDist == 0 and object.blur[i].y then
+			_size = object.size - (i / object.blurCount) * (object.size / object.blurSize)
+			circfill(object.blur[i].x, object.blur[i].y + 1, _size, object.color - 1)
+		end
+	end
+	
+	for i = object.blurCount, 1, -1 do
+		if i % object.blurDist == 0 then
+			_size = object.size - (i / object.blurCount) * (object.size / object.blurSize)
+			circfill(object.blur[i].x, object.blur[i].y, _size, object.color)
+		end
+	end
+	
+	circfill(object.x, object.y, object.size, object.color)
+end
+
+function toolWield(_obj)
+	_x = _obj.x
+	_y = _obj.y
+	_xMod = 6
+	_yMod = 6
+	_color = 31
+	_length = 12
+	
+	_mouseX, _mouseY = mouse()
+	_obj.z = atan2(_mouseY - 270 / 2, _mouseX - 480 / 2)
+	
+	_xOffset = sin(_obj.z + _obj.zMod) * _xMod
+	_yOffset = cos(_obj.z + _obj.zMod) * _yMod
+	
+	_xLength = sin(_obj.z + _obj.zMod) * _length
+	_yLength = cos(_obj.z + _obj.zMod) * _length
+	
+	_x1 = _x + _xOffset
+	_x2 = _x + _xLength
+	_y1 = _y + _yOffset + 1
+	_y2 = _y + _yLength + 1
+	
+	_tool = userdata("f64", 5, 5)
+	_tool:set(0, 0, 
+		_x1, _y1, _x2, _y2, _color,
+		_x1 + 1, _y1, _x2 + 1, _y2, _color,
+		_x1 + 1, _y1 + 1, _x2 + 1, _y2 + 1, _color,
+		_x1, _y1 + 1, _x2, _y2 + 1, _color
+		)
+		
+	_obj.tool = _tool
+	return _obj
+end
+
+function toolDraw(_obj)
+	line(_obj.tool)
+end
+
+function toolSwitch()
+	
+end
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNjoyOSJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: shading.lua
+--[[pod_format="raw",created="2025-10-10 19:48:43",modified="2025-10-10 19:59:14",revision=7,xstickers={}]]
+-- MODULE: Color shading lookup table
+--[[
+	Black = 0, full color = 5.
+--]]
+
+shadingLookupTable =
+{
+	[0] =
+	{
+		0, 0, 0, 0, 0,
+	},
+	[1] =
+	{
+		0, 0, 0, 0, 1,
+	},
+	[2] =
+	{
+		0, 0, 0, 1, 2,
+	},
+	[3] =
+	{
+		0, 0, 1, 19, 3,
+	},
+	[4] =
+	{
+		0, 0, 21, 20, 4,
+	},
+	[5] =
+	{
+		0, 0, 0, 21, 5,
+	},
+	[6] =
+	{
+		0, 21, 5, 22, 6,
+	},
+	[7] =
+	{
+		0, 21, 22, 6, 7,
+	},
+	[8] =
+	{
+		0, 1, 2, 24, 8,
+	},
+	[9] =
+	{
+		0, 21, 4, 25, 9,
+	},
+	[10] =
+	{
+		0, 21, 4, 25, 10,
+	},
+	[11] =
+	{
+		0, 1, 19, 3, 11,
+	},
+	[12] =
+	{
+		0, 1, 19, 16, 12,
+	},
+	[13] =
+	{
+		0, 0, 1, 18, 13,
+	},
+	[14] =
+	{
+		0, 0, 21, 2, 14,
+	},
+	[15] =
+	{
+		0, 21, 5, 22, 15,
+	},
+	[16] =
+	{
+		0, 0, 1, 19, 16,
+	},
+	[17] =
+	{
+		0, 0, 1, 19, 17,
+	},
+	[18] =
+	{
+		0, 0, 0, 1, 18,
+	},
+	[19] =
+	{
+		0, 0, 0, 1, 19,
+	},
+	[20] =
+	{
+		0, 0, 0, 21, 20,
+	},
+	[21] =
+	{
+		0, 0, 0, 0, 21,
+	},
+	[22] =
+	{
+		0, 0, 21, 5, 22,
+	},
+	[23] =
+	{
+		0, 21, 2, 14, 23,
+	},
+	[24] =
+	{
+		0, 0, 1, 2, 24,
+	},
+	[25] =
+	{
+		0, 0, 21, 4, 25,
+	},
+	[26] =
+	{
+		0, 1, 3, 11, 26,
+	},
+	[27] =
+	{
+		0, 1, 19, 3, 27,
+	},
+	[28] =
+	{
+		0, 1, 16, 12, 28,
+	},
+	[29] =
+	{
+		0, 1, 18, 13, 29,
+	},
+	[30] =
+	{
+		0, 0, 21, 2, 30,
+	},
+	[31] =
+	{
+		0, 21, 20, 4, 31,
+	},
+}
+
+function shade(_color, _light)
+	_lighting = _light > 5 and 5 or _light
+	_shade = shadingLookupTable[_color][_light]
+	return _shade
+end
+
+function setShade(_light)
+	for _i = 1, 31 do
+		pal(_i, shade(_i, _light))
+	end
+end
+:: test2.txt
+--[[pod_format="raw",created="2025-10-08 21:05:45",modified="2025-10-08 22:21:12",revision=61671]]
+false
+:: [eoc]

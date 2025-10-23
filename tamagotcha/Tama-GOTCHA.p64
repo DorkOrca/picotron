@@ -1,0 +1,121 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNTo1NiIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzYzIix3b3Jrc3BhY2VfaW5kZXg9MX19XV0=
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNTo1NiJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+OS0xOSAyMDowODoyMyIscmV2aXNpb249NF1dbHo0ANYEAACTOgAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMd5PTAsem9vbT04fSw_APEFQEAE8P_O
+Xw-wJ77wIv4A8B9eBw4CAGdO8B0_Bw4CADEu8BsRABJnDQBNGR4HDgIAMS7wFxcAEOcLABMVIgAS
+xxoAwBQuBw73Aw4HHvATLhcAIPcBGACAHvASHgcO9wUiABERMQACDAAQEAoAEAkgACQPLgoAIg4e
+CgAwLvAOHgAQCxQAJA0uCgAiDB4KAGAu8Awu9w0SABALHAABCgAiCh4KADUu8AoUABMJCgBEPvAI
+Ph4AHwgUAAATBwoARE7wBk4eAB8GFAAPcgsOB17wBl4KAA8UAAQSbtAARF7wB04KACIIXgoARE7w
+CE4OAQAYABUJDgBGXvAKXkABACoAEQuYAQBcAQAOABEMKgADdwEALwAjDU6TAQANABMPHgALAgAx
+XvARGQASpw0ALxNOIgAARRVuBw4CAP8EfvAX-gjwGv4E8B7_APAjnvD-THcCCx80dwIA8QMvDyfw
+J15X8CIOCV5XCgnwHx4IAEEH8B0uCQDAF-AbTglOVwk38BleCABAR-AXbggAs1fwFY4JPkcJd-AU
+CACTE64JLjcJl-ASCADwIRHOCR4nCbfwEN4JDhcJx-AP-gAJBwnn8A7_ACnn8A7eGQ73AfANviku
+9wLwDI4pXgcA8AJOOY73AvALHjnO9wPwChn_AQcAzf4D9wPwCf4E9wTwCAYAfwf_BfcF8AYGACId
+B04ANQn_A3IAMAv_ApMAAQYAUA3_AfcBwgD-D-cA8BHu5-AT3tfwFc7H8Be_t-AanpfwHn538CNO
+R4IBIgD5A-EfLlAu8CIesB7wHw7wAA7wHQ7wAg7wGw7wBA7wGQ7wBg7wFw7wCA7wFQ7wCg7wFAYA
+cRMO8AwO8BIGAHERDvAODvAQBgAUDwkABQYAFA0nAAUGABQLRQAFBgBBCQ7wFmMACwYAQQcO8BiB
+AA8GACAdB04AFwlyABcLkAARDagAEQ_xABERFQAREycAERU5AP8BFx7wBB7wGh7wAB7wHi6QLusC
+HwCgBR-wkwUMDzEAvg9XBuEBwgAFAgAeh2QGO0cOBwIAARIAAncGOIcOBzwAAjIABQIAN44HDgIA
+ApUGQWcOB64GAAJeBgMCADXOBw4CAAKVBkFHDgfuBgAHKAAj-gEJAAQlAAECACP_AwkABSoAI-4F
+-QUAtgY-B-4HHgATGG4cACQHThwAAt4GBBoAA_IGJv4H4AYBGgAD4AYDjAAE3gYEsgAF4AYR7gYA
+BN4GA-cAA_AGFu7SBhTO0AYQ7sIGL-4KtwYxB9cC8yH_AvAd-gTwG-4G8Bn_CPAX-grwFf4M8BT_
+DPAT-g7wEv4O8BH_EPAQ-hDwD-4S8A4EAFMN-hTwDAQAUwv_FvAKBABXCf4Y8AgEAFAH-hrwBgQA
+H-cEAAtTB-cY8AgEAP8jCfcW8Ar3FvAL9xTwDPcU8A33EvAP9xDwEfcO8BP3DPAV9wrwF-cI8Br3
+BPAe9wDwI5cFAQ8PPgQeDzEA-yEPkQf-ew8xAP--------------------------------------
+---------------------0NQbT04fX0=
+:: main.lua
+--[[pod_format="raw",created="2025-09-19 19:45:19",modified="2025-09-20 01:36:17",revision=37]]
+-- Tama-GOTCHA!
+--  You are a thief who specializes in expert reproductions of faberge eggs.
+--  Your objective is to perform a heist at LE GRANDE EGG-STRAVAGANZA, the
+--  most highly-anticipated faberge egg exhibit of the twentieth century.
+
+-- Egg criteria:
+--  - ENAMEL
+--    - Enamel color of the egg.
+--      - EXACT MATCH: +25%
+--      - WRONG SHADE: +15%
+--      - WRONG COLOR: +5%
+--  - GILDING
+--    - Kind of metal and shape of gilding
+--      - CORRECT METAL: +10%
+--      - CORRECT SHAPE: +10%
+--  - GEMS
+--    - Kind and position of gems
+--      - POSITION ACCURACY: UP TO +20%
+--      - STONE TYPE ACCURACY: UP TO +20%
+--      - STONE COLOR MATCH: 15%
+
+enamelColors =
+{
+	mauve = {highlight = 30, shadow = 2,},
+	red = {highlight = 8, shadow = 24,},
+	orange = {highlight = 9, shadow = 25,},
+	yellow = {highlight = 10, shadow = 9,},
+	lime = {highlight = 26, shadow = 27,},
+	green = {highlight = 27, shadow = 19,},
+	blue = {highlight = 12, shadow = 16,},
+	cyan = {highlight = 28, shadow = 12,},
+	white = {highlight = 7, shadow = 15,},
+	black = {highlight = 5, shadow = 21,},
+}
+
+metalColors =
+{
+	platinum = {highlight = 7, neutral = 6, shadow = 13,},
+	silver = {highlight = 7, neutral = 15, shadow = 31,},
+	steel = {highlight = 6, neutral = 5, shadow = 32,},
+	palladium = {highlight = 6, neutral = 22, shadow = 5,},
+	gold = {highlight = 10, neutral = 25, shadow = 4,},
+}
+
+gemColors =
+{
+	garnet = {highlight = 7, neutral = 14, shadow = 8,},
+	ruby = {highlight = 7, neutral = 8, shadow = 2,},
+	peridot = {highlight = 7, neutral = 26, shadow = 11,},
+	emerald = {highlight = 7, neutral = 27, shadow = 19,},
+	aquamarine = {highlight = 7, neutral = 28, shadow = 12,},
+	sapphire = {highlight = 7, neutral = 12, shadow = 16,},
+	pearl = {highlight = 7, neutral = 15, shadow = 22,},
+	diamond = {highlight = 7, neutral = 28, shadow = 1,},
+}
+
+_draw {
+
+}
+
+_update {
+
+}
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNTo1NiJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAxODozNTo1NiJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: [eoc]
