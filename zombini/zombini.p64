@@ -3,19 +3,21 @@ version 2
 
 :: .info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoyOSIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzM5LDI5Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJibHVyLmx1YSMyOCwxOCIsd29y
-a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iY29sbGlzaW9uLmx1YSMxOTEsMTciLHdvcmtzcGFj
-ZV9pbmRleD0xfSx7bG9jYXRpb249InNoYWRpbmcubHVhIzE0NSwxMiIsd29ya3NwYWNlX2luZGV4
-PTF9LHtsb2NhdGlvbj0iZW5lbXkubHVhIzcxLDIiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRp
-b249Im1vdmVtZW50Lmx1YSMxNCw0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwbGF5
-ZXIubHVhIzIxNiwxNSIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iZ2Z4LzAuZ2Z4Iix3
+MC0yMyAyMTowNjoyNCIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzU0LDMzIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJibHVyLmx1YSMxLDI1Iix3b3Jr
+c3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJjb2xsaXNpb24ubHVhIzI0OCw0NSIsd29ya3NwYWNl
+X2luZGV4PTF9LHtsb2NhdGlvbj0ic2hhZGluZy5sdWEjMTQ1LDEyIix3b3Jrc3BhY2VfaW5kZXg9
+MX0se2xvY2F0aW9uPSJlbmVteS5sdWEjNzIsMjQiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRp
+b249Im1vdmVtZW50Lmx1YSMyMSw0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwbGF5
+ZXIubHVhIzE2OSw3NyIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iZ2Z4LzAuZ2Z4Iix3
 b3Jrc3BhY2VfaW5kZXg9Mn0se2xvY2F0aW9uPSJnZngvMS5nZngiLHdvcmtzcGFjZV9pbmRleD0y
 fSx7bG9jYXRpb249Im1hcC8wLm1hcCIsd29ya3NwYWNlX2luZGV4PTN9LHtsb2NhdGlvbj0ibWFw
 LzEubWFwIix3b3Jrc3BhY2VfaW5kZXg9M30se2xvY2F0aW9uPSJtYXAvMi5tYXAiLHdvcmtzcGFj
 ZV9pbmRleD0zfSx7bG9jYXRpb249InNmeC8wLnNmeCIsd29ya3NwYWNlX2luZGV4PTR9fV1d
 :: blur.lua
---[[pod_format="raw",created="2025-10-04 05:49:37",modified="2025-10-05 06:45:15",revision=16,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 05:49:37",modified="2025-10-23 20:43:03",revision=19,xstickers={}]]
+-- MODULE: Movement blur
+
 --[[
 	Takes a table with the following:
 
@@ -52,8 +54,130 @@ function blur(element, count)
 	element.blur[1].y = element.y
 end
 :: collision.lua
---[[pod_format="raw",created="2025-10-08 00:26:05",modified="2025-10-23 01:56:49",revision=260,xstickers={}]]
+--[[pod_format="raw",created="2025-10-08 00:26:05",modified="2025-10-23 21:06:24",revision=272,xstickers={}]]
 --MODULE: AABB collision
+
+--[[
+ 	Axis-aligned boundary box collision for circles and squares.
+	Collision is based on sprites with the "0" flag in the active map.
+	Currently only for box colliders, not round colliders.
+	
+	Box colliders are implemented through a table with four sub-tables with x/y coords.
+	These coords coorespond with the corners of the boundary box as follows:
+	
+		- 1: Top-left
+		- 2: Top-right
+		- 3: Bottom-left
+		- 4: Bottom-right
+	
+	Comes with functions for getting current and neighbor sprites in order to 
+	detect their flags.
+--]]
+
+-- Add a table to the provided object with presumed edges of box collider, for use in collision functions
+-- Top-left, top-right, bottom-left, bottom-right
+function boxCollider(_obj)
+	-- "_obj.width" and "_obj.height" variables in table indicate "rect" or "rectfill" drawing methods
+	if _obj.width and _obj.height then
+		-- Calculate dimensions of boundary box based on rect size
+		-- Left side: x
+		-- Right side: x + width
+		-- Top: y
+		-- Bottom: y + width
+		_col =
+		{
+			[1] = {
+				x = _obj.x,
+				y = _obj.y,
+			},
+			[2] = {
+				x = _obj.x + _obj.width,
+				y = _obj.y,
+			},
+			[3] = {
+				_obj.x,
+				_obj.y + _obj.height,
+			},
+			[4] = {
+			x = _obj.x + _obj.width,
+			y = _obj.y + _obj.height,
+			},
+		}
+		-- "_obj.size" variable indicates "circ" or "circfill" drawing method
+	elseif _obj.size then
+		-- Calculate dimensions of boundary box based on circle size
+		-- Left side: x - size
+		-- Right side: x + size
+		-- Top: y - size
+		-- Bottom: y + size
+		_col =
+		{
+			[1] = {
+				x = _obj.x - _obj.size,
+				y = _obj.y - _obj.size,
+			},
+			[2] = {
+				x = _obj.x + _obj.size,
+				y = _obj.y + _obj.size,
+			},
+			[3] = {
+				x = _obj.x - _obj.size,
+				y = _obj.y + _obj.size,
+			},
+			[4] = {
+				x = _obj.x + _obj.size,
+				y = _obj.y + _obj.size,
+			},
+		}
+	-- Otherwise, give an error because _obj doesn't have named variables required to do boundary box calculations
+	else
+		error("collision.lua/boxCollider(): Unable to identify object shape. Check function comments to correct the name of this object's size and position variables.")
+	end
+
+	-- Put the table listing the box collider's corners into _obj
+	_obj.collision = _col
+	
+	return _obj
+end
+
+-- Get the sprite number of a map cell that _obj is currently occupying
+-- Can manually offset map cells using _xMod or _yMod
+	-- _xMod: 
+		-- Positive = cells to the right
+		-- Negative = cells to the left
+	-- _yMod:
+		-- Positive: cells below
+		-- Negative: cells above
+function getMapSprite(_obj, _xMod, _yMod)
+	_x = _xMod != nil and _xMod or 0
+	_y = _yMod != nil and _yMod or 0
+	return mget(_obj.x // 16 + _x, _obj.y // 16 + _y)
+end
+
+function getMapCell(_x, _y, _xMod, _yMod)
+	_xMod = _xMod != nil and _xMod or 0
+	_yMod = _yMod != nil and _yMod or 0
+	
+	_cell = {
+		x = (_x // 16 + _xMod) * 16,
+		y = (_y // 16 + _yMod) * 16,
+		width = 16,
+		height = 16,
+	}
+	
+	return _cell	
+end
+
+function getCellFlag(_x, _y, _flag)
+	for i = 1, #layers do
+		memmap(layers[i].bmp, 0x100000)
+		_sprite = mget(_x // 16, _y // 16)
+		_flagSet = _flagSet == true and true or fget(_sprite, _flag)
+	end
+	
+	return _flagSet
+end
+
 function drawObjectIntersects(_obj, _color)
 	_x = _obj.x
 	_y = _obj.y
@@ -83,6 +207,10 @@ function drawObjectIntersects(_obj, _color)
 	end
 end
 
+-- DEBUG: Draws squares around neighbor cells in given colors to indicate collision.
+-- _color1: Cell is not collidable
+-- _color2: Cell is collidable, but not currently intersected with
+-- _color3: Cell is collidable and currently intersected with
 function drawNeighborIntersects(_obj, _color1, _color2, _color3)
 	_cells, _collidable = fetchNeighbors(_obj)
 	
@@ -215,88 +343,6 @@ function fetchNeighbors(_obj)
 	return _cells, _collidable
 end
 
--- Get current map cell containing an object given its x / y coords
-function getMapSprite(_obj, _xMod, _yMod)
-	_x = _xMod != nil and _xMod or 0
-	_y = _yMod != nil and _yMod or 0
-	return mget(_obj.x // 16 + _x, _obj.y // 16 + _y)
-end
-
-function getMapCell(_x, _y, _xMod, _yMod)
-	_xMod = _xMod != nil and _xMod or 0
-	_yMod = _yMod != nil and _yMod or 0
-	
-	_cell = {
-		x = (_x // 16 + _xMod) * 16,
-		y = (_y // 16 + _yMod) * 16,
-		width = 16,
-		height = 16,
-	}
-	
-	return _cell	
-end
-
-function getCellFlag(_x, _y, _flag)
-	for i = 1, #layers do
-		memmap(layers[i].bmp, 0x100000)
-		_sprite = mget(_x // 16, _y // 16)
-		_flagSet = _flagSet == true and true or fget(_sprite, _flag)
-	end
-	
-	return _flagSet
-end
-
--- Add a table to the provided object with presumed edges of box collider, for use in collision functions
--- Top-left, top-right, bottom-left, bottom-right
-function boxCollider(_obj)
-	if _obj.width and _obj.height then
-		_col =
-		{
-			[1] = {
-				x = _obj.x,
-				y = _obj.y,
-			},
-			[2] = {
-				x = _obj.x + _obj.width,
-				y = _obj.y,
-			},
-			[3] = {
-				_obj.x,
-				_obj.y + _obj.height,
-			},
-			[4] = {
-			x = _obj.x + _obj.width,
-			y = _obj.y + _obj.height,
-			},
-		}
-	elseif _obj.size then
-		_col =
-		{
-			[1] = {
-				x = _obj.x - _obj.size,
-				y = _obj.y - _obj.size,
-			},
-			[2] = {
-				x = _obj.x + _obj.size,
-				y = _obj.y + _obj.size,
-			},
-			[3] = {
-				x = _obj.x - _obj.size,
-				y = _obj.y + _obj.size,
-			},
-			[4] = {
-				x = _obj.x + _obj.size,
-				y = _obj.y + _obj.size,
-			},
-		}
-	else
-		error("collision.lua/boxCollider(): Unable to identify object type.")
-	end
-
-	_obj.collision = _col
-	
-	return _obj
-end
 
 -- Return a table containing colliders that have intersected
 -- Box: Top-left, top-right, bottom-left, bottom-right
@@ -324,7 +370,7 @@ function checkCollision(_obj)
 	end
 end
 :: enemy.lua
---[[pod_format="raw",created="2025-10-11 00:15:30",modified="2025-10-23 01:27:50",revision=207,xstickers={}]]
+--[[pod_format="raw",created="2025-10-11 00:15:30",modified="2025-10-23 21:04:59",revision=222,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 include("movement.lua")
@@ -394,13 +440,17 @@ function enemyMove(_enemy)
 	return _enemy
 end
 
-function enemySpawn(_enemyList, _enemy)
-	
+function enemySpawn(_enemyList)
+	_x = flr(rnd(440) + 20)
+	_y = flr(rnd(230) + 20)
+	_enemy = enemyInitialize(_x, _y, 7, 27)
+	add(_enemyList, _enemy)
+	return _enemyList
 end
 :: gfx/
 :: gfx/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoyOSJdXQ==
+MC0yMyAyMTowNjoyNCJdXQ==
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yMyAwMToxNzozMCIscmV2aXNpb249MjI2XV1sejQARREAAFVKAADzIXtbMF09e2JtcD1weHUA
@@ -657,77 +707,96 @@ falsefalsefalsefalse
 --[[pod_format="raw",created="2025-10-08 19:04:09",modified="2025-10-08 22:11:23",revision=34830]]
 Cell 1: 272.0,288.0,16,16   Cell 2: 304.0,288.0,16,16   Cell 3: 288.0,272.0,16,16   Cell 4: 288.0,304.0,16,16   
 :: main.lua
---[[pod_format="raw",created="2025-10-04 00:27:00",modified="2025-10-23 01:19:50",revision=160,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:00",modified="2025-10-23 21:00:39",revision=196,xstickers={}]]
 include("player.lua")
 include("enemy.lua")
 include("shading.lua")
 
 function _init()
-	playerInitialize()
+	-- Initialize various variables
 	
-	enemy = enemyInitialize(210, 300, 7, 27)
-	enemy2 = enemyInitialize(10, 10, 7, 17)
+	-- Initialize player
+	player = playerInitialize()
 	
+	-- Initialize table of enemies
 	enemies =
 	{
-		enemy,
-		enemy2,
+		enemyInitialize(210, 300, 7, 27),
+		enemyInitialize(10, 10, 7, 17),
 	}
 	
-	layers = fetch("map/2.map")
+	-- Initialize random enemy spawn bool
+	randomSpawnTimer = 1
+	
+	-- Initialize variable for adjusting light level
 	lightLevel = 5
+	
+	-- Initialize map with all layers
+	-- (for reference during collision checks)
+	layers = fetch("map/2.map")
+	
+	-- Set the wall layer of the map as the active map
+	-- (so that it gets taken into account during collision checks)
 	memmap(layers[3].bmp, 0x100000)
-	--TODO: Remove this debug variable
-	hideVisuals = false
 end
 
 function _update()
+	-- Capture player input for movement (WASD or arrows)
+	-- Also does collision
 	playerMove()
+	-- Update player's rotation and weapon position using mouse
 	player = toolWield(player)
 	
+	-- DEBUG VARIABLE: Manually adjust lighting with Q / E keys
 	shadeTest()
 	
+	-- Focus camera on player
 	camera(player.x - 240, player.y - 135)
 	
+	-- Move enemies automatically and randomly
 	if enemies[1] != nil then
 		for _i = 1, #enemies do
 			enemies[_i] = enemyMove(enemies[_i])
 		end
 	end
 	
-	if t()%60 == 0 then
-		enemySpawn(enemies, enemy)
+	-- Spawn an enemy every second
+	if randomSpawnTimer != flr(t()) then
+		enemies = enemySpawn(enemies)
+		randomSpawnTimer = flr(t())
 	end
 end
 
 function _draw()
 	cls(0)
+	-- Adjust the palette to simulate shading according to the current light level
 	setShade(lightLevel)
+	
+	-- Draw all layers of the map
 	map(layers[4].bmp)
 	map(layers[3].bmp)
 	map(layers[2].bmp)
 	map(layers[1].bmp)
+	
+	-- Draw the player
 	objectDraw(player)
+	-- Draw the player's held tool
 	toolDraw(player)
 	
+	-- Document and print CPU usage
 	_h = stat(1)
-	
-	
 	print(_h, player.x - 238, player.y - 133, 1)
 	print(_h, player.x - 238, player.y - 134, 7)
 	
+	-- Draw all enemies in the enemy table
 	if enemies[1] != nil then
 		for _i = 1, #enemies do
-			_enemy = enemies[_i]
-			
-			objectDraw(_enemy)
-			
-			enemies[_i] = _enemy
+			objectDraw(enemies[_i])
 		end
 	end
 end
 
-
+-- Adjust the palette to simulate shading according to the current light level
 function shadeTest()
 	if keyp("e") then
 		lightLevel = lightLevel < 5 and lightLevel + 1 or 5
@@ -740,7 +809,7 @@ end
 :: map/
 :: map/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoyOSJdXQ==
+MC0yMyAyMTowNjoyNCJdXQ==
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
 MC0wNyAwMTo0Mjo1NCIscmV2aXNpb249MTI2XV1sejQAXgEAAO0gAADwCHt7Ym1wPXVzZXJkYXRh
@@ -776,7 +845,7 @@ YAQ4AAAKYF8BYQxgCB0AAR4AfwMEAAAIAAMkAAHnAIUAAI0AAB0AAIAAAIgGAAg8AB8QPAAEIB0A
 PwAaHTkAH4g8ABYNeAAvAYB1AGAvAIDtAFg-iAAEbAAXEI0GAC8DpWMAGC4BHTAAD2MADR8dYwAb
 LwCFMwAYHwgkAApfAQsACAwhAAdPGWAKCh4AAy8QOBgAEBYYGAAPVAg_UG09MX19
 :: movement.lua
---[[pod_format="raw",created="2025-10-15 22:53:01",modified="2025-10-18 02:00:20",revision=93,xstickers={}]]
+--[[pod_format="raw",created="2025-10-15 22:53:01",modified="2025-10-23 21:02:51",revision=96,xstickers={}]]
 include("collision.lua")
 
 function moveRandAngle(_obj)
@@ -792,8 +861,11 @@ function moveSetBase(_obj)
 	return _obj
 end
 
-function moveCheckBase(_obj, _dist)
+function moveReturnToBase(_obj)
+	_obj.x = _obj.bx
+	_obj.y = _obj.by
 	
+	return _obj
 end
 
 function moveForward(_obj)
@@ -841,12 +913,12 @@ function moveWait(_obj)
 	return _obj
 end
 :: player.lua
---[[pod_format="raw",created="2025-10-04 00:27:14",modified="2025-10-23 01:36:45",revision=681,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:14",modified="2025-10-23 20:59:59",revision=685,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 
 function playerInitialize()
-	player =
+	_player =
 	{
 		x = 240,
 		y = 135,
@@ -866,7 +938,9 @@ function playerInitialize()
 		color = 7,
 	}
 	
-	player = blurSetup(player, player.blurCount)
+	_player = blurSetup(_player, _player.blurCount)
+	
+	return _player
 end
 
 function playerMove()
@@ -1008,6 +1082,7 @@ function playerMove()
 	end
 end
 
+-- TODO: Optimize object drawing by using batch gfx operations with userdata
 function objectDraw(object)
 	circfill(object.x, object.y + 2, object.size, object.color - 2)
 	
@@ -1081,7 +1156,7 @@ end
 :: sfx/
 :: sfx/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoyOSJdXQ==
+MC0yMyAyMTowNjoyNCJdXQ==
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
