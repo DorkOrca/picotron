@@ -1,0 +1,806 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMjoxNzo1OCIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzQsMSIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0icHJvY2dlbi5sdWEjOSwyNyIsd29y
+a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0icmF5Y2FzdC5sdWEjMTkwLDIxIix3b3Jrc3BhY2Vf
+aW5kZXg9MX0se2xvY2F0aW9uPSJpbnRyby5sdWEjMTMsMTMiLHdvcmtzcGFjZV9pbmRleD0xfSx7
+bG9jYXRpb249InN0YXJ0Lmx1YSM3LDE1Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJn
+ZngvMC5nZngiLHdvcmtzcGFjZV9pbmRleD0yfSx7bG9jYXRpb249ImdmeC9maXhlZC5nZngiLHdv
+cmtzcGFjZV9pbmRleD0yfX1dXQ==
+:: etc.lua
+--[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
+-- fps - fish person shooter
+-- happy birthday, kovie!
+
+
+
+
+
+
+
+
+
+-- FUNCTIONS
+--Draw start screen
+
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMjoxNzo1OCJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjQxOjA4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMjowODowNiIscmV2aXNpb249MTU2XV1sejQAnQUAAFg6AADzIXtbMF09e2JtcD1weHUA
+QyAQEATwVgcQB8AX0BfABxAH8FYsZmxhZ3M9MCxwYW5feAgAyHk9MCx6b29tPTh9LD4A8DoYBC4x
+DiwRbjE8AU5RTF4xXG4MEWxenG5sjnyObH5sfmwNfmwNbnwdXhwOTB1OjC0_jC1OjA1eHWxeLWxe
+HTwOLE4tLB4sTh08BQCPTA5MXjwOTB6CABwZPoIAIGxeggBPfI58foIABv8XPg1sLU49PB1OXSwN
+Xl08Ti0OPSwOHB4dHi0OXB4dHj0OTG4tDjyHABrwDRgHBBj_BBgC_AYCDvIGPhYlfiUWTgcFBgcG
+ngYHAN8_BwYXvgcGF04X3hcuWQALGTVZAGcqHQQOCAkCAFew-gEJCAIAOLAICQIAGxguACkJCAIA
+PxgJCDwAB2AIGQgJCIk0AB_pKgAPMbmw6SMAEmkdABJpGQCEBwkHiQcJB5AJAOAJCLkHCJAHCAeZ
+CAcIFxYANEkHCSEAAw0AYBcOBwkHaQoAM5AHCQsAIQgeLQABAgA0J5BXCgA2HgcJAgBnJ3DXCQcJ
+KQAwN3DHCAAJJQBCBwkHcAcAGYksAEZHUAkHAgB5KQcJBy4JBwIAM1AHCQIAYnk_9wAwZwwAagkH
+KT4JBwIANDAJBwIAYnlO9wAQdwwAggkHGV4HCfcFDABiCQdJbvcLCgAmCY4WAEEprvcJCgAzzvcD
+EgBA-gD3BAkAU-4EpwkHAgBf-gnHCd45Ahn-HiAOBD5n-gen-gTX-gL3AO73A873Ba73CF73EB73
+DE73Cm73B673A_7X-gWH3usCGWMXFQT_BggDACMFGAMARQQo-gQMAAEPABcDAwD-AAI4-gE4-gBI
+zij_Aij_BG8AGfAdVjoE-hrwCv4l8Bf_G-Ag-hLwKP4L8C7_BfAx-gLwNO7wNt7wOL7wOp7wPI4D
+AFM9foABAAIAj-ArfvA_bgABAgALj-AebvA-XgABAgATj-AXbvA-jgABAgAVj-ASnvA7ngEAAgAa
+r-AMrkAB8DO_AAECAB1b8AbeAQACAL-wJf4AAAEA8QUAAQIAB1-wAv4AAQIAB5-wG_4BAPEPAAEC
+AANP0O4AAQIADSDwFUMAPxMAAT8AIwACAIzwEP4A8RkAAQIAEaDhAAgCAD9hAAFXAQFq7gDxHQAB
+AgAjgO4JAFoA8QcAAQIAhvAH-gDxIgABAgAWcCcBTPEJAAECAIbwA-4A8SQAAQIANUD_ATEAPQsA
+AXYBGgFgAA8xAAyaAAHg-gLxIAABAgA-MP4CNAAJPtD_AzQAPyD_AzQACXzA-gTxHgABAgAzEP4E
+CgAPUwIIf7D_BfEcAAECAABG-gUBAAIAP_EAAQIABT_g-gfqAQEAAgAd-qcBDwIAD3_w-gjxFwAB
+AgABT-4KAQACABw-kP4MyQIDbwAB-hABAAIAFn6A-hbxCgABAgBP-h4BAAIADG0w-ilRAAECAC-_
+FV4FCzszfSz-CR-wMQD-------------qv8VCAgECG4CCF4BAghOAAECCD4QAQIILiABAggeMAEC
+CA5AAQIIZhAZ-xUICARuCF4IAk4IAgE_CAIBAC4IAgEQHggCASAOCAIBMAgCAUBQABxQjv0AAQ0C
+ACIRDQgAA6ELEhEIAB_ATwAdQPgAAggCACISCAgAIQECAgASEggAH4FPABwv-jAxAK9F8AFnAAIA
+DzwAHTYAVxACAA89ABxvAgFQAfAnNQAcf1ABAmAB8CBGAR4PMQCvAqEBD6sBJgKjAQ_tASaf8A8H
+QCcgRwDnOAAcf1AXMDcQ9x5OAR4PMQCvH-AxAB0SYGIBj2cAVxA3MBfAPgAcAjYAL-AdNwAcI-AX
+dgAPQAEeDzEA--------0g5NDQ8xAP-------------------------------2NQbT04fX0=
+:: gfx/fixed.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzozMjoyMyIscmV2aXNpb249OF1dbHo0AEEHAAAbOgAA8yF7WzBdPXtibXA9cHh1AEMg
+CAgE8AIHEAdAF1AXQAcQB-ACLGZsYWdzPTAscGFuX3gIAMp5PTAsem9vbT03fSw_ADEOCAkCABIO
+BwATCRAAERgGAHQIGQgJCDkIDAARWQgAHyliABwRCTYAERAGACoJEA4AFUkKAG9ZEDkICRBbABwv
+8DAxABwvEF6IAAM2CQg5iQAP5AAgJn4IMAEGPgETeQgAEMkGAA9SAB15GF4JCF4ICQYAD0QAHJ8_
+Nx5XDmcO9xc4AByPJ05HLmcO9xg3ABxA-ggHbjsAL-cAOQAdPyZ3HjMAHR8wMQBNgF4IbghuCF4Y
+AgBPTihOGKIAHVCO-QABDQIAIhENCAAhAAECABIRCAAfgPEAfvAEBwkHSQhpBwkHCQcpDgcJBzkO
+FwwAMQkOBwcAGwcPAA9eAByhOQcJBwBJBwgAGT4AIAApBwAQAAUAICcAEQAjCTcEAA5dAA8IBEAB
+cwBiKQAHCAc5fgADjABjBxkAVwn3EwAfGVUAHFBZB2kIB_gAMlkHCSwBf3cJVwkHeQeJAR6xXggH
+XhdeCG4HbgkEAA9BABy-dw5nHlc_N14X-gg6ABxf9xgOZ-6-Ax2P9w8ONz4X-gY3ABx-Nz4nTgf_
+HwgDTiAfCMEDDzYAHP8APhhOGE4oPig_KE4YXgjuPgAcbwIBUAHwJzUAHH9QAQJgAfAgEAFNA8cD
+ER4GADMHHlcJAK8uRy4HCSc_N04nNwQfBbgDE4cIAC-3EUUAHe9QGVAnMBcJBzAJNxD3C4MAIACw
+AwIIABhXCgAFiQMfF1kEIgAmBCEHiToAEakGAHQZDgkHSQ4HQwEvKS5RAB0v-i-cBE3-EQhuAghe
+AQIITgABAgg_EAECCC4gAQIIHjABAggOQAECFAQd-xJuCF4IAk4IAgE_CAIBAC4IAgEQHggCASAO
+CAIBMAgCAUDCA06PBwgeKC4o-g04AByPLjgeOC4o-h2gAE2f8A8HQCcgRwDnOAAcb1AXMDcQ9-oI
+Tl9eF24H-lcEHW-3AA5nLkdCBiE-DgmHNQAeO2cJF7sDXw4nCf4MBwQgLz4pVAZRQfAJZwACAB9w
+OQAdNQFnAAIADzwAHTYAVxACAA89ABwCcgAPfAAmAnQAD34AJlCO_AACCAIAIhIICAAhAQICABIS
+CAAfgU8AHBJgcAOPZwBXEDcwF8A_ABwCNgAf8BcEHSPwF3YAD10CTS-_L0ANHk8dIB7QNAAdXwcA
+LvAVNQAcP67wJTIAHD8e8C7wBk0PMQAePzA_8A8KHW9_EF5gDvARDx9AIE5QHgIAH0AGAR3-BC4x
+TjEeUS4xDD4MEQw_PE4sTixCABz-AiwRLjwBLkwuTC5cHlwePD5MgwBrAAYAD4MAHg88Ax9wFwBe
+EE4gPmIPDzsAHJFOIC5ADvAOAYCfDw8-AB4j8Bk4AA9AACUfKTgAKB8wZAMdDzEA4SBALgIAnzA_
+MD4gTiBOEE0THf8DXhxOLD48PjwuTC4cDhweXB5cQQAcYUwuPD4sDQMAIB0uAwAgLR4DAA_GAKEP
+mAMeMi5AHt4CIR5QnAMxPjAuDwAFGAAP9gIcG4BtAwMIAD8RcAFPADkvAYBPAMMR4DcAEaAGAB8A
+8QQoH_B7BINvFw5QHjA_4QMeXxBeAG4APAwewS5MLh0sHi0sHh08DgYAXx4dTD48RQAcQjwNLjxi
+B29OLE5MLkyQAx3-CB4NTB49HA5dDA5dDC0OXR4tDh0ePU4tRgAcgBwtLhwdPhwNhgAAXARPLkwu
+PLIHThIefgIABwQTIQwAbw4BAEEOAAwAAB9hXAAcAjcAPwEAgQgABB9xUAAfH0BMADUmcBEOGB8g
+TQAtBMMDBlUAIkBRWwAPTQAoDAgAL3ARbwQkDm0ED3UEJz8JAeB3BCNPJw5gDswCTQ8xAB7-Bxhe
+AmgOYi4WJR4HBQYHBi4HBhdOF65FABxvfnhybgX_kw8dwE4YDlgCDlIeFRY_Bn0AET58AB__IwF_
+A-0DKxBxIwMPxAMoAQIAH-EDDh0eYTMAD2wAFU-hAPEYOwAkDO8AH6H1ACUHEQQPQwEtD24EABMx
+CAAPIwQvH6AhBCtEYA5gDnMPAAIAD9ACHg8xAP9DHwF6AgQPggIlT-EhANEzAB0PtAAdL-EnlwAe
+FyGjAx6h4QAPMQEwBsUDHjEdAw9WABMkMAG2Aw8MAA4fARkEJA4IAA9PACIGqw8BmwsfbtcCHg8x
+AP9DFQGOCwaYCwO5C28uQV4BAH5QACARwT8ADu8CLx5RTQAcEvE4AA9iBC8fIUYAAg-PA4AEswMD
+BgA-ARABDgALD2gAJQYfBB1QCgAPdhEsE2BJAjAeQC4HAD8_EN71Ah4PMQD-1iIBAAIAH-6LCyVf
+UQAB-iA8ACMEPgMPQABfXzAuAP4njAEeDzEA-6WfEA8QDw8PIfArWRUeDzEA-------------3wf
+-pMAHg8xAP8xUG09N319
+:: gfx/raw.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjIxOjM3Iixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMDoyMzoxMCIscmV2aXNpb249MzJdXWx6NAAgBwAADDoAAPMhe1swXT17Ym1wPXB4dQBD
+IAgIBPACBxAHQBdQF0AHEAfwAixmbGFncz0wLHBhbl94CADKeT0wLHpvb209N30sPgAxDggJAgAS
+DgcAEwkQABEYBgB0CBkICQg5CAwAEVkIAB8pYgAcEQk2ABEQBgAqCRAOABVJCgBvWRA5CAkQWwAc
+L-AwMQAcLxBeiAADNgkIOYkAD_QAICZ_CDABBj4BE3kIABDJBgAPUgAdeRheCQheCAkGAA9EABwv
+-jAxAE3wBAcJB0kIaQcJBwkHKQ4HCQc5DhcMADEJDgcHABsHDwAPXgAcoTkHCQcASQcIABk_ACAA
+KQcAEAAFACAnABEAIwk3BAAOXQAPPAJAAXMAYikABwgHOX4AA4wAYwcZAFcJ9xMAHxlVABxQWQdp
+CAfoADJZBwksAX93CVcJB3kHiQEesV4IB14XXghuB24JBAAPLAJ_AwwCER4GADMHHlcJAK8uRy4H
+CSc_N04nfAIfBf0BE4cIAC-3EUUAHe9QGVAnMBcJBzAJNxD3C4MAIAD1AQIIABhXCgAFzgEfF54C
+IgBrAiEHiToAEakGAHQZDgkHSQ4HQwEvKS5RAB0v-i8SAn5vXhduB-4gNQAcr-cADmcuR14X-gg5
+AB0-DgmHNQAeO2cJF9wBXw4nCf4MKAIgbz4pTgf_HzkAHIBeCG4IbgheGAIAX04oThgekwFNnz43
+HlcOZw73FzgAHI8nTkcuZw73GDcAHED_CAduOwAv9wA5AB0vJncMAU4w-h8IdgEPNgAc-wA_GE4Y
+Tig_KD4oThheCO6lAE1-dw5nHlc_NxADIU8YDmf_eAEdj-cPDjc_F-4GNwAcPzc_J-4CIJ-_Bwge
+KC4o-g04AByPLjgeOC4o-h0hAh4PMQD---9g-xEIbgIIXgECCE4AAQIIPhABAgguIAECCB4wAQII
+DkABAtMEHf8SbgheCAJOCAIBPggCAQAuCAIBEB4IAgEgDggCATAIAgFAUAAcUI79AAENAgAiEQ0I
+ACEAAQIAEhEIAB_ATwAdQPgAAggCACISCAgAIQECAgASEggAH4FPABz-BC4xTjEeUS4xDD4MEQw_
+PE4sTixCABz-AywRLjwBLkwuTC5cHlwePD5MLoMAagAGAA_DAB5F8AFnAAIADzwAHTYAVxACAA89
+ABxfAgFQAfC1DB1vUAECYAHw9Aod-wNeHE4sPjw_PC5MLhwOHB5cHlxBABxhTC48PiwNAwAgHS4D
+ACAtHgMAD4YAoQLpAQ-zASYC6wEP9QEmn-APB0AnIEcA5zgAHG9QFzA3EPfsAB3BLkwuHSweLSwe
+HTwOBgBfHh1MPjxFABxCPA0uPJsDb04sTkwuTIUAHf8IHg1MHj0cDl0MDl0MLQ5dHi0OHR49Ti1G
+AByAHC0uHB0_HA2GAAA9Al8uTC48LrMRTRJgrQGPZwBXEDcwF8A_ABwCNgAf8EcKHSPwF3YAD5oC
+HP8HGF4CaA5iLhYlHgcFBgcGLgcGF04XrkUAHG9_eHJuBf7WAh3AThgOWAIOUh4VFj4GfQARPnwA
+H74wCB4PMQD-------90Hy9IFB5PHSAe0DQAHV8HAC7wFTUAHD_u8CUyABwvHvAgCU4PMQAegP4X
+AF4QTiA_-g4POwAckU4gLkAO8A4BgDsPDz8AHiPwGTgAD0AAJR8pOAAoD1gBHg8xAH8yLkAeAAEh
+HlC_ATE_MC4PAAUYAA8YARwbgI8BAwgAPxFwAU8AOS8BgE8AwxHgNwARoAYAHwATAygf4J0CURIe
+nwAAKAITIQwAbw4BAEEOAAwAAB9hXAAcAjcAPwEAgQgABB9xUAAfH0BMADUmcBHtEx8gTQAtBOQB
+BlUAIkBRWwAPTQAoDAgAL3ARkAIkDo4CD5YCJz8JAeCYAiIDRAIrEHFqAQ8LAigBAgAf8cIbHR5h
+MwAPbAAVT_EA8Rg7ACQM7wAfofUAJQdYAg9DAS0PtQIAEzEIAA9qAi8McAIPOAE0D_wAJU-xIQDR
+MwAdD_MCHS-xJ5cAHhchDQIeoeEADzEBMAYvAh8xhwElJDABIAIPDAAOHwGDAiQPCAABD68AJQGp
+BgazBgPUBm8uQV4BAH5QACARwT8ADlkBLx5RTQAcEvE4AA-MAi8fIUYAAg85AoAEHQIDBgA-ARAB
+DgAID-IBKAaJAh1QCgAPsgosE2BJAjAeQC4HAD8_EN4XD34iAQACAB-_1wYlX1EAAf4gPAAjBLYB
+D0AAX18wLgD_J1sBTT8wPvBVAR1vfhBeYA7wKiUfQCBOUB4CAC9ALtUAHg8xAOAf8DEATiBALgIA
+nzA_MD4gTiBOEJ0tHw_WAf8TbxcOUB4wPl4BHl8QXgBuAHEmHx8wlAHhTycOYA5lAB4PMQD-Q0Rg
+DmAO5QUvQC7pBSAPMQD-QwbjBQFWBA9aMR8PMQD-----Q1BtPTd9fQ==
+:: intro.lua
+--[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-23 23:15:41",revision=2,xstickers={}]]
+-- Intro after starting game
+
+-- Draw gradients for horizon
+function drawHorizon(offset, startI, endJ, color)
+    -- Fills follow a 4x4 map. example of the first one:
+    -- 1111
+    -- 0101
+    -- 1111
+    -- 0101
+    fills = {0b1111010111110101, 0b0101101001011010, 0b0101000001010000}
+
+    i = startI
+    j = endJ
+
+    height = (startI - endJ) / 3
+
+    for k=1,3 do
+        fillp(flr(fills[k]))
+        rectfill(0, i + flr(offset), 128, j + flr(offset), color)
+        i -= height
+        j -= height
+    end
+
+    fillp(0)
+end
+
+-- Draw a single building (just a rectangle)
+function drawBuilding(x, y, xOffset, yOffset, width, height, color)
+    rectfill(((x + xOffset) % (128 + width)) - width, (y + yOffset) - height, (0 + xOffset) % (128 + width), y + yOffset, color)
+end
+
+-- Draw a horizon and multiple buildings
+function drawBuildings(y, xOffset, yOffset, color)
+    rectfill(0, (y + yOffset % 128), 128, 128, color)
+    drawBuilding(0, y, xOffset, yOffset, 28, 64, color)
+    drawBuilding(0, y, xOffset + 32, yOffset, 28, 48, color)
+    drawBuilding(0, y, xOffset + 64, yOffset, 28, 56, color)
+    drawBuilding(0, y, xOffset + 96, yOffset, 28, 48, color)
+    drawBuilding(0, y, xOffset + 126, yOffset, 28, 56, color)
+end
+
+-- Intro animation structure
+function introAnim()
+    escapeCounter += 1
+    if(escapeCounter < 400) then
+       xOffset = -5*bobble(0, escapeCounter, 100, 500, 0, 0.25)
+       animCount1 = bobble(24, escapeCounter, 100, 40, 0.5, 1.25)
+    end
+    
+    if(yOffset < 24) then
+        animCount += 1
+        if(animCount < 80) then
+            yOffset = -bobble(0, animCount, 20, 500, 0, 0.25)
+        end
+    end
+
+    -- Background color white
+    rectfill(0,0,127,127,1)
+    -- Dynamic horizon shapes
+    rectfill(0, 112 + flr(-yOffset / 4), 128, 128, 0)
+    drawHorizon(yOffset / -4, 124, 80, 0x8e)
+    drawHorizon(yOffset / -4, 80, 56, 0xe2)
+    drawHorizon(yOffset / -4, 56, 22, 0x21)
+    drawBuildings(100, xOffset / 4, yOffset / -4, 0)
+    -- Entry building
+    map(0, 0, 0 + xOffset, 0, 24, 16)
+
+    for i=0,17 do
+        pal(7, 7)
+        spr(60, (((i * 8) + xOffset) % 136) - 8, 120 - yOffset, 1, 1)
+    end
+
+    spr(incFrame(escapeCounter, 75, 2, 90), animCount1, 90 - yOffset, 2, 3, true, false)
+    spr(123, animCount1 - 3, 113 - yOffset, 3, 1)
+
+    if(xOffset == 0) then
+        screenID = 3
+    end
+end
+
+function menuSelect()
+    if(btn(5)) then
+        screenID = 3
+    end
+    if(mode == 1) then
+        introAnim()
+    end
+end
+:: main.lua
+--[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 01:12:33",revision=17,xstickers={}]]
+include("start.lua")
+include("intro.lua")
+include("procgen.lua")
+include("raycast.lua")
+
+
+function _init()
+	startInit()
+	raycastInit()
+	procgenInit()
+	
+	screenID = 0
+
+   currentMap = seed.map
+end
+
+function _update()
+		local c_tbl =
+	{
+		[0] = initiateMaze,
+		[1] = startScreen,
+		[2] = menuSelect,
+		[3] = drawRoom,
+	}
+
+	local func = c_tbl[screenID]
+    
+	if(func) then
+		func()
+	else
+
+	end
+end
+
+function _draw()
+	local c_tbl =
+	{
+		[0] = initiateMaze,
+		[1] = startScreen,
+		[2] = menuSelect,
+		[3] = drawRoom,
+	}
+
+	local func = c_tbl[screenID]
+    
+	if(func) then
+		func()
+	else
+
+	end
+end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMjoxNzo1OCJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
+CwABNgAAKQAAKAAFNgBvABIAEgASAEAeAAAfGAAVBBgAARUAIwEnGAB0CzYAZwAABBgAUwI3AAA9
+GwARChsAFAMbABQFMwARCRgAFQIYAAIzAAQeABEIHgAUAR4AUwgnAAA-GwARBxsAFQAbAAI5ABY_
+PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
+AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
+PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
+:: procgen.lua
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-24 01:20:58",revision=24,xstickers={}]]
+-- CONTENT GENERATION
+--[[
+	Generate a map with walls at map edges + algorithmic maze generation 
+	Map consists of tables of equal width within a larger table
+	Root table maps Y coords while sub-tables map X coords and contain the values for walls / empty space
+--]]
+
+function procgenInit()
+	seed = generateMap(32, 32, 0, 0, 0, 0)
+	slowDraw = true
+end
+
+function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _tileset)
+	-- Nested table containing values for map cells
+	_genMap = {}
+	-- Nested table containing values for whether a given cell's state is finalized
+	-- 0: Not plotted
+	-- 1: Plotted but not finalized (surrounding cells have not been fully inspected yet)
+	-- 2: Plotted and finalized
+	_plotted = {}
+	-- Value for current map coords
+	_currentCoords = {x = 2, y = 2}
+
+	-- Set walls of map
+	-- Iterate through all Y positions
+	for i = 1, _height do
+		-- Initialize Y axis table
+		_genMap[i] = {}
+		_plotted[i] = {}
+		-- Iterate through all X positions on table
+		for j = 1, _width do
+			if(i == 1 or i == _height or j == 1 or j == _width) then
+				_genMap[i][j] = 2
+				_plotted[i][j] = 2
+			else
+				_genMap[i][j] = 1
+				_plotted[i][j] = 0
+			end
+		end
+	end
+
+	-- Ensure that starting cell (2, 2) is finalized as empty
+	_genMap[2][2] = 0
+	_plotted[2][2] = 0
+	
+	_plotComplete = false
+	
+	_genSeed = {
+		["map"] = _genMap,
+		["plot"] = _plotted,
+		["ready"] = _plotComplete,
+		["coords"] = _currentCoords,
+	}
+	
+	if (slowDraw == false) then
+		_seed = _genSeed
+		
+		while (_seed.ready == false) do
+			_seed = stageMaze(_seed)
+		end
+		
+		_genSeed = _seed
+	end
+	
+	return _genSeed
+end
+
+function initiateMaze()
+	_seed = seed
+	
+	if (slowDraw == true) then
+		if (_seed.ready != nil) then
+			_seed = stageMaze(seed)
+		end
+	else
+		_seed.ready = true
+	end
+	
+	seed = _seed
+	
+	if (seed.ready == true) then
+		screenID = 1
+	end
+end
+
+function stageMaze(_seed)
+	_genProg = generateMaze(_seed.map, _seed.plot, _seed.coords)
+	_seed.map = _genProg.genMap
+	_seed.plot = _genProg.plotted
+	_seed.coords = _genProg.coords
+    
+	currentMap = _seed.map
+
+	_seed.ready = _genProg.plotComplete
+    
+	if (drawMe == true) then
+		drawStage += 1
+		if(drawStage % drawSpeed == 0) then
+			drawMap(currentMap, #currentMap[1], #currentMap)
+			mapFrame = 0
+		end
+	else
+		print("Working...")
+	end
+	
+	return _seed
+end
+
+function generateMaze(_genMap, _plotted, _coords)
+	_map = _genMap
+	_coordinates = _coords
+	
+	_maxY = #_genMap[1]
+	_maxX = #_genMap
+	_options = {}
+	
+	_genProg = {}
+	
+	_genProg.plotComplete = false
+	
+	-- Set current coords to 0
+	_map[_coordinates.y][_coordinates.x] = 0
+	
+	-- List of all possible directions that lead the current cell to surrounding cells in cardinal directions
+	_directions =
+	{
+		{x = 2, y = 0, ix = 1, iy = 0,},
+		{x = 0, y = 2, ix = 0, iy = 1,},
+		{x = -2, y = 0, ix = -1, iy = 0,},
+		{x = 0, y = -2, ix = 0, iy = -1,},
+	}
+	
+	-- If current cell isn't finalized, then search surroundings for unexplored cell and move to it
+	if (_plotted[_coordinates.y][_coordinates.x] < 2) then
+		-- Check if neighboring cells are out-of-bounds and not yet explored; if not, then add them to list of potential options for dest cell
+		for i = 1, 4 do
+			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] == 0) then
+				_options[#_options + 1] = i
+			end
+		end
+	
+		-- If options list isn't empty...
+		if (#_options > 0) then
+			if (#_options > 1) then
+				--  Set choice to any of the option tables at random
+				_choice = _options[flr(rnd(#_options)) + 1]
+				-- Plot current cell as explored
+				_plotted[_coordinates.y][_coordinates.x] = 1
+				-- Plot intersecting cell as explored
+				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+			else
+				-- Set choice to the only choice available
+				_choice = _options[1]
+				-- Plot current cell as finalized
+				_plotted[_coordinates.y][_coordinates.x] = 2
+				-- Plot intersecting cell as explored
+				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+			end
+			-- Set intersecting square as empty space
+			_map[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 0
+			-- Set new coords
+			_coordinates.x += _directions[_choice].x
+			_coordinates.y += _directions[_choice].y
+		else
+			-- If options list is empty then mark the current cell as finalized
+			_plotted[_coordinates.y][_coordinates.x] = 2
+		end
+	elseif (_plotted[_coordinates.y][_coordinates.x] == 2) then
+		_options = {}
+	
+		-- Same as previous neighboring cell step, but look for any neighboring cell that isn't finalized, not just unexplored
+		for i = 1, 4 do
+			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] < 2) then
+				_options[#_options + 1] = i
+			end
+		end
+	
+		-- If there are free spaces to move to, then...
+		if(#_options > 0) then
+			-- Select an available direction at random
+			_choice = _options[flr(rnd(#_options)) + 1]
+			-- Set new coords
+			_coordinates.x += _directions[_choice].x
+			_coordinates.y += _directions[_choice].y
+		else
+			_solved = false
+			for i = 1, flr(#_genMap / 2) do
+				for j = 1, flr(#_genMap[1] / 2) do
+					if (_plotted[i * 2][j * 2] == 1 and _solved == false) then
+						_coordinates.x = j * 2
+						_coordinates.y = i * 2
+						_solved = true
+					end
+				end
+			end
+	
+			if (_solved == false) then
+				-- Done exploring! 
+				_genProg.plotComplete = true
+			end
+		end
+	end
+	
+	_genProg.genMap = _genMap
+	_genProg.plotted = _plotted
+	_genProg.coords = _coordinates
+		
+	mapPlot = _plotted
+	currentCoords.x = _coordinates.x
+	currentCoords.y = _coordinates.y
+		
+	return _genProg
+end
+:: raycast.lua
+--[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-24 01:16:50",revision=10,xstickers={}]]
+--Raycasting
+
+function raycastInit()
+	--Map width / height
+	cellSize = 16
+	h = 40
+
+	currentCoords = {x = 2, y = 2,}
+	mapPlot = {}
+	drawStage = 0
+	drawSpeed = 1
+	drawMe = true
+	
+	--Player variables
+	player =
+	{
+		xPos = cellSize * 2.5,
+		yPos = cellSize * 2.5,
+		xVel = 0,
+		yVel = 0,
+		zRot = 0,
+		FOV = 90,
+	}
+	
+end
+
+function raycast()
+    -- For each X position
+    for i = 0, 127 do
+        -- Find starting tile
+        px = player.xPos
+        py = player.yPos
+
+        x = player.xPos / cellSize
+        y = player.yPos / cellSize
+
+        pa = player.zRot / 360
+
+        -- Find ray direction (panoramic)
+        vx = cos(pa - (i - 64) / 512)
+        vy = sin(pa - (i - 64) / 512)
+
+        -- Find standard distance
+        dx = abs(1 / vx)
+        dy = abs(1 / vy)
+
+        -- Find increment value
+        ix = vx > 0 and 1 or -1
+        iy = vy > 0 and 1 or -1
+
+        -- Find initial offset
+        if (vx > 0) then
+            ox = (flr(x) - x + 1) / vx
+        else
+            ox = abs((x - flr(x)) / vx)
+        end
+
+        if (vy > 0) then
+            oy = (flr(y) - y + 1) / vy
+        else
+            oy = abs((y - flr(y)) / vy)
+        end
+
+        while true do
+            -- Horizontal intersection
+            if (abs(ox) < abs(oy)) then
+                x += ix
+                d = ox
+                ox += dx
+            -- Vertical intersection
+            else
+                y += iy
+                d = oy
+                oy += dy
+            end
+            if (d == nil or d == 0) then
+                errorD(d)
+            end
+
+            -- Check for collision
+            if (mapCollide(currentMap, flr(x), flr(y)) > 0 or x > #currentMap or y > #currentMap[1] or x <= 0 or y <= 0) then
+                _result = mapCollide(currentMap, flr(x), flr(y))
+                if(_result != 7) then
+                    line(i, 64 - h / d, i, 64 + h / d, _result)
+                end
+                break
+            end
+        end
+    end
+    printed = false
+end
+
+-- Get value from a map table - returns nil if out of range
+function mapCollide(_mapVal, _x, _y)
+    if (_x > 0 and _y > 0 and _x <= #_mapVal and _y <= #_mapVal[1]) then
+        return _mapVal[_y][_x]
+    else
+        return 7
+    end
+end
+
+-- Detect if edge of objects will be collided with after moving
+function mapObjectCollision(_map, _x, _y, _xDist, _yDist)
+    _result = {}
+    
+    -- Get floor of player's X position
+    _playerX = flr(_x)
+    _playerY = flr(_y)
+
+    -- Get floor of player's X position plus the provided offsets if player moves on X or Y axis
+    _objX = flr(_x + _xDist)
+    _objY = flr(_y + _yDist)
+    
+    -- If the player's offset X position and true Y position don't intersect with an occupied cell on the map...
+    if (_objX > 0 and _objX < #_map[1] and _playerY > 0 and _playerY < #_map) then
+        -- ...Then check if the player's new X position intersects with an occupied cell on the map using a ternary statement
+        -- If intersects, then mark as 0. If not, then mark as 1.
+        _result[x] = _map[_playerY][_objX] > 0 and 0 or 1
+    else
+        _result[x] = 0
+    end
+
+    -- Same as above but for true X position and offset Y position
+    if(_playerX > 0 and _playerX < #_map[1] and _objY > 0 and _objY < #_map) then
+        _result[y] = _map[_objY][_playerX] > 0 and 0 or 1
+    else
+        _result[y] = 0
+    end
+
+    -- Return table with X and Y values mapped to whether or not the new X / Y positions intersect with an occupied cell on the map
+    return _result
+end
+
+-- Used by move() function to calculate if edge of map will be collided with after moving 
+function mapEdgeCollision(_i, _dist, _maxDist)
+    if(flr(_i + _dist) > 0 and flr(_i + _dist) <= _maxDist) then
+        return _dist
+    else
+        return 0
+    end
+end
+
+function move(_x, _y, _xDist, _yDist)
+    _moveDist = {}
+    _mapObjects = mapObjectCollision(currentMap, _x, _y, _xDist, _yDist)
+
+    _moveDist[x] = _mapObjects[x] == 0 and 0 or mapEdgeCollision(_x, _xDist, #currentMap)
+    _moveDist[y] = _mapObjects[y] == 0 and 0 or mapEdgeCollision(_y, _yDist, #currentMap[1])
+
+    return _moveDist
+end
+
+-- Move player if arrows are pressed
+function movePlayer()
+    -- Rotate player
+    if(btn(0)) then
+        player.zRot += 5
+    elseif(btn(1)) then
+        player.zRot -= 5
+    end
+
+    -- Move player forward / backward, determining direction speed 
+    if(btn(2)) then
+        pa = player.zRot / 360
+        player.xVel = cos(pa)
+        player.yVel = sin(pa)
+        
+        _coords = move(player.xPos / cellSize, player.yPos / cellSize, player.xVel / cellSize, player.yVel / cellSize)
+
+        player.xPos += _coords[x] * cellSize
+        player.yPos += _coords[y] * cellSize
+
+    elseif(btn(3)) then
+        pa = player.zRot / 360
+        player.xVel = cos(pa)
+        player.yVel = sin(pa)
+
+        _coords = move(player.xPos / cellSize, player.yPos / cellSize, -player.xVel / cellSize, -player.yVel / cellSize)
+        
+        player.xPos += _coords[x] * cellSize
+        player.yPos += _coords[y] * cellSize
+    end
+end
+
+-- Map functions
+function drawMap(mapVal, width, height)
+    _prevX = 0
+    _prevY = 0
+    _mapWidth = 270 / width
+    _mapHeight = 270 / height
+
+    for i = 1, #mapVal do
+        for j = 1, #mapVal[i] do
+            -- rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
+            if(mapPlot[i][j] != 0 and i != 1 and i != #mapVal and j != 1 and j != #mapVal[i]) then
+                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, 12)
+            else
+                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
+            end
+            _prevX = j * _mapWidth
+        end
+        _prevX = 0
+        _prevY = i * _mapHeight
+    end
+
+    -- rectfill(currentCoords.x * _mapWidth, currentCoords.y * _mapHeight, (currentCoords.x * _mapWidth) - _mapWidth, (currentCoords.y * _mapHeight) - _mapHeight, 9)
+
+    -- circfill(((player.xPos / cellSize) - 1) * _mapWidth, ((player.yPos / cellSize) - 1) * _mapHeight, 1, 7)
+end
+
+function drawRoom()
+    cls(0)
+    rectfill(0,0,127,64,7)
+    raycast()
+    movePlayer()
+end
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNCAwMjoxNzo1OCJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: start.lua
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNS0xMC0yMyAyMjozNTozOSIsbW9k
+aWZpZWQ9IjIwMjUtMTAtMjQgMDI6MTc6NTgiLHJldmlzaW9uPTcxLHhzdGlja2Vycz17fV1dCmZ1
+bmN0aW9uIHN0YXJ0SW5pdCgpCglwdXBpbFRydWVYID0gNDgqMwoJcHVwaWxUcnVlWSA9IDMxKjMK
+CXB1cGlsWCA9IHB1cGlsVHJ1ZVgKCXB1cGlsWSA9IHB1cGlsVHJ1ZVkKCWJyb3dUcnVlWCA9IDI0
+KjMKCWJyb3dUcnVlWSA9IDMqMwoJYnJvd1ggPSBicm93VHJ1ZVgKCWJyb3dZID0gYnJvd1RydWVZ
+CgkKCS0tT2Zmc2V0IGZvciBmYWNpYWwgZmVhdHVyZXMKCXhPZmZzZXQgPSAwCgl5T2Zmc2V0ID0g
+MAoJek9mZnNldCA9IDE2CglvZmZzZXRDb3VudGVyID0gMAoJZXNjYXBlQ291bnRlciA9IDAKCS0t
+T2Zmc2V0IG1vZGUgMTogSWRseSBib2JibGUKCS0tT2Zmc2V0IG1vZGUgMjogUnVzaCBvZmZzY3Jl
+ZW4gdG8gdGhlIGxlZnQKCW1vZGUgPSAxCgkKCS0tQW5pbWF0aW9ucyBmb3Igc3RhcnQgc2NyZWVu
+CglhbmltQ291bnQgPSAwCglhbmltQ291bnQxID0gMAplbmQKCmZ1bmN0aW9uIHN0YXJ0U2NyZWVu
+KCkKICAgIGlkbGVBbmltKCkKICAgIG9mZnNldFVwZGF0ZSgpCmVuZAoKZnVuY3Rpb24gaWRsZUFu
+aW0oKQogICAgcGFsdCgxNCwgdHJ1ZSkKICAgIHBhbHQoMCwgZmFsc2UpCiAgICAKICAgIGNscygx
+KQoKICAgIC0tQmFja2dyb3VuZDogZmlzaHkgYmx1ZQogICAgcmVjdGZpbGwoMCwwLDQ3OSwyNjks
+NykKCiAgICAtLURyYXcgY2lyY2xlIGhlYWQKICAgIGNpcmNmaWxsKDAgKyB4T2Zmc2V0LDEwMCAr
+IHlPZmZzZXQsNjAwLDEyKQogICAgCiAgICAtLURyYXcgdGV4dAogICAgcHJpbnRYT2Zmc2V0ID0g
+eE9mZnNldCAvIDMKICAgIHByaW50WU9mZnNldCA9IHlPZmZzZXQgLyAzCiAgICBwcmludCgiZnBz
+IiwyMjggKyBwcmludFhPZmZzZXQsMjE1ICsgcHJpbnRZT2Zmc2V0LDcpCiAgICBwcmludCgiKGZp
+c2ggcGVyc29uIHNob290ZXIpIiwxODUgKyBwcmludFhPZmZzZXQsMjMwICsgcHJpbnRZT2Zmc2V0
+LDcpCiAgICBwcmludCgicHJlc3MglyB0byBzdGFydCIsMTk1ICsgcHJpbnRYT2Zmc2V0LDI0NSAr
+IHByaW50WU9mZnNldCw3KQoKICAgIC0tRHJhdyBleWVsYXNoCiAgICBzc3ByKDcsMCwwLDg2LDU4
+LDExMSArIHhPZmZzZXQsMzAgKyB5T2Zmc2V0LDg2KjMsNTgqMykKICAgIC0tRHJhdyBmYWNlIG1h
+cmtpbmcKICAgIHNzcHIoNiwwLDAsMjMsMjEsMjU1ICsgeE9mZnNldCwxNTkgKyB5T2Zmc2V0LDIz
+KjMsMjEqMykKICAgIC0tRHJhdyBhbmQgYW5pbWF0ZSBwdXBpbCAvIGlyaXMgYW5kIGV5ZWJyb3cK
+ICAgIGJyb3dBbmltYXRlKCkKICAgIHB1cGlsQW5pbWF0ZSgpCmVuZAoKCi0tIEFOSU1BVElPTlMK
+LS1yZXR1cm4gZnJhbWUgbnVtYmVyIGdpdmVuIGEgY291bnRlciwgaW5pdGlhbCBmcmFtZSwgd2lk
+dGggb2YgZnJhbWVzIGFuZCBkdXJhdGlvbiBvZiBlYWNoIGZyYW1lICgzMCA9IDFzKQpmdW5jdGlv
+biBpbmNGcmFtZShjb3VudGVyLCBmcmFtZSwgd2lkdGgsIGR1cmF0aW9uKQogICAgcmV0dXJuIGZy
+YW1lICsgKHdpZHRoICogKGZscigod2lkdGggLyBkdXJhdGlvbikgKiAoY291bnRlciAlIGR1cmF0
+aW9uKSkpKQplbmQKCi0tc2luIGZ1bmN0aW9uIGZvciB0d2VlbiBmcmFtZXMKZnVuY3Rpb24gc2lu
+VHdlZW4oZnJtLCBzcGVlZE11bHQsIHN0YXJ0LCBsZW5ndGgpCiAgICBzcGVlZCA9IDQgKiBzcGVl
+ZE11bHQKICAgIAogICAgeCA9IGZybSAvIHNwZWVkCgogICAgLS13aGVuIGNhbGN1bGF0aW5nIHNp
+biwgMC4yNSBpcyAtMSBhbmQgLS43NSBpcyAxCiAgICByZXR1cm4gMSArIHNpbihzdGFydCArICgo
+eCkgKiBsZW5ndGgpKQplbmQKCi0tQm9iYmxlIGFuaW1hdGlvbiB2YWx1ZSAtIGdpdmUgc3BlZWQg
+YW5kIGRpc3QgKHRyeSA2IC8gMikKLS0gaW5pdFBvczogSW5pdGlhbCBwb3NpdGlvbiBvZiBvYmpl
+Y3QKLS0gZnJhbWU6IGZyYW1lIGNvdW50ZXIgdXNlZCB3aGVuIGNhbGxpbmcgdGhpcyBvYmplY3QK
+LS0gc3BlZWQ6IGVmZmVjdGl2ZWx5IHRoZSAibWF4IGZyYW1lIiwgZGl2aWRlZCBieSBmcmFtZSB0
+byBnZXQgYWN0dWFsIHNwZWVkCi0tIGRpc3Q6IG11bHRpcGxpZXIgZm9yIHNpblR3ZWVuIHJlc3Vs
+dHMKLS0gc3RhcnQ6IHN0YXJ0IG9mIHNpbmUgd2F2ZQotLSAgIDAgLyAwLjU6IG1pZC1zd2luZwot
+LSAgIDAuMjUgLyAwLjc1OiBzdGFydCBhdCBzbG93IHBvcnRpb24gb2Ygc3dpbmcKLS0gbGVuZ3Ro
+OiBEZXNpcmVkIGxlbmd0aCBvZiBzaW5lIHdhdmUKLS0gICAxOiBmdWxsIHNpbmUgd2F2ZQotLSAg
+IDAuNTogaGFsZiBhIHNpbmUgd2F2ZQotLSAgIHRha2VzIGFueSBudW1iZXIgZnJvbSAKZnVuY3Rp
+b24gYm9iYmxlKGluaXRQb3MsIGZyYW1lLCBzcGVlZCwgZGlzdCwgc3RhcnQsIGxlbmd0aCkKICAg
+IHggPSBzaW5Ud2VlbihmcmFtZSwgc3BlZWQsIHN0YXJ0LCBsZW5ndGgpICogZGlzdAogICAgcmV0
+dXJuIGluaXRQb3MgKyB4CmVuZAoKZnVuY3Rpb24gb2Zmc2V0VXBkYXRlKCkKICAgIC0tTW9kZSAx
+ID0gc3RhcnQgc2NyZWVuCiAgICBpZihtb2RlID09IDEpIHRoZW4KICAgICAgICBvZmZzZXRDb3Vu
+dGVyICs9IDEKICAgICAgICAtLWJvYmJsZSgpIGlzIGFuIGFuaW1hdGlvbiB0aGF0IHdpbGwgd29i
+YmxlIGEgdmFyaWFibGUgb24gYSBzaW5lIHdhdmUKICAgICAgICB4T2Zmc2V0ID0gYm9iYmxlKDAs
+IG9mZnNldENvdW50ZXIsIDksIDUsIDAuMjUsIDAuNSkgLSA2CiAgICAgICAgeU9mZnNldCA9IGJv
+YmJsZSgwLCBvZmZzZXRDb3VudGVyLCAxNCwgNSwgMC4yNSwgMC41KSAtIDYKCiAgICAgICAgLS1J
+ZiBYIGlzIHByZXNzZWQuLi4KICAgICAgICBpZihidG4oNSkpIHRoZW4KICAgICAgICAgICAgLS0u
+Li5UaGVuIGNoYW5nZSBtb2RlIHRvIDIKICAgICAgICAgICAgbW9kZSA9IDIKICAgICAgICBlbmQK
+ICAgIC0tTW9kZSAyID0gdHJhbnNpdGlvbmluZyB0byBpbnRybyBzY3JlZW4KICAgIGVsc2VpZiht
+b2RlID09IDIpIHRoZW4KICAgICAgICAtLVNoaWZ0IHRoZSBoZWFkIGFuZCBvdGhlciB0aXRsZSBz
+Y3JlZW4gZWxlbWVudHMgb2Zmc2NyZWVuIAogICAgICAgIGVzY2FwZUNvdW50ZXIgKz0gMgoKICAg
+ICAgICB4T2Zmc2V0IC09IGVzY2FwZUNvdW50ZXIKICAgICAgICB6T2Zmc2V0IC09IDAuMjUKCiAg
+ICAgICAgLS1SZXNldCBnZW5lcmFsLXVzZSB2YXJpYWJsZXMgdGhhdCBkb24ndCBuZWVkIHByZXNl
+cnZlZCB2YWx1ZXMgYW5kIHByb2NlZWQgdG8gdGhlIGludHJvCiAgICAgICAgaWYoZXNjYXBlQ291
+bnRlciA_IDQ4KSB0aGVuCiAgICAgICAgICAgIHlPZmZzZXQgPSAwCiAgICAgICAgICAgIGVzY2Fw
+ZUNvdW50ZXIgPSAwCiAgICAgICAgICAgIG9mZnNldENvdW50ZXIgPSAwCiAgICAgICAgICAgIGFu
+aW1Db3VudCA9IDAKICAgICAgICAgICAgYW5pbUNvdW50MSA9IDAKICAgICAgICAgICAgc2NyZWVu
+SUQgPSAyCiAgICAgICAgICAgIG1vZGUgPSAxCiAgICAgICAgZW5kCiAgICBlbmQKZW5kCgotLUJy
+b3cgdHdpdGNoCmZ1bmN0aW9uIGJyb3dBbmltYXRlKCkKICAgIGlmKGFuaW1Db3VudCA8IDQ4KSB0
+aGVuCiAgICAgICAgYnJvd1ggPSBib2JibGUoYnJvd1RydWVYLCBhbmltQ291bnQsIDYsIC0xLCAw
+LjI1LCAwLjc1KQogICAgICAgIGJyb3dZID0gYm9iYmxlKGJyb3dUcnVlWSwgYW5pbUNvdW50LCA2
+LCAyLCAwLjI1LCAwLjc1KQoKICAgICAgICBhbmltQ291bnQgKz0gMQogICAgLS0gVXNlIFJORyB0
+byBkZXRlcm1pbmUgaWYgYnJvdyBzaG91bGQgYmUgdHdpdGNoaW5nCiAgICBlbHNlaWYoZmxyKHJu
+ZCgxMDApKSA9PSAxKSB0aGVuCiAgICAgICAgYW5pbUNvdW50ID0gMAogICAgZW5kCgogICAgc3Nw
+cig1LDAsMCwzMiwxNCxicm93WCArIHhPZmZzZXQsYnJvd1kgKyB5T2Zmc2V0LDMyKjMsMTQqMykK
+ZW5kCgotLVB1cGlsIHdpZ2dsZQpmdW5jdGlvbiBwdXBpbEFuaW1hdGUoKQogICAgLS0gQW5pbWF0
+ZSBwdXBpbCBmb3IgMzYgZnJhbWVzLCB0aGVuIGRvbid0IGFuaW1hdGUgZm9yIDEyIGZyYW1lcywg
+dGhlbiBzdGFydCBhZ2FpbgogICAgaWYoYW5pbUNvdW50MSA8IDM2KSB0aGVuCiAgICAgICAgcHVw
+aWxYID0gYm9iYmxlKHB1cGlsVHJ1ZVgsIGFuaW1Db3VudDEsIDEuNSwgMSwgMC4yNSwgMC43NSkK
+ICAgIGVsc2VpZihhbmltQ291bnQxID49IDQ4KSB0aGVuCiAgICAgICAgYW5pbUNvdW50MSA9IDAK
+ICAgIGVuZAoKICAgIGFuaW1Db3VudDEgKz0gMQoKICAgIHNzcHIoNCwwLDAsNDIsMjkscHVwaWxY
+ICsgeE9mZnNldCxwdXBpbFkgKyB5T2Zmc2V0LDQyKjMsMjkqMykKZW5k
+:: [eoc]
