@@ -3,13 +3,13 @@ version 2
 
 :: .info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwMjoxNzo1OCIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzQsMSIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0icHJvY2dlbi5sdWEjOSwyNyIsd29y
-a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0icmF5Y2FzdC5sdWEjMTkwLDIxIix3b3Jrc3BhY2Vf
-aW5kZXg9MX0se2xvY2F0aW9uPSJpbnRyby5sdWEjMTMsMTMiLHdvcmtzcGFjZV9pbmRleD0xfSx7
-bG9jYXRpb249InN0YXJ0Lmx1YSM3LDE1Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJn
-ZngvMC5nZngiLHdvcmtzcGFjZV9pbmRleD0yfSx7bG9jYXRpb249ImdmeC9maXhlZC5nZngiLHdv
-cmtzcGFjZV9pbmRleD0yfX1dXQ==
+MC0yNCAwODowMDo1NiIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzIwLDEzIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwcm9jZ2VuLmx1YSMxLDIyIix3
+b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJyYXljYXN0Lmx1YSMyMTgsMjEiLHdvcmtzcGFj
+ZV9pbmRleD0xfSx7bG9jYXRpb249ImludHJvLmx1YSM1MSw2NCIsd29ya3NwYWNlX2luZGV4PTF9
+LHtsb2NhdGlvbj0ic3RhcnQubHVhIzg2LDEiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249
+ImdmeC8wLmdmeCIsd29ya3NwYWNlX2luZGV4PTJ9LHtsb2NhdGlvbj0iZ2Z4L2ZpeGVkLmdmeCIs
+d29ya3NwYWNlX2luZGV4PTJ9fV1d
 :: etc.lua
 --[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
 -- fps - fish person shooter
@@ -29,7 +29,7 @@ cmtzcGFjZV9pbmRleD0yfX1dXQ==
 :: gfx/
 :: gfx/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwMjoxNzo1OCJdXQ==
+MC0yNCAwODowMDo1NiJdXQ==
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjQxOjA4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yNCAwMjowODowNiIscmV2aXNpb249MTU2XV1sejQAnQUAAFg6AADzIXtbMF09e2JtcD1weHUA
@@ -130,11 +130,16 @@ D0AAX18wLgD_J1sBTT8wPvBVAR1vfhBeYA7wKiUfQCBOUB4CAC9ALtUAHg8xAOAf8DEATiBALgIA
 nzA_MD4gTiBOEJ0tHw_WAf8TbxcOUB4wPl4BHl8QXgBuAHEmHx8wlAHhTycOYA5lAB4PMQD-Q0Rg
 DmAO5QUvQC7pBSAPMQD-QwbjBQFWBA9aMR8PMQD-----Q1BtPTd9fQ==
 :: intro.lua
---[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-23 23:15:41",revision=2,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-24 07:44:52",revision=24,xstickers={}]]
 -- Intro after starting game
 
+--return frame number given a counter, initial frame, width of frames and duration of each frame (30 = 1s)
+function incFrame(counter, frame, width, duration)
+    return frame + (width * (flr((width / duration) * (counter % duration))))
+end
+
 -- Draw gradients for horizon
-function drawHorizon(offset, startI, endJ, color)
+function drawHorizon(offset, startI, endJ, _color)
     -- Fills follow a 4x4 map. example of the first one:
     -- 1111
     -- 0101
@@ -149,7 +154,7 @@ function drawHorizon(offset, startI, endJ, color)
 
     for k=1,3 do
         fillp(flr(fills[k]))
-        rectfill(0, i + flr(offset), 128, j + flr(offset), color)
+        rectfill(0, i + flr(offset), 128, j + flr(offset), _color)
         i -= height
         j -= height
     end
@@ -163,34 +168,34 @@ function drawBuilding(x, y, xOffset, yOffset, width, height, color)
 end
 
 -- Draw a horizon and multiple buildings
-function drawBuildings(y, xOffset, yOffset, color)
-    rectfill(0, (y + yOffset % 128), 128, 128, color)
-    drawBuilding(0, y, xOffset, yOffset, 28, 64, color)
-    drawBuilding(0, y, xOffset + 32, yOffset, 28, 48, color)
-    drawBuilding(0, y, xOffset + 64, yOffset, 28, 56, color)
-    drawBuilding(0, y, xOffset + 96, yOffset, 28, 48, color)
-    drawBuilding(0, y, xOffset + 126, yOffset, 28, 56, color)
+function drawBuildings(y, xOffset, yOffset, _color)
+    rectfill(0, (y + yOffset % 128), 480, 270, _color)
+    drawBuilding(0, y, xOffset, yOffset, 28, 64, _color)
+    drawBuilding(0, y, xOffset + 32, yOffset, 28, 48, _color)
+    drawBuilding(0, y, xOffset + 64, yOffset, 28, 56, _color)
+    drawBuilding(0, y, xOffset + 96, yOffset, 28, 48, _color)
+    drawBuilding(0, y, xOffset + 126, yOffset, 28, 56, _color)
 end
 
 -- Intro animation structure
 function introAnim()
     escapeCounter += 1
-    if(escapeCounter < 400) then
+    if(escapeCounter < 800) then
        xOffset = -5*bobble(0, escapeCounter, 100, 500, 0, 0.25)
        animCount1 = bobble(24, escapeCounter, 100, 40, 0.5, 1.25)
     end
     
     if(yOffset < 24) then
         animCount += 1
-        if(animCount < 80) then
+        if(animCount < 80*2) then
             yOffset = -bobble(0, animCount, 20, 500, 0, 0.25)
         end
     end
 
     -- Background color white
-    rectfill(0,0,127,127,1)
+    rectfill(0,0,480,270,1)
     -- Dynamic horizon shapes
-    rectfill(0, 112 + flr(-yOffset / 4), 128, 128, 0)
+    rectfill(0, 112 + flr(-yOffset / 4), 480, 270, 0)
     drawHorizon(yOffset / -4, 124, 80, 0x8e)
     drawHorizon(yOffset / -4, 80, 56, 0xe2)
     drawHorizon(yOffset / -4, 56, 22, 0x21)
@@ -203,7 +208,7 @@ function introAnim()
         spr(60, (((i * 8) + xOffset) % 136) - 8, 120 - yOffset, 1, 1)
     end
 
-    spr(incFrame(escapeCounter, 75, 2, 90), animCount1, 90 - yOffset, 2, 3, true, false)
+    sspr(incFrame(escapeCounter, 1, 2, 180), 0, 0, 16, 24, animCount1, 90 - yOffset, 16 * 2, 24 * 2)
     spr(123, animCount1 - 3, 113 - yOffset, 3, 1)
 
     if(xOffset == 0) then
@@ -220,7 +225,7 @@ function menuSelect()
     end
 end
 :: main.lua
---[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 01:12:33",revision=17,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 07:45:51",revision=20,xstickers={}]]
 include("start.lua")
 include("intro.lua")
 include("procgen.lua")
@@ -240,10 +245,10 @@ end
 function _update()
 		local c_tbl =
 	{
-		[0] = initiateMaze,
+		[0] = func,
 		[1] = startScreen,
 		[2] = menuSelect,
-		[3] = drawRoom,
+		[3] = movePlayer,
 	}
 
 	local func = c_tbl[screenID]
@@ -259,7 +264,7 @@ function _draw()
 	local c_tbl =
 	{
 		[0] = initiateMaze,
-		[1] = startScreen,
+		[1] = startScreenDraw,
 		[2] = menuSelect,
 		[3] = drawRoom,
 	}
@@ -275,7 +280,7 @@ end
 :: map/
 :: map/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwMjoxNzo1OCJdXQ==
+MC0yNCAwODowMDo1NiJdXQ==
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
@@ -285,7 +290,7 @@ PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
 AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
 PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
 :: procgen.lua
---[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-24 01:20:58",revision=24,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-24 07:29:09",revision=25,xstickers={}]]
 -- CONTENT GENERATION
 --[[
 	Generate a map with walls at map edges + algorithmic maze generation 
@@ -500,13 +505,15 @@ function generateMaze(_genMap, _plotted, _coords)
 	return _genProg
 end
 :: raycast.lua
---[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-24 01:16:50",revision=10,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-24 08:00:56",revision=40,xstickers={}]]
 --Raycasting
 
 function raycastInit()
 	--Map width / height
 	cellSize = 16
 	h = 40
+	
+	horizon = 110
 
 	currentCoords = {x = 2, y = 2,}
 	mapPlot = {}
@@ -522,14 +529,14 @@ function raycastInit()
 		xVel = 0,
 		yVel = 0,
 		zRot = 0,
-		FOV = 90,
+		fov = 150,
 	}
 	
 end
 
 function raycast()
     -- For each X position
-    for i = 0, 127 do
+    for i = 0, 479 do
         -- Find starting tile
         px = player.xPos
         py = player.yPos
@@ -539,9 +546,12 @@ function raycast()
 
         pa = player.zRot / 360
 
+			_xFOV = 480 / (player.fov / 360)
+			_yFOV = 270 / ((player.fov / 2) / 360)
+
         -- Find ray direction (panoramic)
-        vx = cos(pa - (i - 64) / 512)
-        vy = sin(pa - (i - 64) / 512)
+        vx = cos(pa - (i - 240) / _xFOV)
+        vy = sin(pa - (i - 240) / _yFOV)
 
         -- Find standard distance
         dx = abs(1 / vx)
@@ -584,7 +594,7 @@ function raycast()
             if (mapCollide(currentMap, flr(x), flr(y)) > 0 or x > #currentMap or y > #currentMap[1] or x <= 0 or y <= 0) then
                 _result = mapCollide(currentMap, flr(x), flr(y))
                 if(_result != 7) then
-                    line(i, 64 - h / d, i, 64 + h / d, _result)
+                    line(i, horizon - h / d, i, horizon + h / d, _result)
                 end
                 break
             end
@@ -657,16 +667,16 @@ end
 function movePlayer()
     -- Rotate player
     if(btn(0)) then
-        player.zRot += 5
+        player.zRot += 2.5
     elseif(btn(1)) then
-        player.zRot -= 5
+        player.zRot -= 2.5
     end
 
     -- Move player forward / backward, determining direction speed 
     if(btn(2)) then
         pa = player.zRot / 360
-        player.xVel = cos(pa)
-        player.yVel = sin(pa)
+        player.xVel = cos(pa) / 2
+        player.yVel = sin(pa) / 2
         
         _coords = move(player.xPos / cellSize, player.yPos / cellSize, player.xVel / cellSize, player.yVel / cellSize)
 
@@ -675,8 +685,8 @@ function movePlayer()
 
     elseif(btn(3)) then
         pa = player.zRot / 360
-        player.xVel = cos(pa)
-        player.yVel = sin(pa)
+        player.xVel = cos(pa) / 2
+        player.yVel = sin(pa) / 2
 
         _coords = move(player.xPos / cellSize, player.yPos / cellSize, -player.xVel / cellSize, -player.yVel / cellSize)
         
@@ -713,14 +723,13 @@ end
 
 function drawRoom()
     cls(0)
-    rectfill(0,0,127,64,7)
+    rectfill(0,0,480,horizon,7)
     raycast()
-    movePlayer()
 end
 :: sfx/
 :: sfx/.info.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwMjoxNzo1OCJdXQ==
+MC0yNCAwODowMDo1NiJdXQ==
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
@@ -729,7 +738,7 @@ MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
 H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: start.lua
 b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNS0xMC0yMyAyMjozNTozOSIsbW9k
-aWZpZWQ9IjIwMjUtMTAtMjQgMDI6MTc6NTgiLHJldmlzaW9uPTcxLHhzdGlja2Vycz17fV1dCmZ1
+aWZpZWQ9IjIwMjUtMTAtMjQgMDc6NDE6MTEiLHJldmlzaW9uPTg4LHhzdGlja2Vycz17fV1dCmZ1
 bmN0aW9uIHN0YXJ0SW5pdCgpCglwdXBpbFRydWVYID0gNDgqMwoJcHVwaWxUcnVlWSA9IDMxKjMK
 CXB1cGlsWCA9IHB1cGlsVHJ1ZVgKCXB1cGlsWSA9IHB1cGlsVHJ1ZVkKCWJyb3dUcnVlWCA9IDI0
 KjMKCWJyb3dUcnVlWSA9IDMqMwoJYnJvd1ggPSBicm93VHJ1ZVgKCWJyb3dZID0gYnJvd1RydWVZ
@@ -738,69 +747,66 @@ MAoJek9mZnNldCA9IDE2CglvZmZzZXRDb3VudGVyID0gMAoJZXNjYXBlQ291bnRlciA9IDAKCS0t
 T2Zmc2V0IG1vZGUgMTogSWRseSBib2JibGUKCS0tT2Zmc2V0IG1vZGUgMjogUnVzaCBvZmZzY3Jl
 ZW4gdG8gdGhlIGxlZnQKCW1vZGUgPSAxCgkKCS0tQW5pbWF0aW9ucyBmb3Igc3RhcnQgc2NyZWVu
 CglhbmltQ291bnQgPSAwCglhbmltQ291bnQxID0gMAplbmQKCmZ1bmN0aW9uIHN0YXJ0U2NyZWVu
-KCkKICAgIGlkbGVBbmltKCkKICAgIG9mZnNldFVwZGF0ZSgpCmVuZAoKZnVuY3Rpb24gaWRsZUFu
-aW0oKQogICAgcGFsdCgxNCwgdHJ1ZSkKICAgIHBhbHQoMCwgZmFsc2UpCiAgICAKICAgIGNscygx
-KQoKICAgIC0tQmFja2dyb3VuZDogZmlzaHkgYmx1ZQogICAgcmVjdGZpbGwoMCwwLDQ3OSwyNjks
-NykKCiAgICAtLURyYXcgY2lyY2xlIGhlYWQKICAgIGNpcmNmaWxsKDAgKyB4T2Zmc2V0LDEwMCAr
-IHlPZmZzZXQsNjAwLDEyKQogICAgCiAgICAtLURyYXcgdGV4dAogICAgcHJpbnRYT2Zmc2V0ID0g
-eE9mZnNldCAvIDMKICAgIHByaW50WU9mZnNldCA9IHlPZmZzZXQgLyAzCiAgICBwcmludCgiZnBz
-IiwyMjggKyBwcmludFhPZmZzZXQsMjE1ICsgcHJpbnRZT2Zmc2V0LDcpCiAgICBwcmludCgiKGZp
-c2ggcGVyc29uIHNob290ZXIpIiwxODUgKyBwcmludFhPZmZzZXQsMjMwICsgcHJpbnRZT2Zmc2V0
-LDcpCiAgICBwcmludCgicHJlc3MglyB0byBzdGFydCIsMTk1ICsgcHJpbnRYT2Zmc2V0LDI0NSAr
-IHByaW50WU9mZnNldCw3KQoKICAgIC0tRHJhdyBleWVsYXNoCiAgICBzc3ByKDcsMCwwLDg2LDU4
-LDExMSArIHhPZmZzZXQsMzAgKyB5T2Zmc2V0LDg2KjMsNTgqMykKICAgIC0tRHJhdyBmYWNlIG1h
-cmtpbmcKICAgIHNzcHIoNiwwLDAsMjMsMjEsMjU1ICsgeE9mZnNldCwxNTkgKyB5T2Zmc2V0LDIz
-KjMsMjEqMykKICAgIC0tRHJhdyBhbmQgYW5pbWF0ZSBwdXBpbCAvIGlyaXMgYW5kIGV5ZWJyb3cK
-ICAgIGJyb3dBbmltYXRlKCkKICAgIHB1cGlsQW5pbWF0ZSgpCmVuZAoKCi0tIEFOSU1BVElPTlMK
-LS1yZXR1cm4gZnJhbWUgbnVtYmVyIGdpdmVuIGEgY291bnRlciwgaW5pdGlhbCBmcmFtZSwgd2lk
-dGggb2YgZnJhbWVzIGFuZCBkdXJhdGlvbiBvZiBlYWNoIGZyYW1lICgzMCA9IDFzKQpmdW5jdGlv
-biBpbmNGcmFtZShjb3VudGVyLCBmcmFtZSwgd2lkdGgsIGR1cmF0aW9uKQogICAgcmV0dXJuIGZy
-YW1lICsgKHdpZHRoICogKGZscigod2lkdGggLyBkdXJhdGlvbikgKiAoY291bnRlciAlIGR1cmF0
-aW9uKSkpKQplbmQKCi0tc2luIGZ1bmN0aW9uIGZvciB0d2VlbiBmcmFtZXMKZnVuY3Rpb24gc2lu
-VHdlZW4oZnJtLCBzcGVlZE11bHQsIHN0YXJ0LCBsZW5ndGgpCiAgICBzcGVlZCA9IDQgKiBzcGVl
-ZE11bHQKICAgIAogICAgeCA9IGZybSAvIHNwZWVkCgogICAgLS13aGVuIGNhbGN1bGF0aW5nIHNp
-biwgMC4yNSBpcyAtMSBhbmQgLS43NSBpcyAxCiAgICByZXR1cm4gMSArIHNpbihzdGFydCArICgo
-eCkgKiBsZW5ndGgpKQplbmQKCi0tQm9iYmxlIGFuaW1hdGlvbiB2YWx1ZSAtIGdpdmUgc3BlZWQg
-YW5kIGRpc3QgKHRyeSA2IC8gMikKLS0gaW5pdFBvczogSW5pdGlhbCBwb3NpdGlvbiBvZiBvYmpl
-Y3QKLS0gZnJhbWU6IGZyYW1lIGNvdW50ZXIgdXNlZCB3aGVuIGNhbGxpbmcgdGhpcyBvYmplY3QK
-LS0gc3BlZWQ6IGVmZmVjdGl2ZWx5IHRoZSAibWF4IGZyYW1lIiwgZGl2aWRlZCBieSBmcmFtZSB0
-byBnZXQgYWN0dWFsIHNwZWVkCi0tIGRpc3Q6IG11bHRpcGxpZXIgZm9yIHNpblR3ZWVuIHJlc3Vs
-dHMKLS0gc3RhcnQ6IHN0YXJ0IG9mIHNpbmUgd2F2ZQotLSAgIDAgLyAwLjU6IG1pZC1zd2luZwot
-LSAgIDAuMjUgLyAwLjc1OiBzdGFydCBhdCBzbG93IHBvcnRpb24gb2Ygc3dpbmcKLS0gbGVuZ3Ro
-OiBEZXNpcmVkIGxlbmd0aCBvZiBzaW5lIHdhdmUKLS0gICAxOiBmdWxsIHNpbmUgd2F2ZQotLSAg
-IDAuNTogaGFsZiBhIHNpbmUgd2F2ZQotLSAgIHRha2VzIGFueSBudW1iZXIgZnJvbSAKZnVuY3Rp
-b24gYm9iYmxlKGluaXRQb3MsIGZyYW1lLCBzcGVlZCwgZGlzdCwgc3RhcnQsIGxlbmd0aCkKICAg
-IHggPSBzaW5Ud2VlbihmcmFtZSwgc3BlZWQsIHN0YXJ0LCBsZW5ndGgpICogZGlzdAogICAgcmV0
-dXJuIGluaXRQb3MgKyB4CmVuZAoKZnVuY3Rpb24gb2Zmc2V0VXBkYXRlKCkKICAgIC0tTW9kZSAx
-ID0gc3RhcnQgc2NyZWVuCiAgICBpZihtb2RlID09IDEpIHRoZW4KICAgICAgICBvZmZzZXRDb3Vu
-dGVyICs9IDEKICAgICAgICAtLWJvYmJsZSgpIGlzIGFuIGFuaW1hdGlvbiB0aGF0IHdpbGwgd29i
-YmxlIGEgdmFyaWFibGUgb24gYSBzaW5lIHdhdmUKICAgICAgICB4T2Zmc2V0ID0gYm9iYmxlKDAs
-IG9mZnNldENvdW50ZXIsIDksIDUsIDAuMjUsIDAuNSkgLSA2CiAgICAgICAgeU9mZnNldCA9IGJv
-YmJsZSgwLCBvZmZzZXRDb3VudGVyLCAxNCwgNSwgMC4yNSwgMC41KSAtIDYKCiAgICAgICAgLS1J
-ZiBYIGlzIHByZXNzZWQuLi4KICAgICAgICBpZihidG4oNSkpIHRoZW4KICAgICAgICAgICAgLS0u
-Li5UaGVuIGNoYW5nZSBtb2RlIHRvIDIKICAgICAgICAgICAgbW9kZSA9IDIKICAgICAgICBlbmQK
-ICAgIC0tTW9kZSAyID0gdHJhbnNpdGlvbmluZyB0byBpbnRybyBzY3JlZW4KICAgIGVsc2VpZiht
-b2RlID09IDIpIHRoZW4KICAgICAgICAtLVNoaWZ0IHRoZSBoZWFkIGFuZCBvdGhlciB0aXRsZSBz
-Y3JlZW4gZWxlbWVudHMgb2Zmc2NyZWVuIAogICAgICAgIGVzY2FwZUNvdW50ZXIgKz0gMgoKICAg
-ICAgICB4T2Zmc2V0IC09IGVzY2FwZUNvdW50ZXIKICAgICAgICB6T2Zmc2V0IC09IDAuMjUKCiAg
-ICAgICAgLS1SZXNldCBnZW5lcmFsLXVzZSB2YXJpYWJsZXMgdGhhdCBkb24ndCBuZWVkIHByZXNl
-cnZlZCB2YWx1ZXMgYW5kIHByb2NlZWQgdG8gdGhlIGludHJvCiAgICAgICAgaWYoZXNjYXBlQ291
-bnRlciA_IDQ4KSB0aGVuCiAgICAgICAgICAgIHlPZmZzZXQgPSAwCiAgICAgICAgICAgIGVzY2Fw
-ZUNvdW50ZXIgPSAwCiAgICAgICAgICAgIG9mZnNldENvdW50ZXIgPSAwCiAgICAgICAgICAgIGFu
-aW1Db3VudCA9IDAKICAgICAgICAgICAgYW5pbUNvdW50MSA9IDAKICAgICAgICAgICAgc2NyZWVu
-SUQgPSAyCiAgICAgICAgICAgIG1vZGUgPSAxCiAgICAgICAgZW5kCiAgICBlbmQKZW5kCgotLUJy
-b3cgdHdpdGNoCmZ1bmN0aW9uIGJyb3dBbmltYXRlKCkKICAgIGlmKGFuaW1Db3VudCA8IDQ4KSB0
-aGVuCiAgICAgICAgYnJvd1ggPSBib2JibGUoYnJvd1RydWVYLCBhbmltQ291bnQsIDYsIC0xLCAw
-LjI1LCAwLjc1KQogICAgICAgIGJyb3dZID0gYm9iYmxlKGJyb3dUcnVlWSwgYW5pbUNvdW50LCA2
-LCAyLCAwLjI1LCAwLjc1KQoKICAgICAgICBhbmltQ291bnQgKz0gMQogICAgLS0gVXNlIFJORyB0
-byBkZXRlcm1pbmUgaWYgYnJvdyBzaG91bGQgYmUgdHdpdGNoaW5nCiAgICBlbHNlaWYoZmxyKHJu
-ZCgxMDApKSA9PSAxKSB0aGVuCiAgICAgICAgYW5pbUNvdW50ID0gMAogICAgZW5kCgogICAgc3Nw
-cig1LDAsMCwzMiwxNCxicm93WCArIHhPZmZzZXQsYnJvd1kgKyB5T2Zmc2V0LDMyKjMsMTQqMykK
-ZW5kCgotLVB1cGlsIHdpZ2dsZQpmdW5jdGlvbiBwdXBpbEFuaW1hdGUoKQogICAgLS0gQW5pbWF0
-ZSBwdXBpbCBmb3IgMzYgZnJhbWVzLCB0aGVuIGRvbid0IGFuaW1hdGUgZm9yIDEyIGZyYW1lcywg
-dGhlbiBzdGFydCBhZ2FpbgogICAgaWYoYW5pbUNvdW50MSA8IDM2KSB0aGVuCiAgICAgICAgcHVw
-aWxYID0gYm9iYmxlKHB1cGlsVHJ1ZVgsIGFuaW1Db3VudDEsIDEuNSwgMSwgMC4yNSwgMC43NSkK
-ICAgIGVsc2VpZihhbmltQ291bnQxID49IDQ4KSB0aGVuCiAgICAgICAgYW5pbUNvdW50MSA9IDAK
-ICAgIGVuZAoKICAgIGFuaW1Db3VudDEgKz0gMQoKICAgIHNzcHIoNCwwLDAsNDIsMjkscHVwaWxY
-ICsgeE9mZnNldCxwdXBpbFkgKyB5T2Zmc2V0LDQyKjMsMjkqMykKZW5k
+KCkKCW9mZnNldFVwZGF0ZSgpCmVuZAoKZnVuY3Rpb24gc3RhcnRTY3JlZW5EcmF3KCkKCWlkbGVB
+bmltKCkKZW5kCgpmdW5jdGlvbiBpZGxlQW5pbSgpCglwYWx0KDE0LCB0cnVlKQoJcGFsdCgwLCBm
+YWxzZSkKICAgIAogICAgY2xzKDEpCgogICAgLS1CYWNrZ3JvdW5kOiBmaXNoeSBibHVlCiAgICBy
+ZWN0ZmlsbCgwLDAsNDc5LDI2OSw3KQoKICAgIC0tRHJhdyBjaXJjbGUgaGVhZAogICAgY2lyY2Zp
+bGwoMCArIHhPZmZzZXQsMTAwICsgeU9mZnNldCw2MDAsMTIpCiAgICAKICAgIC0tRHJhdyB0ZXh0
+CiAgICBwcmludFhPZmZzZXQgPSB4T2Zmc2V0IC8gMwogICAgcHJpbnRZT2Zmc2V0ID0geU9mZnNl
+dCAvIDMKICAgIHByaW50KCJmcHMiLDIyOCArIHByaW50WE9mZnNldCwyMTUgKyBwcmludFlPZmZz
+ZXQsNykKICAgIHByaW50KCIoZmlzaCBwZXJzb24gc2hvb3RlcikiLDE4NSArIHByaW50WE9mZnNl
+dCwyMzAgKyBwcmludFlPZmZzZXQsNykKICAgIHByaW50KCJwcmVzcyCXIHRvIHN0YXJ0IiwxOTUg
+KyBwcmludFhPZmZzZXQsMjQ1ICsgcHJpbnRZT2Zmc2V0LDcpCgogICAgLS1EcmF3IGV5ZWxhc2gK
+ICAgIHNzcHIoNywwLDAsODYsNTgsMTExICsgeE9mZnNldCwzMCArIHlPZmZzZXQsODYqMyw1OCoz
+KQogICAgLS1EcmF3IGZhY2UgbWFya2luZwogICAgc3Nwcig2LDAsMCwyMywyMSwyNTUgKyB4T2Zm
+c2V0LDE1OSArIHlPZmZzZXQsMjMqMywyMSozKQogICAgLS1EcmF3IGFuZCBhbmltYXRlIHB1cGls
+IC8gaXJpcyBhbmQgZXllYnJvdwogICAgYnJvd0FuaW1hdGUoKQogICAgcHVwaWxBbmltYXRlKCkK
+ZW5kCgoKLS0gQU5JTUFUSU9OUwotLXNpbiBmdW5jdGlvbiBmb3IgdHdlZW4gZnJhbWVzCmZ1bmN0
+aW9uIHNpblR3ZWVuKGZybSwgc3BlZWRNdWx0LCBzdGFydCwgbGVuZ3RoKQogICAgc3BlZWQgPSA4
+ICogc3BlZWRNdWx0CiAgICAKICAgIHggPSBmcm0gLyBzcGVlZAoKICAgIC0td2hlbiBjYWxjdWxh
+dGluZyBzaW4sIDAuMjUgaXMgLTEgYW5kIC0uNzUgaXMgMQogICAgcmV0dXJuIDEgKyBzaW4oc3Rh
+cnQgKyAoKHgpICogbGVuZ3RoKSkKZW5kCgotLUJvYmJsZSBhbmltYXRpb24gdmFsdWUgLSBnaXZl
+IHNwZWVkIGFuZCBkaXN0ICh0cnkgNiAvIDIpCi0tIGluaXRQb3M6IEluaXRpYWwgcG9zaXRpb24g
+b2Ygb2JqZWN0Ci0tIGZyYW1lOiBmcmFtZSBjb3VudGVyIHVzZWQgd2hlbiBjYWxsaW5nIHRoaXMg
+b2JqZWN0Ci0tIHNwZWVkOiBlZmZlY3RpdmVseSB0aGUgIm1heCBmcmFtZSIsIGRpdmlkZWQgYnkg
+ZnJhbWUgdG8gZ2V0IGFjdHVhbCBzcGVlZAotLSBkaXN0OiBtdWx0aXBsaWVyIGZvciBzaW5Ud2Vl
+biByZXN1bHRzCi0tIHN0YXJ0OiBzdGFydCBvZiBzaW5lIHdhdmUKLS0gICAwIC8gMC41OiBtaWQt
+c3dpbmcKLS0gICAwLjI1IC8gMC43NTogc3RhcnQgYXQgc2xvdyBwb3J0aW9uIG9mIHN3aW5nCi0t
+IGxlbmd0aDogRGVzaXJlZCBsZW5ndGggb2Ygc2luZSB3YXZlCi0tICAgMTogZnVsbCBzaW5lIHdh
+dmUKLS0gICAwLjU6IGhhbGYgYSBzaW5lIHdhdmUKLS0gICB0YWtlcyBhbnkgbnVtYmVyIGZyb20g
+CmZ1bmN0aW9uIGJvYmJsZShpbml0UG9zLCBmcmFtZSwgc3BlZWQsIGRpc3QsIHN0YXJ0LCBsZW5n
+dGgpCiAgICB4ID0gc2luVHdlZW4oZnJhbWUsIHNwZWVkLCBzdGFydCwgbGVuZ3RoKSAqIGRpc3QK
+ICAgIHJldHVybiBpbml0UG9zICsgeAplbmQKCmZ1bmN0aW9uIG9mZnNldFVwZGF0ZSgpCiAgICAt
+LU1vZGUgMSA9IHN0YXJ0IHNjcmVlbgogICAgaWYobW9kZSA9PSAxKSB0aGVuCiAgICAgICAgb2Zm
+c2V0Q291bnRlciArPSAxCiAgICAgICAgLS1ib2JibGUoKSBpcyBhbiBhbmltYXRpb24gdGhhdCB3
+aWxsIHdvYmJsZSBhIHZhcmlhYmxlIG9uIGEgc2luZSB3YXZlCiAgICAgICAgeE9mZnNldCA9IGJv
+YmJsZSgwLCBvZmZzZXRDb3VudGVyLzIsIDksIDUsIDAuMjUsIDAuNSkgLSA2CiAgICAgICAgeU9m
+ZnNldCA9IGJvYmJsZSgwLCBvZmZzZXRDb3VudGVyLzIsIDE0LCA1LCAwLjI1LCAwLjUpIC0gNgoK
+ICAgICAgICAtLUlmIFggaXMgcHJlc3NlZC4uLgogICAgICAgIGlmKGJ0big1KSkgdGhlbgogICAg
+ICAgICAgICAtLS4uLlRoZW4gY2hhbmdlIG1vZGUgdG8gMgogICAgICAgICAgICBtb2RlID0gMgog
+ICAgICAgIGVuZAogICAgLS1Nb2RlIDIgPSB0cmFuc2l0aW9uaW5nIHRvIGludHJvIHNjcmVlbgog
+ICAgZWxzZWlmKG1vZGUgPT0gMikgdGhlbgogICAgICAgIC0tU2hpZnQgdGhlIGhlYWQgYW5kIG90
+aGVyIHRpdGxlIHNjcmVlbiBlbGVtZW50cyBvZmZzY3JlZW4gCiAgICAgICAgZXNjYXBlQ291bnRl
+ciArPSAyCgogICAgICAgIHhPZmZzZXQgLT0gZXNjYXBlQ291bnRlcgogICAgICAgIHpPZmZzZXQg
+LT0gMC4yNQoKICAgICAgICAtLVJlc2V0IGdlbmVyYWwtdXNlIHZhcmlhYmxlcyB0aGF0IGRvbid0
+IG5lZWQgcHJlc2VydmVkIHZhbHVlcyBhbmQgcHJvY2VlZCB0byB0aGUgaW50cm8KICAgICAgICBp
+Zihlc2NhcGVDb3VudGVyID4gNDgqMikgdGhlbgogICAgICAgICAgICB5T2Zmc2V0ID0gMAogICAg
+ICAgICAgICBlc2NhcGVDb3VudGVyID0gMAogICAgICAgICAgICBvZmZzZXRDb3VudGVyID0gMAog
+ICAgICAgICAgICBhbmltQ291bnQgPSAwCiAgICAgICAgICAgIGFuaW1Db3VudDEgPSAwCiAgICAg
+ICAgICAgIHNjcmVlbklEID0gMgogICAgICAgICAgICBtb2RlID0gMQogICAgICAgIGVuZAogICAg
+ZW5kCmVuZAoKLS1Ccm93IHR3aXRjaApmdW5jdGlvbiBicm93QW5pbWF0ZSgpCiAgICBpZihhbmlt
+Q291bnQgPCA0OCoyKSB0aGVuCiAgICAgICAgYnJvd1ggPSBib2JibGUoYnJvd1RydWVYLCBhbmlt
+Q291bnQsIDYsIC0xLCAwLjI1LCAwLjc1KQogICAgICAgIGJyb3dZID0gYm9iYmxlKGJyb3dUcnVl
+WSwgYW5pbUNvdW50LCA2LCAyLCAwLjI1LCAwLjc1KQoKICAgICAgICBhbmltQ291bnQgKz0gMQog
+ICAgLS0gVXNlIFJORyB0byBkZXRlcm1pbmUgaWYgYnJvdyBzaG91bGQgYmUgdHdpdGNoaW5nCiAg
+ICBlbHNlaWYoZmxyKHJuZCgxMDApKSA9PSAxKSB0aGVuCiAgICAgICAgYW5pbUNvdW50ID0gMAog
+ICAgZW5kCgogICAgc3Nwcig1LDAsMCwzMiwxNCxicm93WCArIHhPZmZzZXQsYnJvd1kgKyB5T2Zm
+c2V0LDMyKjMsMTQqMykKZW5kCgotLVB1cGlsIHdpZ2dsZQpmdW5jdGlvbiBwdXBpbEFuaW1hdGUo
+KQogICAgLS0gQW5pbWF0ZSBwdXBpbCBmb3IgMzYgZnJhbWVzLCB0aGVuIGRvbid0IGFuaW1hdGUg
+Zm9yIDEyIGZyYW1lcywgdGhlbiBzdGFydCBhZ2FpbgogICAgaWYoYW5pbUNvdW50MSA8IDM2KjIp
+IHRoZW4KICAgICAgICBwdXBpbFggPSBib2JibGUocHVwaWxUcnVlWCwgYW5pbUNvdW50MSwgMS41
+LCAxLCAwLjI1LCAwLjc1KQogICAgZWxzZWlmKGFuaW1Db3VudDEgPj0gNDgqMikgdGhlbgogICAg
+ICAgIGFuaW1Db3VudDEgPSAwCiAgICBlbmQKCiAgICBhbmltQ291bnQxICs9IDEKCiAgICBzc3By
+KDQsMCwwLDQyLDI5LHB1cGlsWCArIHhPZmZzZXQscHVwaWxZICsgeU9mZnNldCw0MiozLDI5KjMp
+CmVuZA==
 :: [eoc]
