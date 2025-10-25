@@ -1,35 +1,7 @@
 picotron cartridge // www.picotron.net
 version 2
 
-:: .info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwODowMDo1NiIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzIwLDEzIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwcm9jZ2VuLmx1YSMxLDIyIix3
-b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJyYXljYXN0Lmx1YSMyMTgsMjEiLHdvcmtzcGFj
-ZV9pbmRleD0xfSx7bG9jYXRpb249ImludHJvLmx1YSM1MSw2NCIsd29ya3NwYWNlX2luZGV4PTF9
-LHtsb2NhdGlvbj0ic3RhcnQubHVhIzg2LDEiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249
-ImdmeC8wLmdmeCIsd29ya3NwYWNlX2luZGV4PTJ9LHtsb2NhdGlvbj0iZ2Z4L2ZpeGVkLmdmeCIs
-d29ya3NwYWNlX2luZGV4PTJ9fV1d
-:: etc.lua
---[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
--- fps - fish person shooter
--- happy birthday, kovie!
-
-
-
-
-
-
-
-
-
--- FUNCTIONS
---Draw start screen
-
 :: gfx/
-:: gfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwODowMDo1NiJdXQ==
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjQxOjA4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yNCAwMjowODowNiIscmV2aXNpb249MTU2XV1sejQAnQUAAFg6AADzIXtbMF09e2JtcD1weHUA
@@ -129,6 +101,47 @@ DgAID-IBKAaJAh1QCgAPsgosE2BJAjAeQC4HAD8_EN4XD34iAQACAB-_1wYlX1EAAf4gPAAjBLYB
 D0AAX18wLgD_J1sBTT8wPvBVAR1vfhBeYA7wKiUfQCBOUB4CAC9ALtUAHg8xAOAf8DEATiBALgIA
 nzA_MD4gTiBOEJ0tHw_WAf8TbxcOUB4wPl4BHl8QXgBuAHEmHx8wlAHhTycOYA5lAB4PMQD-Q0Rg
 DmAO5QUvQC7pBSAPMQD-QwbjBQFWBA9aMR8PMQD-----Q1BtPTd9fQ==
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNSAwMjowMjoxMCJdXQ==
+:: map/
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
+CwABNgAAKQAAKAAFNgBvABIAEgASAEAeAAAfGAAVBBgAARUAIwEnGAB0CzYAZwAABBgAUwI3AAA9
+GwARChsAFAMbABQFMwARCRgAFQIYAAIzAAQeABEIHgAUAR4AUwgnAAA-GwARBxsAFQAbAAI5ABY_
+PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
+AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
+PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNSAwMjowMjoxMCJdXQ==
+:: sfx/
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNSAwMjowMjoxMCJdXQ==
+:: etc.lua
+--[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
+-- fps - fish person shooter
+-- happy birthday, kovie!
+
+
+
+
+
+
+
+
+
+-- FUNCTIONS
+--Draw start screen
+
 :: intro.lua
 --[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-24 07:44:52",revision=24,xstickers={}]]
 -- Intro after starting game
@@ -225,7 +238,7 @@ function menuSelect()
     end
 end
 :: main.lua
---[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 07:45:51",revision=20,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 23:19:21",revision=42,xstickers={}]]
 include("start.lua")
 include("intro.lua")
 include("procgen.lua")
@@ -238,14 +251,12 @@ function _init()
 	procgenInit()
 	
 	screenID = 0
-
-   currentMap = seed.map
 end
 
 function _update()
 		local c_tbl =
 	{
-		[0] = func,
+		[0] = initiateMaze,
 		[1] = startScreen,
 		[2] = menuSelect,
 		[3] = movePlayer,
@@ -263,7 +274,7 @@ end
 function _draw()
 	local c_tbl =
 	{
-		[0] = initiateMaze,
+		[0] = drawMaze,
 		[1] = startScreenDraw,
 		[2] = menuSelect,
 		[3] = drawRoom,
@@ -274,23 +285,11 @@ function _draw()
 	if(func) then
 		func()
 	else
-
+	
 	end
 end
-:: map/
-:: map/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwODowMDo1NiJdXQ==
-:: map/0.map
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
-CwABNgAAKQAAKAAFNgBvABIAEgASAEAeAAAfGAAVBBgAARUAIwEnGAB0CzYAZwAABBgAUwI3AAA9
-GwARChsAFAMbABQFMwARCRgAFQIYAAIzAAQeABEIHgAUAR4AUwgnAAA-GwARBxsAFQAbAAI5ABY_
-PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
-AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
-PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
 :: procgen.lua
---[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-24 07:29:09",revision=25,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-25 02:02:00",revision=435,xstickers={}]]
 -- CONTENT GENERATION
 --[[
 	Generate a map with walls at map edges + algorithmic maze generation 
@@ -299,21 +298,98 @@ PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
 --]]
 
 function procgenInit()
-	seed = generateMap(32, 32, 0, 0, 0, 0)
-	slowDraw = true
+	---- These variables are customizable
+	-- Width and height of the map in cells
+	-- Even numbers are preferred
+	-- Takes about 1 frame to initialize the map with 200 x 200 cells
+	mapWidth = 30
+	mapHeight = 30
+	
+	validCells = (mapWidth / 2) * (mapHeight / 2)
+	finalizedCells = 0
+	
+	drawStage = 0
+	drawSpeed = 2
+	-- If drawMazeGen is true, then generation will be depicted visually
+	-- This is much slower than if you opt not to draw the map generation 
+	drawMazeGen = true
+	-- slowGeneration
+	slowGeneration = true
+	-- drawCellStatus colors map cells based on whether or not they're finalized:
+	  -- Dark blue = 
+	drawCellStatus = true
+	
+	rainbow = userdata(u8, 7, 1)
+	rainbow:set(0, 0, 8, 9, 10, 11, 12, 14)
+	
+	---- These variables are not customizable
+	
+	-- currentCoords is used to identify the position the algorithm is currently looking at
+	currentCoords = {x = 0, y = 0,}
+	-- Seed is the foundation for a completed map generation
+	seed = 
+	{
+		["map"] = userdata(i16, mapWidth, mapHeight),
+		["plot"] = userdata(i16, mapWidth, mapHeight),
+		["ready"] = nil,
+		["coords"] = currentCoords,
+	}
+	-- map
+	mapPlot = userdata(i16, mapWidth, mapHeight)
 end
 
 function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _tileset)
-	-- Nested table containing values for map cells
-	_genMap = {}
+	-- Userdata with fixed width and height
+	--TODO: Rewrite this since converting to userdata
 	-- Nested table containing values for whether a given cell's state is finalized
 	-- 0: Not plotted
 	-- 1: Plotted but not finalized (surrounding cells have not been fully inspected yet)
 	-- 2: Plotted and finalized
-	_plotted = {}
+	_genMap = seed.map
+	_plotted = seed.plot
 	-- Value for current map coords
-	_currentCoords = {x = 2, y = 2}
 
+	------
+	
+	-- Set walls of map
+	
+	-- OPTIMIZATION
+	_ends = repeatVar(2, _width)
+	_midGens = repeatVar(1, _width - 2)
+	_midPlots = repeatVar(0, _width - 2)
+	if currentCoords.x <= _width then
+		if currentCoords.x == 0 or currentCoords.x == _width then
+			_genMap:set(currentCoords.x, 0, unpack(_ends))
+			_plotted:set(currentCoords.x, 0, unpack(_ends))
+		else
+			_genMap:set(currentCoords.x, 0, 2, unpack(_midGens), 2)
+			_plotted:set(currentCoords.x, 0, 2, unpack(_midPlots), 2)
+		end
+		
+		genComplete = false
+	else
+		genComplete = true
+	end
+	
+	currentCoords.x += 1
+	
+	--[[
+	-- ALT
+	-- Iterate through all Y positions
+	for i = 1, _height do
+		for j = 1, _width do
+			if i == 1 or i == _height or j == 1 or j == _width then
+				_genMap:set(i, j, 2)
+				_plotted:set(i, j, 2)
+			else
+				_genMap:set(i, j, 1)
+				_plotted:set(i, j, 0)
+			end
+		end
+	end
+	--]]
+	
+	--[[
 	-- Set walls of map
 	-- Iterate through all Y positions
 	for i = 1, _height do
@@ -331,80 +407,107 @@ function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _
 			end
 		end
 	end
+	
+	--]]
 
 	-- Ensure that starting cell (2, 2) is finalized as empty
-	_genMap[2][2] = 0
-	_plotted[2][2] = 0
+	_genMap:set(2,2,0)
+	_plotted:set(2,2,0)
 	
-	_plotComplete = false
+	if genComplete == true then
+		_ready = false
+		currentCoords.x = 2
+		currentCoords.y = 2
+	else
+		_ready = nil
+	end
 	
 	_genSeed = {
 		["map"] = _genMap,
 		["plot"] = _plotted,
-		["ready"] = _plotComplete,
-		["coords"] = _currentCoords,
+		["ready"] = _ready,
+		["coords"] = currentCoords,
 	}
-	
-	if (slowDraw == false) then
-		_seed = _genSeed
-		
-		while (_seed.ready == false) do
-			_seed = stageMaze(_seed)
-		end
-		
-		_genSeed = _seed
+	-- Trash code?
+	--[[	
+	while (_genSeed.ready == false) do
+		_genSeed = stageMaze(_genSeed)
 	end
+	--]]
 	
 	return _genSeed
 end
 
+-- Root function for maze generation
 function initiateMaze()
-	_seed = seed
-	
-	if (slowDraw == true) then
-		if (_seed.ready != nil) then
-			_seed = stageMaze(seed)
+	if seed != nil then
+		if seed.ready == nil then
+			seed = generateMap(mapWidth, mapHeight, 0, 0, 0, 0)
+			currentMap = seed.map
+		else
+			if seed.ready == false then
+				seed = stageMaze(seed)
+			else
+				screenID = 1
+			end
 		end
-	else
-		_seed.ready = true
-	end
-	
-	seed = _seed
-	
-	if (seed.ready == true) then
-		screenID = 1
 	end
 end
 
 function stageMaze(_seed)
-	_genProg = generateMaze(_seed.map, _seed.plot, _seed.coords)
-	_seed.map = _genProg.genMap
-	_seed.plot = _genProg.plotted
+	_genProg = generateMaze(_seed)
+	
+	_seed.map = _genProg.map
+	_seed.plot = _genProg.plot
 	_seed.coords = _genProg.coords
-    
-	currentMap = _seed.map
-
 	_seed.ready = _genProg.plotComplete
     
-	if (drawMe == true) then
-		drawStage += 1
-		if(drawStage % drawSpeed == 0) then
-			drawMap(currentMap, #currentMap[1], #currentMap)
-			mapFrame = 0
-		end
-	else
-		print("Working...")
-	end
-	
+	currentMap = _seed.map
+ 	
 	return _seed
 end
 
-function generateMaze(_genMap, _plotted, _coords)
-	_map = _genMap
-	_coordinates = _coords
+function drawMaze()
+	cls()
+	if slowGeneration == true then
+		if genComplete == false then
+			-- Write loading message with timestamp in center of screen
+			_str = "Initializing maze... %.2f"
+			_str = string.format(_str, t())
+			_strWidth = print(_str, 0, -1000)
+			print(_str, 240 - _strWidth / 2, 130, 7)
+			
+			-- Draw loading bar
+			rect(100, 140, 380, 148)
+			rectfill(102, 142, 102 + 276 * (currentCoords.x / mapWidth), 146, rainbow:get(flr(t() * 8)%6, 0))
+		else
+			if drawMazeGen == true and seed != nil then
+				drawMap()
+			elseif drawMazeGen == false and seed != nil then
+				-- Write loading screen message with timestamp in center of screen
+				_str = "Generating maze... %.2f"
+				_str = string.format(_str, t())
+				_strWidth = print(_str, 0, -1000)
+				print(_str, 240 - _strWidth / 2, 130, 7)
+				
+				-- Draw loading bar
+				rect(100, 140, 380, 148)
+				rectfill(102, 142, 102 + 276 * (finalizedCells / validCells), 146, rainbow:get(flr(t() * 8)%6, 0))
+			else
+				error("No seed")
+			end
+		end
+	end
+end
+
+function generateMaze(_seed, _genMap, _plotted, _coords)
+	_genMap = _seed.map
+	_plotted = _seed.plot
+	_coords = _seed.coords
+	_genMap = _genMap
 	
-	_maxY = #_genMap[1]
-	_maxX = #_genMap
+	_maxX = _genMap:width()
+	_maxY = _genMap:height()
 	_options = {}
 	
 	_genProg = {}
@@ -412,10 +515,10 @@ function generateMaze(_genMap, _plotted, _coords)
 	_genProg.plotComplete = false
 	
 	-- Set current coords to 0
-	_map[_coordinates.y][_coordinates.x] = 0
+	_genMap:set(_coords.x, _coords.y, 0)
 	
 	-- List of all possible directions that lead the current cell to surrounding cells in cardinal directions
-	_directions =
+	_directions = 
 	{
 		{x = 2, y = 0, ix = 1, iy = 0,},
 		{x = 0, y = 2, ix = 0, iy = 1,},
@@ -424,102 +527,136 @@ function generateMaze(_genMap, _plotted, _coords)
 	}
 	
 	-- If current cell isn't finalized, then search surroundings for unexplored cell and move to it
-	if (_plotted[_coordinates.y][_coordinates.x] < 2) then
+	if (_plotted:get(_coords.x, _coords.y) < 2) then
 		-- Check if neighboring cells are out-of-bounds and not yet explored; if not, then add them to list of potential options for dest cell
 		for i = 1, 4 do
-			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] == 0) then
+			if (_coords.x + _directions[i].x > 1 and _coords.x + _directions[i].x < _maxX and _coords.y + _directions[i].y > 1 and _coords.y + _directions[i].y < _maxY and _plotted:get(_coords.x + _directions[i].x, _coords.y + _directions[i].y) == 0) then
 				_options[#_options + 1] = i
 			end
 		end
 	
 		-- If options list isn't empty...
 		if (#_options > 0) then
+			-- If there's more than one option (meaning current cell needs to be explored twice or more)...
 			if (#_options > 1) then
 				--  Set choice to any of the option tables at random
 				_choice = _options[flr(rnd(#_options)) + 1]
 				-- Plot current cell as explored
-				_plotted[_coordinates.y][_coordinates.x] = 1
+				_plotted:set(_coords.x, _coords.y, 1)
 				-- Plot intersecting cell as explored
-				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+				_plotted:set(_coords.x + _directions[_choice].ix, _coords.y + _directions[_choice].iy, 1)
+			-- Otherwise, if only one option is available...
 			else
 				-- Set choice to the only choice available
 				_choice = _options[1]
+				-- Document increase in amount of finalized cells
+				finalizedCells += 1
 				-- Plot current cell as finalized
-				_plotted[_coordinates.y][_coordinates.x] = 2
+				_plotted:set(_coords.x, _coords.y, 2)
 				-- Plot intersecting cell as explored
-				_plotted[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 1
+				_plotted:set(_coords.x + _directions[_choice].ix, _coords.y + _directions[_choice].iy, 1)
 			end
 			-- Set intersecting square as empty space
-			_map[_coordinates.y + _directions[_choice].iy][_coordinates.x + _directions[_choice].ix] = 0
+			_genMap:set(_coords.x + _directions[_choice].ix, _coords.y + _directions[_choice].iy, 0)
 			-- Set new coords
-			_coordinates.x += _directions[_choice].x
-			_coordinates.y += _directions[_choice].y
+			_coords.x += _directions[_choice].x
+			_coords.y += _directions[_choice].y
 		else
 			-- If options list is empty then mark the current cell as finalized
-			_plotted[_coordinates.y][_coordinates.x] = 2
+			_plotted:set(_coords.x, _coords.y, 2)
+			-- Document increase in amount of finalized cells
+			finalizedCells += 1
 		end
-	elseif (_plotted[_coordinates.y][_coordinates.x] == 2) then
+	elseif (_plotted:get(_coords.x, _coords.y) == 2) then
 		_options = {}
 	
 		-- Same as previous neighboring cell step, but look for any neighboring cell that isn't finalized, not just unexplored
 		for i = 1, 4 do
-			if (_coordinates.x + _directions[i].x > 1 and _coordinates.x + _directions[i].x < _maxX and _coordinates.y + _directions[i].y > 1 and _coordinates.y + _directions[i].y < _maxY and _plotted[_coordinates.y + _directions[i].y][_coordinates.x + _directions[i].x] < 2) then
+			if (_coords.x + _directions[i].x > 1 and _coords.x + _directions[i].x < _maxX and _coords.y + _directions[i].y > 1 and _coords.y + _directions[i].y < _maxY and _plotted:get(_coords.x + _directions[i].x, _coords.y + _directions[i].y) < 2) then
 				_options[#_options + 1] = i
 			end
 		end
 	
 		-- If there are free spaces to move to, then...
 		if(#_options > 0) then
-			-- Select an available direction at random
-			_choice = _options[flr(rnd(#_options)) + 1]
+			if #_options > 1 then
+				-- Select an available direction at random
+				_choice = _options[flr(rnd(#_options)) + 1]
+			else
+				_choice = _options[1]
+				-- Document increase in amount of finalized cells
+				finalizedCells += 1
+			end
 			-- Set new coords
-			_coordinates.x += _directions[_choice].x
-			_coordinates.y += _directions[_choice].y
+			_coords.x += _directions[_choice].x
+			_coords.y += _directions[_choice].y
 		else
-			_solved = false
-			for i = 1, flr(#_genMap / 2) do
-				for j = 1, flr(#_genMap[1] / 2) do
-					if (_plotted[i * 2][j * 2] == 1 and _solved == false) then
-						_coordinates.x = j * 2
-						_coordinates.y = i * 2
-						_solved = true
+			-- Check all cells for ANY cell that is explored but not finalized, and use that if it exists
+			-- Otherwise maze generation is complete. Congratulations!
+			_solved = true
+			for i = 1, flr(_genMap:width() / 2) do
+				for j = 1, flr(_genMap:height() / 2) do
+					if (_plotted:get(i * 2, j * 2) == 1 and _solved == true) then
+						_coords.x = i * 2
+						_coords.y = j * 2
+						_solved = false
 					end
 				end
 			end
 	
-			if (_solved == false) then
+			if (_solved == true) then
 				-- Done exploring! 
 				_genProg.plotComplete = true
 			end
 		end
 	end
 	
-	_genProg.genMap = _genMap
-	_genProg.plotted = _plotted
-	_genProg.coords = _coordinates
+	_genProg.map = _genMap
+	_genProg.plot = _plotted
+	_genProg.coords = _coords
 		
 	mapPlot = _plotted
-	currentCoords.x = _coordinates.x
-	currentCoords.y = _coordinates.y
-		
+	currentCoords.x = _coords.x
+	currentCoords.y = _coords.y
+	
 	return _genProg
 end
+
+function checkCellValue(_map, _val, _x, _y, _ix, _iy)
+	_ix = _ix != nil and _ix or 0
+	_iy = _iy != nil and _iy or 0
+	
+	_trueVal = _map:get(_x + _ix, _y + _iy)
+	
+	if _trueVal == _val then
+		return true
+	else
+		return false
+	end
+end
+
+-- Build a table of the same variable repeated, then unpack and return it
+function repeatVar(_value, _size)
+	_t = {}
+	for i = 1, _size do
+		add(_t, _value)
+	end
+	
+	return _t
+end
 :: raycast.lua
---[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-24 08:00:56",revision=40,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-25 01:59:17",revision=162,xstickers={}]]
 --Raycasting
 
 function raycastInit()
 	--Map width / height
 	cellSize = 16
-	h = 40
+	h = 80
 	
+	-- Y position on screen where horizon starts
 	horizon = 110
 
-	currentCoords = {x = 2, y = 2,}
-	mapPlot = {}
-	drawStage = 0
-	drawSpeed = 1
-	drawMe = true
+	
 	
 	--Player variables
 	player =
@@ -529,7 +666,7 @@ function raycastInit()
 		xVel = 0,
 		yVel = 0,
 		zRot = 0,
-		fov = 150,
+		fov = 90,
 	}
 	
 end
@@ -591,7 +728,7 @@ function raycast()
             end
 
             -- Check for collision
-            if (mapCollide(currentMap, flr(x), flr(y)) > 0 or x > #currentMap or y > #currentMap[1] or x <= 0 or y <= 0) then
+            if (mapCollide(currentMap, flr(x), flr(y)) > 0 or x > currentMap:width() or y > currentMap:height() or x <= 0 or y <= 0) then
                 _result = mapCollide(currentMap, flr(x), flr(y))
                 if(_result != 7) then
                     line(i, horizon - h / d, i, horizon + h / d, _result)
@@ -605,8 +742,8 @@ end
 
 -- Get value from a map table - returns nil if out of range
 function mapCollide(_mapVal, _x, _y)
-    if (_x > 0 and _y > 0 and _x <= #_mapVal and _y <= #_mapVal[1]) then
-        return _mapVal[_y][_x]
+    if (_x > 0 and _y > 0 and _x <= _mapVal:width() and _y <= _mapVal:height()) then
+        return _mapVal:get(_x, _y)
     else
         return 7
     end
@@ -625,17 +762,17 @@ function mapObjectCollision(_map, _x, _y, _xDist, _yDist)
     _objY = flr(_y + _yDist)
     
     -- If the player's offset X position and true Y position don't intersect with an occupied cell on the map...
-    if (_objX > 0 and _objX < #_map[1] and _playerY > 0 and _playerY < #_map) then
+    if (_objX > 0 and _objX < _map:width() and _playerY > 0 and _playerY < _map:height()) then
         -- ...Then check if the player's new X position intersects with an occupied cell on the map using a ternary statement
         -- If intersects, then mark as 0. If not, then mark as 1.
-        _result[x] = _map[_playerY][_objX] > 0 and 0 or 1
+        _result[x] = _map:get(_objX, _playerY) > 0 and 0 or 1
     else
         _result[x] = 0
     end
 
     -- Same as above but for true X position and offset Y position
-    if(_playerX > 0 and _playerX < #_map[1] and _objY > 0 and _objY < #_map) then
-        _result[y] = _map[_objY][_playerX] > 0 and 0 or 1
+    if(_playerX > 0 and _playerX < _map:width() and _objY > 0 and _objY < _map:height()) then
+        _result[y] = _map:get(_playerX, _objY) > 0 and 0 or 1
     else
         _result[y] = 0
     end
@@ -657,8 +794,8 @@ function move(_x, _y, _xDist, _yDist)
     _moveDist = {}
     _mapObjects = mapObjectCollision(currentMap, _x, _y, _xDist, _yDist)
 
-    _moveDist[x] = _mapObjects[x] == 0 and 0 or mapEdgeCollision(_x, _xDist, #currentMap)
-    _moveDist[y] = _mapObjects[y] == 0 and 0 or mapEdgeCollision(_y, _yDist, #currentMap[1])
+    _moveDist[x] = _mapObjects[x] == 0 and 0 or mapEdgeCollision(_x, _xDist, currentMap:width())
+    _moveDist[y] = _mapObjects[y] == 0 and 0 or mapEdgeCollision(_y, _yDist, currentMap:height())
 
     return _moveDist
 end
@@ -696,24 +833,29 @@ function movePlayer()
 end
 
 -- Map functions
-function drawMap(mapVal, width, height)
-    _prevX = 0
-    _prevY = 0
-    _mapWidth = 270 / width
-    _mapHeight = 270 / height
+function drawMap()
+	_mapWidth = 270 / seed.map:width()
+	_mapHeight = 270 / seed.map:height()
+	_xOffset = 240 - (seed.map:width() * _mapWidth) / 2
+	_prevX = 0
+	_prevY = 0
 
-    for i = 1, #mapVal do
-        for j = 1, #mapVal[i] do
-            -- rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
-            if(mapPlot[i][j] != 0 and i != 1 and i != #mapVal and j != 1 and j != #mapVal[i]) then
-                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, 12)
-            else
-                rectfill(_prevX, _prevY, j * _mapWidth, i * _mapHeight, mapPlot[i][j])
-            end
-            _prevX = j * _mapWidth
+	for i = 1, seed.map:width() do
+		for j = 1, seed.map:height() do
+			if(mapPlot:get(i, j) != 0 and i != 1 and i != seed.map:width() and j != 1 and j != seed.map:height()) then
+				rectfill(_prevX + _xOffset, _prevY, i * _mapWidth + _xOffset, j * _mapHeight, 12)
+			end
+			if drawCellStatus == true then
+				if i == 1 or i == seed.map:width() or j == 1 or j == seed.map:height() then
+					rectfill(_prevX + _xOffset, _prevY, i * _mapWidth + _xOffset, j * _mapHeight, 16)
+				elseif seed.plot:get(i, j) == 2 then
+					rectfill(_prevX + _xOffset, _prevY, i * _mapWidth + _xOffset, j * _mapHeight, 28)
+				end
+			end
+				_prevY = j * _mapHeight + 1
         end
-        _prevX = 0
-        _prevY = i * _mapHeight
+        _prevX = i * _mapWidth + 1
+        _prevY = 0
     end
 
     -- rectfill(currentCoords.x * _mapWidth, currentCoords.y * _mapHeight, (currentCoords.x * _mapWidth) - _mapWidth, (currentCoords.y * _mapHeight) - _mapHeight, 9)
@@ -726,16 +868,6 @@ function drawRoom()
     rectfill(0,0,480,horizon,7)
     raycast()
 end
-:: sfx/
-:: sfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNCAwODowMDo1NiJdXQ==
-:: sfx/0.sfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
-Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
-AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
-MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
-H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: start.lua
 b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNS0xMC0yMyAyMjozNTozOSIsbW9k
 aWZpZWQ9IjIwMjUtMTAtMjQgMDc6NDE6MTEiLHJldmlzaW9uPTg4LHhzdGlja2Vycz17fV1dCmZ1
@@ -809,4 +941,13 @@ LCAxLCAwLjI1LCAwLjc1KQogICAgZWxzZWlmKGFuaW1Db3VudDEgPj0gNDgqMikgdGhlbgogICAg
 ICAgIGFuaW1Db3VudDEgPSAwCiAgICBlbmQKCiAgICBhbmltQ291bnQxICs9IDEKCiAgICBzc3By
 KDQsMCwwLDQyLDI5LHB1cGlsWCArIHhPZmZzZXQscHVwaWxZICsgeU9mZnNldCw0MiozLDI5KjMp
 CmVuZA==
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNSAwMjowMjoxMCIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzEyLDE0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwcm9jZ2VuLmx1YSMyMywyMCIs
+d29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iaW50cm8ubHVhIzUxLDY0Iix3b3Jrc3BhY2Vf
+aW5kZXg9MX0se2xvY2F0aW9uPSJzdGFydC5sdWEjODYsMSIsd29ya3NwYWNlX2luZGV4PTF9LHts
+b2NhdGlvbj0icmF5Y2FzdC5sdWEjMTkyLDEyIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9u
+PSJnZngvMC5nZngiLHdvcmtzcGFjZV9pbmRleD0yfSx7bG9jYXRpb249ImdmeC9maXhlZC5nZngi
+LHdvcmtzcGFjZV9pbmRleD0yfX1dXQ==
 :: [eoc]
