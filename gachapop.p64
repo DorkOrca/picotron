@@ -1,0 +1,158 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNyAwNzoyMTozNiIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzE5LDUiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249ImdhY2hhLmx1YSM5LDIzIix3b3Jr
+c3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJjbGlja2VyLmx1YSM0Miw0OSIsd29ya3NwYWNlX2lu
+ZGV4PTF9LHtsb2NhdGlvbj0iZ2Z4LzAuZ2Z4Iix3b3Jrc3BhY2VfaW5kZXg9Mn0se2xvY2F0aW9u
+PSJzZngvMC5zZngiLHdvcmtzcGFjZV9pbmRleD00fX1dXQ==
+:: clicker.lua
+--[[pod_format="raw",created="2025-10-26 08:18:44",modified="2025-10-27 07:21:36",revision=109,xstickers={}]]
+
+-- Create a button that performs the provided function
+function clicker(_func, _x, _y, _width, _height, _type)
+	-- Error if x or y positions for the button aren't provided
+	if not _x or not _y then
+		error("clicker(): No X or Y position provided")
+	end
+	
+	-- Set defaults for remaining variables if none are provided
+	_type = not _type and 1 or _type
+	_width = not _width and 8 or _width
+	_height = not _height and 8 or _height
+
+	_button = userdata("i16",6,2)
+	
+	_button:set(0, 0, _x, _y + 2, _width, _height + 1, 1, 22)
+	
+	_mouseX, _mouseY, _mouseB = mouse()
+	
+	_xIntersects = _mouseX > _x and _mouseX < _x + _width
+	_yIntersects = _mouseY > _y and _mouseY < _y + _height + 4
+	_clicked = _mouseB == 0x1
+	_space = key("space")
+	
+	-- Only run function once when button is held; don't run again until it's released
+	if _type == 1 then
+		if ((_clicked and _xIntersects and _yIntersects) or _space) and not lmbHeld  then
+			lmbHeld = true
+			_button:set(0, 1, _x, _y + 2, _width, _height, 1, 7)
+			sfx(2)
+			
+			-- Run the provided function if the function isn't nil
+			if _func then
+				_func()
+			end
+			
+		else
+			-- Reset hold variable if user releases left mouse button
+			if lmbHeld and (_clicked or _space) then
+				_button:set(0, 1, _x, _y + 2, _width, _height, 1, 7)
+			else
+				if lmbHeld and (not _clicked and not _space) then
+					lmbHeld = false
+					sfx(1)
+				end
+				_button:set(0, 1, _x, _y, _width, _height, 1, 7)
+			end
+		end
+		
+	-- Run function repeatedly instead of only once
+	else
+		if _clicked and _xIntersects and _yIntersects then
+			_button:set(0, 1, _x, _y + 2, _width, _height, 1, 7)
+			
+			if _func then
+				_func()
+			end
+			
+		else
+			_button:set(0, 1, _x, _y, _width, _height, 1, 7)
+		end
+	end
+	
+	return _button
+end
+
+function drawClicker(_button)
+	rrectfill(_button:get(0,0,6))
+	rrectfill(_button:get(0,1,6))
+end
+:: gacha.lua
+--[[pod_format="raw",created="2025-10-26 20:44:35",modified="2025-10-27 06:59:39",revision=4,xstickers={}]]
+function initGacha()
+	gachaTypes =
+	{
+		
+	}
+end
+
+function spawnGacha()
+	_type = flr(rnd(4)+1)
+	
+	_gacha = userdata("i16",3)
+	
+end
+:: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNyAwNzoyMTozNiJdXQ==
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yNiAyMDo0OToxOCIscmV2aXNpb249NV1dbHo0AIgBAABQMwAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIANp5PTAsem9vbT0xMn0sPwDwBBAWFzAW
+FyAHHxwnEAceJxAGPgYEAPMXAB8ONh0cNhwfFz0bHjweAA8YOwoQDxA_CRBYEFwgChgKMAkcCTA8
+ABseOwD-Gwo2FR8LNhQfDzUTHxo0EgAPGTMBEA8DMg0QXwkQXxsgAR8JATANHxsNEK4AHfAL8BFe
+EFwADgg-GAgODA8QMQ0MHxc_Gx8cPBqiAFEJEA06DaEA8CoJGAkwDRwN8BNfChBfCwAPCg8JPxkP
+CQ8KDwsPGzMHDwsfDz8KHw8fGj8LHxoADxk-Dw8ZEAM-GgOiAN9XIA8ZHwkPGTADFwMQUAE1-gQG
+DjYOFg42DiY_Nj4WEDYwNvAUPgEPKQADHxImAR4f8DIA--------------------------------
+---------------------------------0FQPTEyfX0=
+:: main.lua
+--[[pod_format="raw",created="2025-10-26 08:07:01",modified="2025-10-27 01:17:47",revision=17,xstickers={}]]
+include("clicker.lua")
+include("gacha.lua")
+
+function _init()
+	clickerWidth = 30
+	clickerHeight = 10
+	
+	lmbHeld = false
+end
+
+function _update()
+		clicker1 = clicker(spawnGacha, 240 - clickerWidth / 2, 135 - clickerHeight / 2, clickerWidth, clickerHeight, 1)
+end
+
+function _draw()
+	cls()
+	if clicker1 then
+		drawClicker(clicker1)
+	end
+end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNyAwNzoyMTozNiJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNyAwNzoyMTozNiJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yNyAwNToxNjo0NyIscmV2aXNpb249MTJdXWx6NACnAQAAegsAAP8wcHh1AAMoAAAEAAQPQBAC
+DgABoAEgAqAOAA8QAA3wygECA0APD5AEBQYHQAyQCAkKC0AMkA8MDw0PDgxADPD-AQDr8hCqARAG
+DzAQASABIAHwAAIQBg4QAQ-xEA8hIAEwD2ugEQDxHAwQAQ-0EAHwqAsPbA8U8MMDAA-4Cg--D4AP
+9w8NAXAPcA9sD3UPYw9rsAEwAA9NAASaCSAPSyAPffAHVgATiFYAHwJWAAW6DyAPZQ9jD2gPb2Bg
+ABACDAACXgCYQPDDDygP--DGRAAv8AkwAP------NEgKDgAR0AX8KCABD_UPLAAFMA_LDx0QD1tQ
+AQggD88AATACD4EgDyDwpw8pEA_Q8AMPHg8dAA_H8AUPMQ808JQzBvUEcw91D3APZQ9yD2IPYR9z
+cAEQApkAIg8SagBTDyEPxxB5AAOFAGCoBAAK8AUFABmtqQAf-wEAqvAgxg9AAA8NAjAPKg8k--8u
+EP0uHyD9LvAxDyMD8C0PQAAIAjAO-S8PIP0vB-0v8HASADFADzQOAAQRAF8PEED9sAoAcB--AQD-
+1VD-----lA==
+:: [eoc]

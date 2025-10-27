@@ -1,7 +1,34 @@
 picotron cartridge // www.picotron.net
 version 2
 
+:: .info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNiAwNDozMTo0NyIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzQ2LDYiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InByb2NnZW4ubHVhIzE0LDE2Iix3
+b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJpbnRyby5sdWEjMywyOCIsd29ya3NwYWNlX2lu
+ZGV4PTF9LHtsb2NhdGlvbj0ic3RhcnQubHVhIzg2LDEiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9j
+YXRpb249InJheWNhc3QubHVhIzg2LDQ5Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJn
+ZngvMC5nZngiLHdvcmtzcGFjZV9pbmRleD0yfX1dXQ==
+:: etc.lua
+--[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
+-- fps - fish person shooter
+-- happy birthday, kovie!
+
+
+
+
+
+
+
+
+
+-- FUNCTIONS
+--Draw start screen
+
 :: gfx/
+:: gfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNiAwNDozMTo0NyJdXQ==
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjQxOjA4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yNCAwMjowODowNiIscmV2aXNpb249MTU2XV1sejQAnQUAAFg6AADzIXtbMF09e2JtcD1weHUA
@@ -101,49 +128,8 @@ DgAID-IBKAaJAh1QCgAPsgosE2BJAjAeQC4HAD8_EN4XD34iAQACAB-_1wYlX1EAAf4gPAAjBLYB
 D0AAX18wLgD_J1sBTT8wPvBVAR1vfhBeYA7wKiUfQCBOUB4CAC9ALtUAHg8xAOAf8DEATiBALgIA
 nzA_MD4gTiBOEJ0tHw_WAf8TbxcOUB4wPl4BHl8QXgBuAHEmHx8wlAHhTycOYA5lAB4PMQD-Q0Rg
 DmAO5QUvQC7pBSAPMQD-QwbjBQFWBA9aMR8PMQD-----Q1BtPTd9fQ==
-:: gfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNSAwMjowMjoxMCJdXQ==
-:: map/
-:: map/0.map
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
-CwABNgAAKQAAKAAFNgBvABIAEgASAEAeAAAfGAAVBBgAARUAIwEnGAB0CzYAZwAABBgAUwI3AAA9
-GwARChsAFAMbABQFMwARCRgAFQIYAAIzAAQeABEIHgAUAR4AUwgnAAA-GwARBxsAFQAbAAI5ABY_
-PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
-AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
-PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
-:: map/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNSAwMjowMjoxMCJdXQ==
-:: sfx/
-:: sfx/0.sfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
-Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
-AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
-MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
-H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
-:: sfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNSAwMjowMjoxMCJdXQ==
-:: etc.lua
---[[pod_format="raw",created="2025-10-23 22:34:30",modified="2025-10-23 22:50:31",revision=10,xstickers={}]]
--- fps - fish person shooter
--- happy birthday, kovie!
-
-
-
-
-
-
-
-
-
--- FUNCTIONS
---Draw start screen
-
 :: intro.lua
---[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-24 07:44:52",revision=24,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:34:26",modified="2025-10-25 03:58:14",revision=26,xstickers={}]]
 -- Intro after starting game
 
 --return frame number given a counter, initial frame, width of frames and duration of each frame (30 = 1s)
@@ -238,7 +224,7 @@ function menuSelect()
     end
 end
 :: main.lua
---[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-24 23:19:21",revision=42,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:32:52",modified="2025-10-25 05:54:44",revision=59,xstickers={}]]
 include("start.lua")
 include("intro.lua")
 include("procgen.lua")
@@ -254,7 +240,7 @@ function _init()
 end
 
 function _update()
-		local c_tbl =
+	local c_tbl =
 	{
 		[0] = initiateMaze,
 		[1] = startScreen,
@@ -287,9 +273,22 @@ function _draw()
 	else
 	
 	end
+	print(string.format("%.2f",stat(1)), 2, 2, 7)
 end
+:: map/
+:: map/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNiAwNDozMTo0NyJdXQ==
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
+MC0yMyAyMzoxNzoyNSIscmV2aXNpb249M11dbHo0ACkBAADmAQAA8BF7e2JtcD1weHUATICAQAAF
+CwABNgAAKQAAKAAFNgBvABIAEgASAEAeAAAfGAAVBBgAARUAIwEnGAB0CzYAZwAABBgAUwI3AAA9
+GwARChsAFAMbABQFMwARCRgAFQIYAAIzAAQeABEIHgAUAR4AUwgnAAA-GwARBxsAFQAbAAI5ABY_
+PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
+AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
+PWZhbHNlLHBhbl94PS0xODgLAOJ5PS0xMCx0aWxlX2g9OAkA4Hc9OCx6b29tPTAuNX19
 :: procgen.lua
---[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-25 02:02:00",revision=435,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2025-10-26 04:31:47",revision=500,xstickers={}]]
 -- CONTENT GENERATION
 --[[
 	Generate a map with walls at map edges + algorithmic maze generation 
@@ -302,8 +301,8 @@ function procgenInit()
 	-- Width and height of the map in cells
 	-- Even numbers are preferred
 	-- Takes about 1 frame to initialize the map with 200 x 200 cells
-	mapWidth = 30
-	mapHeight = 30
+	mapWidth = 10
+	mapHeight = 10
 	
 	validCells = (mapWidth / 2) * (mapHeight / 2)
 	finalizedCells = 0
@@ -329,13 +328,13 @@ function procgenInit()
 	-- Seed is the foundation for a completed map generation
 	seed = 
 	{
-		["map"] = userdata(i16, mapWidth, mapHeight),
-		["plot"] = userdata(i16, mapWidth, mapHeight),
+		["map"] = userdata(i16, 3, mapWidth * mapHeight),
+		["plot"] = userdata(i16, 3, mapWidth * mapHeight),
 		["ready"] = nil,
 		["coords"] = currentCoords,
 	}
 	-- map
-	mapPlot = userdata(i16, mapWidth, mapHeight)
+	mapPlot = userdata(i16, 3, mapWidth * mapHeight)
 end
 
 function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _tileset)
@@ -347,23 +346,52 @@ function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _
 	-- 2: Plotted and finalized
 	_genMap = seed.map
 	_plotted = seed.plot
+	
+	_mapWidth = 270 / seed.map:width()
+	_mapHeight = 270 / seed.map:height()
+	_xOffset = 240 - (seed.map:width() * _mapWidth) / 2
 	-- Value for current map coords
-
+	
+	_coordsX = currentCoords.x * _mapWidth + 1
+	_coordsY = currentCoords.y * _mapHeight + 1
+	
 	------
 	
 	-- Set walls of map
-	
 	-- OPTIMIZATION
-	_ends = repeatVar(2, _width)
-	_midGens = repeatVar(1, _width - 2)
-	_midPlots = repeatVar(0, _width - 2)
+	for i = 1, _mapHeight do
+		for i = 1, _mapWidth do
+			_genMap:add(_coordsX + _xOffset, _coordsY, _coordsX + _xOffset + _mapWidth, _coordsY + _mapHeight, 0)
+			_coordsX += _mapWidth
+			currentCoords.x += 1
+		end
+		currentCoords.x = 0
+		_coordsX = currentCoords.x * _mapWidth + 1
+		
+		currentCoords.y += 1
+		_coordsY += _mapHeight
+	end
+	
+	
+	
+	--[[ ALT
+	_ends, currentCoords = repeatVar(2, currentCoords, _width)
+	for i = 2, _height - 1 do
+		_midGens, currentCoords = repeatVar(2, currentCoords, _width, 1)
+	end
+	currentCoords.y = 1
+	for i = 2, _height - 1 do
+		_midPlots, currentCoords = repeatVar(2, currentCoords, _width, 0)
+	end
+	currentCoords.y = 0
+	
 	if currentCoords.x <= _width then
 		if currentCoords.x == 0 or currentCoords.x == _width then
 			_genMap:set(currentCoords.x, 0, unpack(_ends))
 			_plotted:set(currentCoords.x, 0, unpack(_ends))
 		else
-			_genMap:set(currentCoords.x, 0, 2, unpack(_midGens), 2)
-			_plotted:set(currentCoords.x, 0, 2, unpack(_midPlots), 2)
+			_genMap:set(currentCoords.x, 0, unpack(_midGens))
+			_plotted:set(currentCoords.x, 0, unpack(_midPlots))
 		end
 		
 		genComplete = false
@@ -372,21 +400,6 @@ function generateMap(_width, _height, _enemyCount, _goodiesCount, _difficulty, _
 	end
 	
 	currentCoords.x += 1
-	
-	--[[
-	-- ALT
-	-- Iterate through all Y positions
-	for i = 1, _height do
-		for j = 1, _width do
-			if i == 1 or i == _height or j == 1 or j == _width then
-				_genMap:set(i, j, 2)
-				_plotted:set(i, j, 2)
-			else
-				_genMap:set(i, j, 1)
-				_plotted:set(i, j, 0)
-			end
-		end
-	end
 	--]]
 	
 	--[[
@@ -469,6 +482,12 @@ end
 
 function drawMaze()
 	cls()
+	
+	if checkpoint then
+		_timerString = string.format("Time per frame: %.2f", checkpoint)
+		print(_timerString, 2, 2, 7)
+	end
+	
 	if slowGeneration == true then
 		if genComplete == false then
 			-- Write loading message with timestamp in center of screen
@@ -501,10 +520,11 @@ function drawMaze()
 end
 
 function generateMaze(_seed, _genMap, _plotted, _coords)
+	
+	
 	_genMap = _seed.map
 	_plotted = _seed.plot
 	_coords = _seed.coords
-	_genMap = _genMap
 	
 	_maxX = _genMap:width()
 	_maxY = _genMap:height()
@@ -636,16 +656,30 @@ function checkCellValue(_map, _val, _x, _y, _ix, _iy)
 end
 
 -- Build a table of the same variable repeated, then unpack and return it
-function repeatVar(_value, _size)
+function repeatVar(_value, _coords, _size, _value2)
+	_valueEdge = _value2 != nil and _value2 or _value
 	_t = {}
-	for i = 1, _size do
+	add(_t, _coords.x)
+	add(_t, _coords.y)
+	add(_t, _valueEdge)
+	_coords.x += 1
+	for i = 2, mapWidth - 2 do
+		add(_t, _coords.x)
+		add(_t, _coords.y)
 		add(_t, _value)
+		_coords.x += 1
 	end
+	add(_t, _coords.x)
+	add(_t, _coords.y)
+	add(_t, _valueEdge)
 	
-	return _t
+	_coords.x = 0
+	_coords.y += 1
+		
+	return _t, _coords
 end
 :: raycast.lua
---[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-25 01:59:17",revision=162,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:49",modified="2025-10-25 04:32:28",revision=165,xstickers={}]]
 --Raycasting
 
 function raycastInit()
@@ -868,6 +902,16 @@ function drawRoom()
     rectfill(0,0,480,horizon,7)
     raycast()
 end
+:: sfx/
+:: sfx/.info.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
+MC0yNiAwNDozMTo0NyJdXQ==
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: start.lua
 b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNS0xMC0yMyAyMjozNTozOSIsbW9k
 aWZpZWQ9IjIwMjUtMTAtMjQgMDc6NDE6MTEiLHJldmlzaW9uPTg4LHhzdGlja2Vycz17fV1dCmZ1
@@ -941,13 +985,4 @@ LCAxLCAwLjI1LCAwLjc1KQogICAgZWxzZWlmKGFuaW1Db3VudDEgPj0gNDgqMikgdGhlbgogICAg
 ICAgIGFuaW1Db3VudDEgPSAwCiAgICBlbmQKCiAgICBhbmltQ291bnQxICs9IDEKCiAgICBzc3By
 KDQsMCwwLDQyLDI5LHB1cGlsWCArIHhPZmZzZXQscHVwaWxZICsgeU9mZnNldCw0MiozLDI5KjMp
 CmVuZA==
-:: .info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTEyIDE0OjQ5OjMwIixtb2RpZmllZD0iMjAyNS0x
-MC0yNSAwMjowMjoxMCIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzEyLDE0Iix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9uPSJwcm9jZ2VuLmx1YSMyMywyMCIs
-d29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iaW50cm8ubHVhIzUxLDY0Iix3b3Jrc3BhY2Vf
-aW5kZXg9MX0se2xvY2F0aW9uPSJzdGFydC5sdWEjODYsMSIsd29ya3NwYWNlX2luZGV4PTF9LHts
-b2NhdGlvbj0icmF5Y2FzdC5sdWEjMTkyLDEyIix3b3Jrc3BhY2VfaW5kZXg9MX0se2xvY2F0aW9u
-PSJnZngvMC5nZngiLHdvcmtzcGFjZV9pbmRleD0yfSx7bG9jYXRpb249ImdmeC9maXhlZC5nZngi
-LHdvcmtzcGFjZV9pbmRleD0yfX1dXQ==
 :: [eoc]
