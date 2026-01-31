@@ -2,36 +2,56 @@ picotron cartridge // www.picotron.net
 version 2
 
 :: .info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzQiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lcy5sdWEjNjEiLHdvcmtzcGFj
-ZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lQW5pbWF0aW9ucy5sdWEjOSIsd29ya3NwYWNlX2lu
-ZGV4PTF9fV1d
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNi0w
+MS0zMSAwMzowNjoxMSIscnVudGltZT0yMSx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
+IzQsMSIsd29ya3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0ic2xpbWVzLmx1YSMxODcsNDciLHdv
+cmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lQW5pbWF0aW9ucy5sdWEjOSwyMCIsd29y
+a3NwYWNlX2luZGV4PTF9LHtsb2NhdGlvbj0iZ2Z4LzAuZ2Z4Iix3b3Jrc3BhY2VfaW5kZXg9Mn19
+XV0=
 :: gfx/
 :: gfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNi0w
+MS0zMSAwMzowNjoxMSJdXQ==
 :: gfx/0.gfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
-OS0xOCAwMDo0OToyNiIscmV2aXNpb249M11dbHo0AJoDAABPNQAA8yF7WzBdPXtibXA9cHh1AEMg
-EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_APMMZkiQCE4I
-cAgeHxcXDghgCA5NBwhQCB5dDghABgDvDS4tHghQCA4NTghwaDBgAB3-EZZIgBhOGFAILh8XFx4I
-MAg_TQcOCCAIDg0ODW4IMKgQUAAd8A0pKLAIDhcIkAgOLxcHCIAIDj0IgAgeHQ4IgAg_DwD-AA0o
-kAgeCMAYsBjwDgjwCl8AHYEnWHAYDi8XF-EAMC4tBwYBkQgePQgwCAAYAGgAr5AILggwCGAo8FNc
-AB35CTIIAAjgCAAYwAgODxc4gAguDRcIgBgOLccAAF8AT7Ao8CRdAB0ReMgBFGC9AD8eTQfCAQQf
-IFoAHWB0SJAILhekAEA-Fw4YHAIfB1oAAx9AWgAdH2R8Ag4xDg0eYQB-Hg0_CHBoUGEAHR9WYQAC
-IQ5tWwABBgAwDQ5NYACfbghwCA0_CJBIxAAeH0bEAA5ADQ5dDhMAED0fAG8NXghwCE5pACVADg8X
-J2wAJx0nagACjgESB2oAARMAH01pAC7wEEcIcAgvFzcIYAgPDi8XJwhQCB8OPxcnCEAIHw5PFxc-
-ATAPDk5pAjAdPgeMAI89DgcIcAg9DnEAJfAFLxcfDghwCDcPFw8ODxcIYAhHDg82AXJnHghACHcO
-BQC-UAhnCGAIZwhwCEdoACUwDxc-aABQBy8XFw_QATAHTxczATAXXg9kAP4FF14NCEAIJ04NCFAI
-Jy4NCGAINy5uAA8ZAiMBmwERB3UCBgYAQFAIB00dAI8nHR4IcAgnHWkAIR8GGQIkL-A1agAdHxd8
-BQEKugQgCA4EAHENBwigCB4NDwBv0AjgCPAHawAdUQgI4AjQTQCTDxceCKAIBw0OXQAQLoAAQB0e
-CIBuAgMFACAHLX8AIBcOOgUfFmsAHcA8CAAIkBgACHA4DxfFAmEPDhcuCGDkAC0YcJkFHyhfAB0w
-JFiAnwGAFw4NGFAIDk0cARBAMAMQCNoCAFkAAFkGEUBdAE9gCPBRXwAeDxAHBZCQCC4NCKAoDgc4
-Ac8NCMAY8AAY8A8I8AViAB0f8DEA----------2RZkeQB0AHcAdgAgBTUAeAB0AEAH9QB2AHcGcw
-swAeDzEA------------------------------------------------i1BtPTh9fQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+MS0zMSAwMjoyMjowOCIscmV2aXNpb249MTFdXWx6NADVBwAAeDwAAPMhe1swXT17Ym1wPXB4dQBD
+IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADbeT0wLHpvb209MTJ9LD8A8wxmSJAI
+TghwCB4fFxcOCGAIDk0HCFAIHl0OCEAGAO8NLi0eCFAIDg1OCHBoMGEAHv8RlkiAGE4YUAguHxcX
+HggwCD5NBw4IIAgODQ4NbggwqBBRAB7wDSkosAgOFwiQCA4vFwcIgAgOPQiACB4dDgiACD4PAP8A
+ByiQCB4IwBiwGPAOCPAKYAAegCdYcBgOLxcX9ABABy4tBwkBkQgePQgwCAAYAGkAr5AILggwCGAo
+8FNdAB75CTIIAAjgCAAYwAgOBziACC4PFxcIgBgOLckAAGAAT7Ao8CReAB7wAwgI4AjQCA4IsAgP
+Fx4IoAgHDQwAAAQAEC4wAXQdHgiACD0OBQAgBy1rACAXDmwAHxZsAB7xBzwIAAiQGAAIcDgPFwcI
+cAgPDhcuCGCVAS0YcMwAHyhgAB7wAiRYgAgODxcXDg0YUAgOTQ4NiQFxDj0OCB4IQFoAAI4BEUBe
+AE9gCPBRYAAfD0cCBZCQCC4NCKAoDgc7Ac8NCMAY8AAY8A8I8AVjAB4fF2MAAQoaAQGdAQDcAEGg
+CB4NDwBv0AjgCPAHbAAeEXjIAxRgugI-Hk0HwgMEHyBbAB5gdEiQCC4XuwBAPxcOGB0EHwdbAAMf
+QFsAHmRHKKAYLhh_BAe3AGAHCDAIHn0pBAMGAP8BbR4IIAgNLj0uCDAYDV4YYIoEIKCVaGAYbhgw
+CD4vigSBEAg_bQcOCACKBF_OCBDIAFEAHhkZ4AERcDwFkGAIDl0IYAgePU0F8AAuHQ4IcBg_CHAI
+DQcOKIBPAs_gCAAYoAgACPANCLBxAB7xBBdYYCg-FxcIMBgPDg8XHw4PFw97APIIQBgvDk8XBxhA
+CB8OXxcIYAgfDj8XDw7XBQWEAx9DcAAeEBGpADEACNCxBEAPFwdI5wOfDxcvDhcIcBge9QACGHD2
+Ax8UcgAdkHAI8A8I0AgHCG8AIQiwbgBRBwiQCC8IADCACE9bAAJzAT8fFxd_AAsfUO8AHsAcCAAI
+sAjAGAAIYEhwABFg1QQRDwoGIC0H_wIP7QAJHxlwAB7wHxNYgAgPFxcuKEAIPgcPDi4NGBAIDU4H
+HRgwCA1eDQhAGB0_DQhwCB0eDQiQCC1kAB9KZAAeHxSkAgsAwgAAFgZlPhiQKA4N8wQB9AEAjAEP
+LgQeP1AosKEBEyKQCPYGED7dAAP8BBHAAAVP8A8IcOgAHmVZKKAYDhdLBGAQGBAIHl3eA-8OBxge
+bQcYHg0ejQgACC6NDggQCE5NHgggGI4IUIh_CB8aVGgAANsAAG4A8AQACA5tBw4YDgcYDo0ODR4Y
+Ho0ebwCfTT4IIAiOGECIGwUf0SY4kBg_GGAIHgcPFxf0BhE9QAkhDm1ACREeygAxHn0HBwASjckE
+8AAefR4YDg0uXR4NGB4Njg0kB48OHT4dDhgwmPcFH3BlWGAoXiggmwIxFycNzwDwAH0HDQ4YHp0H
+DhgerQ4YLuQALxieXQAhQHA4kBjdBwDgABEt_gURDlUGgA4NLk0IMAhebglBHh0uHQcGEC0zAmAw
+CC4dHg0dBiBeDQ4BQA4HThgICGE4YAg_CKDxCS-wCeQAHhQYiAAhMDiIABAQjAcAfgaxAAguLS5N
+GJ49GF6HADEACE6HACIQKIcA71AITg0eCGAYPhiQOPAUlgMiFR-aBPECDw44UAg_DxcODRcYMAhO
+LRfvAA8RAQwA-QAMigAPFAcfEgfZBQNrBUAIoAg-ngMASAsiHg-gAg_gAQkQLRMAUy0eHQhQjQCP
+YBguDRiQOFBLByIAEQFUYDg-Dg-hBhEXDAAwIAgf1QgQP-YCQA5fFwcJCA8XARsPTgQfGhSgAiA4
+IAABEQ4IAgB7AHEeHRhePT4YegAwLg0YegAxPggQegA3HiggegAv8Bh7AB0aMHoADnoBD-IAAxQd
+GgOTUBhOHQhwOC4HyAoCGgMPvAoeH1CHABYMAgIyCD4Niw0A1gVBDgigCIQMIA0OhwAP1wofQDdI
+gBiKAgBBDictFxwK8AqNCAAYLg0eXRguDU49BxgOHS4NLi0OGG4N0AZEAAh_HeMFD-kEHx80dAAH
+4CAIHg0uTQ4YAAhuXQcYcwCALg0YPg0eHU4iBCMdTu4FD4gDHx-wMgD------zeRZkeQB0AHcAdg
+AgBTUAeAB0AEAG9QB2AHcGeYBSAPMgD---------------------------------------------
+-80fVt04AiAObdQpAgYAMA0OTcA0EG6jM08_CJBIqC8fH0ZBOQ8AIzARUP8wj2AIDV4IcAhOagAm
+QA4PFydtACcdJ2sAEwejKgFrAAETAB9NagAvcUcIcAgvFzcFM1EvFycIUFU0ICcIZDQwTxcXQgEw
+Dw5OHDMhHT7jMSA9DmAyLz0OcgAmMC8XHyEyMTcPF4wuUGAIRw4POQEQZ-AvIncOBQC-UAhnCGAI
+ZwhwCEdpACYQD00uUHAIBy8XJTVQYAgHTxc2ATAXXg9lABAXezP_AAgnTg0IUAgnLg0IYAg3Lm8A
+Dx4CJAGfAREHewIGBgBAUAgHTR0AjycdHghwCCcdagAiHwYeAiQv8DVrAApQPTEyfX0=
 :: main.lua
---[[pod_format="raw",created="2025-09-18 00:49:08",modified="2025-09-22 22:24:31",revision=77]]
+--[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-01-31 01:15:42",revision=78,xstickers={}]]
 include("slimes.lua")
 
 -- 	World functions
@@ -56,8 +76,8 @@ function _draw()
 end
 :: map/
 :: map/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNi0w
+MS0zMSAwMzowNjoxMSJdXQ==
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
@@ -65,8 +85,8 @@ aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/
 :: sfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNi0w
+MS0zMSAwMzowNjoxMSJdXQ==
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
@@ -74,19 +94,19 @@ AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
 IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
 H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: slimeAnimations.lua
---[[pod_format="raw",created="2025-09-18 20:12:26",modified="2025-09-19 00:11:21",revision=66]]
-function drawSlimeJump()
+--[[pod_format="raw",created="2025-09-18 20:12:26",modified="2026-01-31 01:26:57",revision=68,xstickers={}]]
+function drawSlimeJump(_slime)
 	if angle and _slime.y < floor then
 		frame = flr((angle - 22.5) / 45) % 8 + 1
 		_slime.sprite = slimeRotation[frame]
 	end
 end
 
-slimeFlopR = {1, 7, 6, 7,}
-slimeFlopL = {1, 6, 7, 6,}
+slimeFlopR = {1, 11, 12, 11,}
+slimeFlopL = {1, 12, 11, 12,}
 slimeBounce = {}
 
-function drawSlimeFlop()
+function drawSlimeFlop(_slime)
 	if _slime.yLast then
 		if _slime.yLast != _slime.y and _slime.y == floor then
 			_slime.frame = 16
@@ -105,7 +125,7 @@ function drawSlimeFlop()
 	end
 end
 :: slimes.lua
---[[pod_format="raw",created="2025-09-18 20:00:44",modified="2025-09-22 22:24:42",revision=65]]
+--[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-01-31 03:06:11",revision=117,xstickers={}]]
 include("slimeAnimations.lua")
 
 slimes = {}
@@ -121,16 +141,23 @@ dt = 1/60
 spawnFrequency = 180
 spawnTimer = spawnFrequency
 
+maxspeed = 3
+minspeed = 1
+maxvel = 5
+minvel = 3
+
+scale = 2
+
 slimeRotation = 
 {
 	3,
 	4,
 	5,
-	18,
-	19,
-	20,
-	21,
-	17,
+	6,
+	7,
+	8,
+	9,
+	10,
 }
 
 nameParts =
@@ -272,8 +299,8 @@ end
 	
 function slimeJump(_slime)
 	if flr(_slime.y) >= 180 and abs(_slime.velocity) < 0.1 then
-		_slime.velocity = -flr(rnd(5) + 2)
-		_slime.speed = flr(rnd(10) - 5)
+		_slime.velocity = -flr(rnd(maxvel - minvel) + minvel)
+		_slime.speed = flr(rnd(maxspeed - minspeed) - maxspeed)
 	end
 end
 
@@ -281,17 +308,18 @@ function slimeMerge()
 	for i=1,#slimes do
 		for j=i,#slimes do
 			if j < #slimes then
-				_slime1 = slimes[j]
+				_slime1 = slimes[i]
 				_slime2 = slimes[j+1]
 			
-				_left = _slime1.x - _slime1.width < _slime2.x + _slime2.width
-				_right = _slime1.x + _slime1.width > _slime2.x - _slime2.width
-				_bottom = _slime1.y > _slime2.y + - _slime2.height
-				_top = _slime1.y - _slime1.height < _slime2.y
+				_left = _slime1.x - _slime1.width * scale < _slime2.x + _slime2.width * scale
+				_right = _slime1.x + _slime1.width * scale > _slime2.x - _slime2.width * scale
+				_bottom = _slime1.y > _slime2.y + - _slime2.height * scale
+				_top = _slime1.y - _slime1.height * scale < _slime2.y
 				
 				if _left and _right and _top and _bottom then
-					_slime1.speed += _slime2.speed
+					_slime1.speed = _slime1.speed / 2 + _slime2.speed / 2
 					_slime1.velocity += _slime2.velocity
+					_slime1.size +=  _slime2.size / 2
 					table.remove(slimes, j+1)
 				end
 			end
@@ -306,12 +334,14 @@ function drawSlimes()
 		
 		if _slime.yLast != nil then
 			angle = (atan2(_slime.yLast - _slime.y, _slime.xLast - _slime.x) * 360)
-		end	
+		end
 		
-		drawSlimeJump()
-		drawSlimeFlop()
-
-		spr(_slime.sprite, _slime.x - 8, _slime.y - 15)
+		drawSlimeJump(_slime)
+		drawSlimeFlop(_slime)
+		
+		sprSize = min(flr(_slime.size - 1), 2) * 12
+		
+		sspr(_slime.sprite + sprSize, 0, 0, 16, 16, _slime.x - 8 * scale, _slime.y - 13 * scale, 16 * scale, 16 * scale)
 	end
 end
 :: [eoc]
