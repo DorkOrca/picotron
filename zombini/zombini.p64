@@ -44,7 +44,7 @@ function blur(element, count)
 	element.blur[1].y = element.y
 end
 :: collision.lua
---[[pod_format="raw",created="2025-10-08 00:26:05",modified="2025-10-23 21:06:24",revision=272,xstickers={}]]
+--[[pod_format="raw",created="2025-10-08 00:26:05",modified="2026-02-13 03:04:52",revision=303,xstickers={}]]
 --MODULE: AABB collision
 
 --[[
@@ -162,8 +162,13 @@ function getCellFlag(_x, _y, _flag)
 	for i = 1, #layers do
 		memmap(layers[i].bmp, 0x100000)
 		_sprite = mget(_x // 16, _y // 16)
-		_flagSet = _flagSet == true and true or fget(_sprite, _flag)
+		if fget(_sprite, _flag) then
+			_flagSet = true
+			break
+		end
 	end
+	
+	memmap(layers[4].bmp, 0x100000)
 	
 	return _flagSet
 end
@@ -203,6 +208,10 @@ end
 -- _color3: Cell is collidable and currently intersected with
 function drawNeighborIntersects(_obj, _color1, _color2, _color3)
 	_cells, _collidable = fetchNeighbors(_obj)
+	
+	_color1 = _color1 or 16
+	_color2 = _color2 or 28
+	_color3 = _color3 or 9
 	
 	_empty = {}
 	_blocked = {}
@@ -251,9 +260,9 @@ function objectIntersects(_obj1, _obj2, _mod)
 		_intersects =
 		{
 			_obj1.x - _obj1.size < _obj2.x + _obj2.width + _mod,
-			_obj1.x + _obj1.size >= _obj2.x - _mod,
+			_obj1.x + _obj1.size > _obj2.x - _mod,
 			_obj1.y - _obj1.size < _obj2.y + _obj2.height + _mod,
-			_obj1.y + _obj1.size >= _obj2.y - _mod,
+			_obj1.y + _obj1.size > _obj2.y - _mod,
 		}
 
 		return _intersects
@@ -286,17 +295,17 @@ function intersectDifference(_obj1, _obj2)
 end
 
 function fetchNeighbors(_obj)
-	_leftCell = getMapCell(_obj.x, _obj.y, -1, 0)
-	_rightCell = getMapCell(_obj.x, _obj.y, 1, 0)
-	_topCell = getMapCell(_obj.x, _obj.y, 0, -1)
-	_botCell = getMapCell(_obj.x, _obj.y, 0, 1)
-	_sameCell = getMapCell(_obj.x, _obj.y, 0, 0)
-	_tlCell = getMapCell(_obj.x, _obj.y, -1, -1)
-	_trCell = getMapCell(_obj.x, _obj.y, 1, -1)
-	_blCell = getMapCell(_obj.x, _obj.y, -1, 1)
-	_brCell = getMapCell(_obj.x, _obj.y, 1, 1)
+	local _leftCell = getMapCell(_obj.x, _obj.y, -1, 0)
+	local _rightCell = getMapCell(_obj.x, _obj.y, 1, 0)
+	local _topCell = getMapCell(_obj.x, _obj.y, 0, -1)
+	local _botCell = getMapCell(_obj.x, _obj.y, 0, 1)
+	local _sameCell = getMapCell(_obj.x, _obj.y, 0, 0)
+	local _tlCell = getMapCell(_obj.x, _obj.y, -1, -1)
+	local _trCell = getMapCell(_obj.x, _obj.y, 1, -1)
+	local _blCell = getMapCell(_obj.x, _obj.y, -1, 1)
+	local _brCell = getMapCell(_obj.x, _obj.y, 1, 1)
 	
-	_cells = {
+	local _cells = {
 		_leftCell,
 		_rightCell,
 		_topCell,
@@ -308,17 +317,17 @@ function fetchNeighbors(_obj)
 		_brCell,
 	}
 	
-	_leftSprite = fget(getMapSprite(_obj, -1, 0), 0)
-	_rightSprite = fget(getMapSprite(_obj, 1, 0), 0)
-	_topSprite = fget(getMapSprite(_obj, 0, -1), 0)
-	_botSprite = fget(getMapSprite(_obj, 0, 1), 0)
-	_sameSprite = fget(getMapSprite(_obj, 0, 0), 0)
-	_tlSprite = fget(getMapSprite(_obj, -1, -1), 0)
-	_trSprite = fget(getMapSprite(_obj, 1, -1), 0)
-	_blSprite = fget(getMapSprite(_obj, -1, 1), 0)
-	_brSprite = fget(getMapSprite(_obj, 1, 1), 0)
+	local _leftSprite = fget(getMapSprite(_obj, -1, 0), 0)
+	local _rightSprite = fget(getMapSprite(_obj, 1, 0), 0)
+	local _topSprite = fget(getMapSprite(_obj, 0, -1), 0)
+	local _botSprite = fget(getMapSprite(_obj, 0, 1), 0)
+	local _sameSprite = fget(getMapSprite(_obj, 0, 0), 0)
+	local _tlSprite = fget(getMapSprite(_obj, -1, -1), 0)
+	local _trSprite = fget(getMapSprite(_obj, 1, -1), 0)
+	local _blSprite = fget(getMapSprite(_obj, -1, 1), 0)
+	local _brSprite = fget(getMapSprite(_obj, 1, 1), 0)
 	
-	_collidable = {
+	local _collidable = {
 		_leftSprite,
 		_rightSprite,
 		_topSprite,
@@ -338,19 +347,12 @@ end
 -- Box: Top-left, top-right, bottom-left, bottom-right
 function checkCollision(_obj)
 	if _obj.collision then
-		_collideList = {}
-		
-		_mapBorders = {
-			{x = 0, y = 0,},
-			{x = mapWidth, y = 0,},
-			{x = 0, y = mapHeight,},
-			{x = mapWidth, y = mapHeight,},
-		}
+		local _collideList = {}
 		
 		for i = 1, #_obj.collision do
-			_collider = _obj.collision[i]
+			local _collider = _obj.collision[i]
 			-- Check for intersections with cells that have flag 0 enabled
-			_collideDetected = getCellFlag(_collider.x, _collider.y, 0)
+			local _collideDetected = getCellFlag(_collider.x, _collider.y, 0)
 			add(_collideList, _collideDetected)
 		end
 		
@@ -359,13 +361,85 @@ function checkCollision(_obj)
 		error("collision.lua/checkCollision(): Unable to detect collider for this object.")
 	end
 end
+
+function wallCollisionLoop(_obj)
+	local cells, collidable = fetchNeighbors(_obj)
+	
+	local intersected = {}
+	local intersecting = false
+	
+	for _i = 1, #cells do
+		if collidable[_i] then
+			local hit = objectIntersects(_obj, cells[_i])
+			if hit[1] and hit[2] and hit[3] and hit[4] then
+				intersecting = true
+				break
+			end
+		end
+	end
+	
+	return intersecting
+end
+
+function euclidDist(x1, y1, x2, y2)
+	return sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+end
 :: ease.lua
---[[pod_format="raw",created="2026-02-04 23:33:59",modified="2026-02-04 23:39:59",revision=1,xstickers={}]]
-function easeOutExpo(x)
-	return x == 1 and 1 or 1 - (-10 * x) ^ 2
+--[[pod_format="raw",created="2026-02-04 23:33:59",modified="2026-02-12 22:47:50",revision=19,xstickers={}]]
+function easeOutExpo(x, reverse)
+	reverse = reverse or false
+	if reverse == false then
+		return x == 1 and 1 or 1 - (2 ^ (-10 * x))
+	else
+		return x == 1 and 1 or -1 / 10 * log2(1 - x)
+	end
+end
+
+function easeOutQuad(x, reverse)
+reverse = reverse or false
+	if reverse == false then
+		return x < 0.5 and 2 * x * x or 1 - (-2 * x + 2) ^ 2 / 2
+	else
+		return x == 1 and 1 or 1 - sqrt(1 - x)
+	end
+end
+
+-- log2 table with 20 indices and FP precision of 2
+log2_tbl = {
+	-4.32,
+	-3.32,
+	-2.73,
+	-2.32,
+	-2.0,
+	-1.73,
+	-1.51,
+	-1.32,
+	-1.15,
+	-1.0,
+	-0.86,
+	-0.73,
+	-0.62,
+	-0.51,
+	-0.41,
+	-0.32,
+	-0.23,
+	-0.15,
+	-0.07,
+	0.0,
+}
+
+function log2(x)
+	p = x * 20
+	i = max(flr(p), 1)
+	j = min(i + 1, 20)
+	f = p - i
+	l1 = log2_tbl[i]
+	l2 = log2_tbl[j]
+	diff = l2 - l1
+	return l1 + (diff) * f
 end
 :: enemy.lua
---[[pod_format="raw",created="2025-10-11 00:15:30",modified="2026-02-08 18:41:21",revision=264,xstickers={}]]
+--[[pod_format="raw",created="2025-10-11 00:15:30",modified="2026-02-13 02:49:11",revision=326,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 include("movement.lua")
@@ -399,36 +473,20 @@ function enemyInitialize(_x, _y, _size, _color)
 		color = 27,
 	}
 	
-	_enemy = boxCollider(_enemy)
-	
 	return _enemy
 end
 
 function enemyMove(_enemy)
-	
 	if _enemy.moveStep <= -1 then
 		_enemy.moveType = moveOptions[flr(rnd(#moveOptions + 1))]
 		_enemy.moveStep = 0
 	end
 	
-	-- Initialize box collider for enemy's current position
-	_enemy = boxCollider(_enemy)
-	
-	-- Check if enemy intersects with walls
-	_collides = checkCollision(_enemy)
-	
-	for i = 1, #_collides do
-		if _collided != true then
-			_collided = _collides[i] == true and true or false
-		else
-			_collided = false
-		end
-	end
+	local intersecting = wallCollisionLoop(_enemy)
 	
 	-- Step away from collided walls and pick a diff. move func.
-	if _collided then
+	if intersecting == true then
 		_enemy = moveBack(_enemy)
-		_collided = false
 		_enemy.moveStep = -1
 		return _enemy
 	end
@@ -599,10 +657,11 @@ falsefalsefalsefalse
 --[[pod_format="raw",created="2025-10-08 19:04:09",modified="2025-10-08 22:11:23",revision=34830]]
 Cell 1: 272.0,288.0,16,16   Cell 2: 304.0,288.0,16,16   Cell 3: 288.0,272.0,16,16   Cell 4: 288.0,304.0,16,16   
 :: main.lua
---[[pod_format="raw",created="2025-10-04 00:27:00",modified="2026-02-03 02:04:32",revision=230,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:00",modified="2026-02-13 02:35:33",revision=296,xstickers={}]]
 include("player.lua")
 include("enemy.lua")
 include("shading.lua")
+include("collision.lua")
 
 function _init()
 	-- Initialize various variables
@@ -617,6 +676,9 @@ function _init()
 		enemyInitialize(10, 10, 7, 17),
 	}
 	
+	-- Initialize camera focus
+	cFocus = enemies[1]
+	
 	-- Initialize random enemy spawn bool
 	randomSpawnTimer = 1
 	
@@ -629,7 +691,7 @@ function _init()
 	
 	-- Set the wall layer of the map as the active map
 	-- (so that it gets taken into account during collision checks)
-	memmap(layers[3].bmp, 0x100000)
+	memmap(layers[4].bmp, 0x100000)
 	
 	debug = true
 end
@@ -640,12 +702,13 @@ function _update()
 	playerMove()
 	-- Update player's rotation and weapon position using mouse
 	player = toolWield(player)
+	player = toolSwing(player)
 	
 	-- DEBUG VARIABLE: Manually adjust lighting with Q / E keys
 	shadeTest()
 	
 	-- Focus camera on player
-	camera(player.x - 240, player.y - 135)
+	camera(cFocus.x - 240, cFocus.y - 135)
 	
 	-- Move enemies automatically and randomly
 	if enemies[1] != nil then
@@ -677,17 +740,25 @@ function _draw()
 	-- Draw the player's held tool
 	toolDraw(player)
 	
-	-- Document and print CPU usage
-	_h = sub(tostring(stat(1)), 0, 4)
-	print(_h, player.x - 238, player.y - 133, 1)
-	print(_h, player.x - 238, player.y - 134, 7)
+	-- DEBUG: Draw stuff for first enemy
+	drawNeighborIntersects(enemies[1])
+	print("Enemy 1 movestep: " .. enemies[1].moveStep, cFocus.x - 238, cFocus.y - 123, 1)
+	print("Enemy 1 movestep: " .. enemies[1].moveStep, cFocus.x - 237, cFocus.y - 124, 7)
 	
 	-- Draw all enemies in the enemy table
-	print(enemies[1].moveStep, player.x - 238, player.y - 123, 1)
-	print(enemies[1].moveStep, player.x - 238, player.y - 124, 7)
-	
 	local elist = enemiesToUserdata(enemies)
 	objBatchDraw(elist)
+	
+	-- Document and print CPU usage
+	local _h = sub(tostr(stat(1)), 0, 4)
+	print("CPU: " .. _h, cFocus.x - 238, cFocus.y - 133, 1)
+	print("CPU: " .. _h, cFocus.x - 237, cFocus.y - 134, 7)
+	
+	-- Document and print player orientation and weapon stats
+	print("Player zStep: " .. sub(tostr(player.zStep), 0, 4), cFocus.x - 238, cFocus.y - 113, 1)
+	print("Player zStep: " .. sub(tostr(player.zStep), 0, 4), cFocus.x - 237, cFocus.y - 114, 7)
+	print("Player ease: " .. sub(tostr(player.zEase(player.zStep)), 0, 4), cFocus.x - 238, cFocus.y - 103, 1)
+	print("Player ease: " .. sub(tostr(player.zEase(player.zStep)), 0, 4), cFocus.x - 237, cFocus.y - 104, 7)
 end
 
 -- Adjust the palette to simulate shading according to the current light level
@@ -701,7 +772,7 @@ function shadeTest()
 	end
 end
 :: movement.lua
---[[pod_format="raw",created="2025-10-15 22:53:01",modified="2026-02-02 21:53:26",revision=97,xstickers={}]]
+--[[pod_format="raw",created="2025-10-15 22:53:01",modified="2026-02-13 01:42:50",revision=100,xstickers={}]]
 include("collision.lua")
 
 function moveRandAngle(_obj)
@@ -752,6 +823,8 @@ function moveBack(_obj)
 	_obj.x -= _vx
 	_obj.y -= _vy
 	
+	_obj.moveStep = -1
+	
 	return _obj
 end
 
@@ -769,7 +842,7 @@ function moveWait(_obj)
 	return _obj
 end
 :: player.lua
---[[pod_format="raw",created="2025-10-04 00:27:14",modified="2026-02-09 01:56:27",revision=701,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:14",modified="2026-02-13 01:26:15",revision=857,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 include("ease.lua")
@@ -790,10 +863,28 @@ function playerInitialize()
 		maxVel = 2,
 		z = 0,
 		zStep = 0,
+		zBaseMod = 0.2,
 		zMod = 0.2,
+		zEase = easeOutQuad,
 		rot = 0,
 		size = 5,
 		color = 7,
+		ctrls =
+		{
+			l = 0,
+			r = 1,
+			u = 2,
+			d = 3,
+			x = 5
+		},
+		keys =
+		{
+			l = "a",
+			r = "d",
+			u = "w",
+			d = "s",
+			x = "space"
+		}
 	}
 	
 	_player = blurSetup(_player, _player.blurCount)
@@ -802,33 +893,35 @@ function playerInitialize()
 end
 
 function playerMove()
-	x = player.x
-	y = player.y
-	xVel = player.xVel
-	yVel = player.yVel
-	incVel = player.incVel
-	decVel = player.decVel
-	maxVel = player.maxVel
+	local x = player.x
+	local y = player.y
+	local xVel = player.xVel
+	local yVel = player.yVel
+	local incVel = player.incVel
+	local decVel = player.decVel
+	local maxVel = player.maxVel
+	local c = player.ctrls
+	local k = player.keys
 	
-	mapWidth = 512
-	mapHeight = 512
+	local mapWidth = 512
+	local mapHeight = 512
 	
 	-- Surrounding cells - uses collision.lua to ID them
 	cells, collidable = fetchNeighbors(player)
 	
 	-- Adjust x velocity if left or right is pressed
-	if (btn(0) or key("a")) and (not btn(1) and not key("d")) then
+	if (btn(c.l) or key(k.l)) and (not btn(c.r) and not key(k.r)) then
 		xVel -= incVel
-	elseif (btn(1) or key("d")) and (not btn(0) and not key("a")) then
+	elseif (btn(c.r) or key(k.r)) and (not btn(c.l) and not key(k.l)) then
 		xVel += incVel
 	else
 		xVel = xVel < 0 and xVel + decVel or xVel > 0 and xVel - decVel or 0
 	end
 	
 	-- Adjust y velocity if up or down is pressed
-	if (btn(2) or key("w")) and (not btn(3) and not key("s")) then
+	if (btn(c.u) or key(k.u)) and (not btn(c.d) and not key(k.d)) then
 		yVel -= incVel
-	elseif (btn(3) or key("s")) and (not btn(2) and not key("w")) then
+	elseif (btn(c.d) or key(k.d)) and (not btn(c.u) and not key(k.u)) then
 		yVel += incVel
 	else
 		yVel = yVel < 0 and yVel + decVel or yVel > 0 and yVel - decVel or 0
@@ -864,7 +957,7 @@ function playerMove()
 	player.yVel = yVel
 	
 	-- Check for collides with map walls, and don't increase speed if currently colliding
-	for _i = 1, #_cells do
+	for _i = 1, #cells do
 		intersected = objectIntersects(player, cells[_i])
 		intersecting = intersected[1] and intersected[2] and intersected[3] and intersected[4]
 		intDiff = intersectDifference(player, cells[_i])
@@ -975,21 +1068,22 @@ function objBatchDraw(_objList)
 end
 
 function toolWield(_obj)
-	_x = _obj.x
-	_y = _obj.y
-	_xMod = 6
-	_yMod = 6
-	_color = 31
-	_length = 12
+	local _x = _obj.x
+	local _y = _obj.y
+	local _xMod = 6
+	local _yMod = 6
+	local _zMod = (_obj.zMod * 2 * _obj.zEase(_obj.zStep)) - _obj.zMod
+	local _color = 31
+	local _length = 16
 	
 	_mouseX, _mouseY = mouse()
 	_obj.z = atan2(_mouseY - 270 / 2, _mouseX - 480 / 2)
 	
-	_xOffset = sin(_obj.z + _obj.zMod) * _xMod
-	_yOffset = cos(_obj.z + _obj.zMod) * _yMod
+	_xOffset = sin(_obj.z + _zMod) * _xMod
+	_yOffset = cos(_obj.z + _zMod) * _yMod
 	
-	_xLength = sin(_obj.z + _obj.zMod) * _length
-	_yLength = cos(_obj.z + _obj.zMod) * _length
+	_xLength = sin(_obj.z + _zMod) * _length
+	_yLength = cos(_obj.z + _zMod) * _length
 	
 	_x1 = _x + _xOffset
 	_x2 = _x + _xLength
@@ -1009,7 +1103,45 @@ function toolWield(_obj)
 end
 
 function toolSwing(_obj)
+	local c = _obj.ctrls
+	local k = _obj.keys
 	
+	if (not btn(c.x) and not key(k.x)) then
+		if _obj.zEase != easeOutQuad then
+			if _obj.zStep >= 0.6 then
+				_obj.zStep = easeOutQuad(_obj.zEase(_obj.zStep), true)
+				_obj.zEase = easeOutQuad
+				charging = false
+			else
+				charging = true
+			end
+		end
+		
+		if charging == false then
+			if _obj.zStep > 0 then
+				_obj.zStep -= 0.03
+			else
+				_obj.zStep = 0
+			end
+		end
+	else
+		charging = true
+	end
+	
+	if charging == true then
+		if _obj.zEase != easeOutExpo then
+			_obj.zStep = easeOutExpo(_obj.zEase(_obj.zStep), true)
+			_obj.zEase = easeOutExpo
+		end
+		
+		if _obj.zStep < 1 then
+			_obj.zStep += 0.05
+		else
+			_obj.zStep = 1
+		end
+	end
+	
+	return _obj
 end
 
 function toolDraw(_obj)
@@ -1173,90 +1305,90 @@ end
 --[[pod_format="raw",created="2025-10-08 21:05:45",modified="2025-10-08 22:21:12",revision=61671]]
 false
 :: .info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-09 01:56:27",runtime=24,workspaces={{location="main.lua#88,10",workspace_index=1},{location="blur.lua#1,25",workspace_index=1},{location="collision.lua#248,45",workspace_index=1},{location="shading.lua#145,12",workspace_index=1},{location="enemy.lua#26,29",workspace_index=1},{location="movement.lua#2,1",workspace_index=1},{location="player.lua#14,12",workspace_index=1},{location="ease.lua#2,42",workspace_index=1},{location="gfx/0.gfx",workspace_index=2},{location="gfx/1.gfx",workspace_index=2},{location="map/0.map",workspace_index=3},{location="map/1.map",workspace_index=3},{location="map/2.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:04:52",runtime=24,workspaces={{location="main.lua#34,17",workspace_index=1},{location="blur.lua#1,25",workspace_index=1},{location="collision.lua#327,39",workspace_index=1},{location="shading.lua#145,12",workspace_index=1},{location="enemy.lua#43,23",workspace_index=1},{location="movement.lua#48,15",workspace_index=1},{location="player.lua#115,15",workspace_index=1},{location="ease.lua#2,28",workspace_index=1},{location="gfx/0.gfx#0",workspace_index=2},{location="gfx/1.gfx",workspace_index=2},{location="map/0.map",workspace_index=3},{location="map/1.map",workspace_index=3},{location="map/2.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-09 01:56:27"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:04:52"]]
 :: gfx/0.gfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAwMToxNzozMCIscmV2aXNpb249MjI2XV1sejQARREAAFVKAADzIXtbMF09e2JtcD1weHUA
-QyAQEATwVgcQB8AX0BfABxAH8FYsZmxhZ3M9MCxwYW5feAgAynk9MCx6b29tPTl9LD4ASA8WBQ4C
-AFcVDxUFDQIA-wT9DAUOXQUObQVtBf0iBQ7tBf1XYgAcoQXvFQ8WBd8VBe5sAPMGDa4FLgWuDQXe
-Be4NBV4FDV4FfgVeDwCDHgUNngU_BZ4PAB-eagAc0u8VBd4FDxbuBZ4FDR5pAELeBQ3uZgBCDW4F
-bg8Akq4FDQ4FDb4FHg8AP94FDWgAHD--FfAyABwbBWcBKh4FZwH0CxXtDgXdBe0OBS0OBY0FPQVd
-DgUdDgWdBS0FGQCx3QVNDgV9DgU9BY0PAA_BACwbDucBMA0F3d0BkN0FDo0FDj0FHfUBZS0FDi0F
-rRkAMO0FfRsAQg6NBU0PAA_DABzwBb8ZBA4EHhQPFCQNJA00DgQODSQNBgDSNA0EHSQdBB0kDQ4U
-DRwAAggAJmQNJQAkJB0lAAICAAMrAC4kDUgAG2QjAJQdBA0PFQ0EDQwEABMtAgADwAAfMfYBFnID
-BS4FLgV_QQFHBV4FDgIAQT4FDmUGAFAFDjUOFUkDQg41DjXsAWUOBQ6FPoUMAAAYAA8eABofHqAC
-HsNXBQ8W7xUF-iIFDxb7Akr_CwUOAgAqDQUCAA9mABxg9YIPFSUOAgBJ9QIOBQIASPUBDgUCAAHH
-AAkQABEuAgAfDnMAHQ94Ax0jDxVqAA6CAA_xAAoA0wAD3AAfgu8EJcROBY4PFgU_DQV_Be7RBHAF
-rgUuDQUu8QQQHhsAFY4ZAB8OnAE6It8VAQKljgU_BQ8WfgUNTuwEM_4FLiAFhF4FPgWOBQ0uGQAA
-tgIHAgA_HQUNgwAP7wOHBysABiUAIw4USQAP7AMcLx8VrwMYD_sDafEPPw8PFg8PDxaPD38WDw-v
-Fg8P3xYF-gAPD_4N3gXuAgAy-gANDQCvfpUOFQ61DhUOFWUASE-uFW6VYwAgUG8ZDxQ-MgLzEA8U
-DuQOVA5kDgTtDiQNRA1EDvQDDkQOVO1kDWQN9AAbAIo0DUQN9AUNBAIAbz0PFU0MTesBHCYEX3sA
-cfQHDmQO-QBeAHEJDkQORP0AdwAHFwAPdQBDJf0BdAAwNP0BdAD3AeQNZA507UQNRA00DeQdBA0C
-AB5dcgAPYQEgGg1hAUI0DQTteABfDlQOhN15ADcgDxkEBBAOAgAxDxkUCABwNA0EDQ4kDgYAtDQO
-BB4kHgQeJA4NHAACCAAmZA4lACQkHiUAAgIAAysALiQOSAA5ZA4kAgAnDRQlACMNFEkADw4EagIb
-CAozCCsFDlUIEX62Bi-_A0cDHEHVHxWlQQBRhQ41DrUKAC7VHhIAMRUOJYkAAQ4ABQoABAIAEdWt
-AAcCAA_-BwYPjgdEWQUe1Q4FAgA1FQ7VCgAzJQ4VIABBtQ41Dl4BLw6lEgABD54AHC-w8DEATQD1
-C-AGDg8WBT0VLQUeDQ8PBw0FLQ5FDg08XwdQHiUeDUwJALAOHQwHDQUNHB0FDQgAgDwFDQwNFQ0c
-CwAwDSUtFwAADADxCgwHBR0MHRUNHAUNLA0FLRUOPSwNJQ0VHh0QAGAOJS4VHSxlCBIuKgAwDRUO
-CABgLBUtBQ4sSgBgFQ0VDiwNLQB-DjUtHA0FHCMHHQATBlMFDxUAPwgAIE8W3wACBgDxES8WFR8V
-VR41LgBuAC4QPw8HDxYOAD0PDwUODUwNDgVNUw7QVR5VDgBuAA0MBQ4APQUAIU0FGwBFBS0VHjwA
-ARkAIjwHNQAAPQC-VR5dBQ4AXgBVDgCJBJIEIwCUHgQODxUOBA4MBAATLgIADsYAD6YCFA8xAP--
---_ID8kE-23wEEBWcBZfFhZABh5VHgYgBg4VVhUOBgAGDgUOFgUeBSYHAAANAPEDBg4WDgUWBRYF
-BgUOBj4GDgUGDAA7fgUGFABxFgUOFg4GDhYAEgZFAPABBh4FBgUADgYFHjYeBQYOEBYA-wM_BRYO
-BSAFHlYeBUAVXhVwVUC4AB2EDx8EEA4EkA4GAGYEDxSQBA0TAAUMACMEDRIALw4EHgAMJgQNGAAv
-DgSSAB0zAAYVAgBaIA8WHxUEADMgBRECAA8KAAExMBYOAgAv8JMgAh4PswLxI18VtAIwHVEdXQJE
-DZENBQYAFbEEAACQAhORigIUcYgCHzGIAi1gBw8P0AcOAwAxDg8WBwCiDdAHDkcOBy4dHggA8QAX
-HgdeBw4nHideDQ4nHhcgAAQzAAAsAB-QYQEeDzEA-xPyABVVcBUPFjYOFUAFHgYFHugBIw4GywRH
-Bg4FELgEExDMBAoUACMOBs0EAC4AEgZHADAGHgU6AlEVDjYOFToCz1UOBgVAFQZOFXBV8PQUHSPw
-Bz8CCDwCJPAeCgAFJgIv8AdZABzR-xYA9gD_AP8VAPBw-gsAL-0AQwAc-xN-FnB2XhB_Vh5-FV4W
-cF0e0B3wUG6AZi5QbiYeMG0uFh4QUQAc9wrwEA8W4AYewA4WHqAPFR4WHpAdHhYOoB0OBQBSsB0O
-Bg4FAGkNDgYOwA0KAB8QZgIeDzEA-xKnYC8VHxYWDqAfFYUBgMAdDtANDuANAgAv8GCDAB4PMQD-
--------V_AJkDxT0Dw50-gDkDvQP-gFkDg4AD0wAHPELJy8PBy4HDjceNx4HHgcOBw5XHiceJy4X
-HhcQAAAWAEA3HhcODADxBycOFy4XHiceFx4XPgcONw43DgcODx9YDAACAGAHDQ4HDkdlDAALAHA3
-HicODTcNhgwgDg1YABAXHwBgJw4NJw43CgADFgAhJx43ABANQgBvHjcNDg1HqRkg8AVeFS4VHgBe
-EC4Q-gElHhUuFT4gHg0A8AwEFY4VLhAuJS4QfiAOFW4VThAuFR4QLhVOEG4dAP8AHgUeFW4QHgAe
-EA4lziBeeAAd-0USTQ8dHQ5NDxJdDB0MrQ4MHQwOjQ4MPQwObQ4MXQwOPR4MfQweHRydHH0efR49
-HD0eHRwOfQ4cPQwOXQ4MbQwOPQ4MjQwOHQ4MrQwdDL0MHQxdDt39AB1aCA8YCA4CABEoAgATSAgA
-HggCAA8wAHoP8AAc-14WVwUfFkUXBicGBz4VDgUnJgcGBV4FBxZHZQ4GFwY3DhUuFUcWBxUOBS4F
-JjcGHiUeBXdlHlUOJwYHBhcuJQ4FFwZHNS4FFjcGBwVuFwYXBhcVLhUOJxYndQYHBjcGHhUuBUcW
-ByUOBS4HFjcGnAAc8RUnDxdnDlcuRy43TidOF24HbgcPDk4NDw8NTg0MBw0uDScNLg3iApsNDg1X
-DWcNZw4vAAApAA8tAAUfN1QETRG0VARAJP4ANE4EWqT_ALQOEAAPUAAckA8PJx4HLlcuJ0EEUA4n
-DgceCgAwRx4HPwRQLgceRw5ZBCEHDlEEoS4XHjcOBz5nLidRBCAOh0IEcicuJy4NFw1TBBEHKAQg
-HjcOAeIORw4NBz4nDQ4HLg1XLkAEfwcehw0ODTeTIh0pLxUjBDAuFR4lBBAQJQRg3hA_Fd4QJAQT
-riIEMC4VHmsEEBBrBCj_BmkEHwGeAU0M6AMwLhgeAgADVgM4HggOAgA-GA4ILABuHwjhABzwJyZH
-HxY1HlcGBxUeBQ4VNxYXFU4FByYXBgclTmcGBQ41HhYnBhdOJRcWFxYFHkUGJwYnVV4lDhsA8ARV
-BjcWByU_BQcmNwU_JRcGR04V8APwBRYHFR41NwYnBQ4VHhUHBlcOFT4FPgAPmAAcNxcvF6IDAQIA
-YA8Obh1ODa4DFBepA0gtRy1HygMBAgAfDScAAR8nKgJNBDceUSQOJA8fBwAQDd8dcaQOJA0kDmQM
-AAAEAA0GAAgeAAAMAAMCAAMeAAYCAA-AAE3wDE8VBQAuEAVOBSBeEAUOBRBeAAUuAA4AjhBuAJEo
-8AUgBV4gBU4ADgUQThAFPhCOIAXuMCcA-wmuIH4FAM4FAJ4QBRCeBR4ATgUQLhB_AG6vAB4PMQDg
-ODQPFOkBCe8BHw5OAgEgDaQcAi0NJDUAAwYAANwoJQ7kTAIPNAJOcCAFXxUQBV4WAtk_AAVeEG4Q
-BRAFvgAeGgKA3gCeBRAFAD4ZAlEeAE4AvmgCkW4QXhAFLgUATmcCrwUQbhA_AC4F3gCzAB4PMQD-
-1vECB1aHJicWJyYXFkcGRxYHBlc6CgYIAFBHFgcWRyAAwSY3VvcCVjcmFyYnFhUACykAMVcGB0MA
-ERdPAD_HVgfrAB4PMQD-----6ZEEDx8PDxUGnxYJAFEFDxYWjgoA-w0uFn4PFAQPDwUuhQ8UBN8P
-AA8UFL8fEB8UtPCAYwAc-wcvFpVeDxV1Df4D9QAPD9EMDx-dC-QARwAeAHAqTA8fBIAIAIE1Dw8E
-DxSATwYAry8fFA8UkCQe8ItqAR4PMQB-8SY5CA8XUA8WCA8XFwgOBw8OCCcIDg8WBw8YCAMPEw8Y
-CA8TAw0IDg8UDw4IBwQNCA4DDRMIDh4AkRQXDAMPDggNBBAAwg0DDQ8VBw8WBw0TDRcA-wwfFQ8O
-CA8WAAgOJwgORwgPDhAPGAggDw4I8DilAB3UQQ8Wtw4ADgcEDxQEDQIAWAcOBwQNAgASF4s3BAIA
-3wwHDge8Bw4ADrcO8EExJB5gFRUfFgWAVC0BAgASYAcAwA4FHlCeYH5glVCVUGEvV1AOBQ5FHgAQ
-cG0uXy6QPvA2cQAcMCCUUN0AEg4CAFBQnmB0cAIAMA5UDgYA7wQOFA4EDoAOBB4EDvBVRQIeD6cC
-svABCVAPFgQJFwQJBw8ZBCcICaUCERmlAhAZpQLyBQ4ICQ8UDxkEBwQOBAkDDhMECQ0EpAJgDQgO
-BAgJuwISDqICsQ4TDgMNBA4EHxUJoALPCScECUcEDRANBCANnQIg8AUVHxsHBh6APhMHAw5QAy4T
-HgMOQGMA8Bk_DxMDQAMdAy4TDgMHMAceDRMODS4HMA0jHRMNAw0GMAZODS4dMA0DLABQHgMODUA6
-A-8BHQMdYAcNAw0TBg2QDRYH8P8QHYIwd2CXUBYHBgIA8wRgdmAGdwZQl1CXUAaHUAcGZwZQGgBv
-BxZgdvBE6AEeDzEA4fAFJg8dIA5QDiANDg0ADQoNAA4QDQp9BPAMDxIHDQcMBw0HDQAPFgwEDQcN
-Dg8UDgsNDg0MZgJgBA4EDA0OFgDADA4ECxcNBw0EDgwLEwASDioF8AYODA8VDQ4NCQwKDAkMDgcP
-Fg0HDRe1BBAMLQDPEAwwDQcNMAyADPAosgAc8BZAWHCYQLgg2BDYAAgPGMgeyA4YDsgeCA6oPggO
-iA4IDgIeCA5oCAAjAC78E1IOCB4QAg0Aoj4CIAKeAkASDgICAC9wUuUmHbDwBA8YqCAOCA6YIFIA
-IIggcAAEAgBQIA4CriBkGJJiIA5IDgJOIFgdAAAOAAMiADBYHkgOAIJYIB4oLkggAhYAQQgOODAH
-ABACohg-QC4Q-hkdS-AA_CGUFY-_AfIA-gEIDjMVARMCCAARWAYAsbgOAg7YDtgOAg64EAAfSF4X
-HlDwALgwqAAHEJjjACYIDgIAcAIgrgIOIGJrGXMgTgIOSA4gGQASWCcAUR5IDiA4DwAQSAsAc1ge
-KA4CIEhTAQAaAAGrAG8CMF4QLkA9Ax4PMQD------315Bf8WAOYFDgIAgR4GDgYOBg8VBwAQDQYA
-YOYONi4mLgAwAEJFUAUtBR4W1jkjBQ0GADAOBg74OQEEAAAMADIOLQUEAAgYADIWBQ0GQgEGAAdM
-AAJcAD-mBe68AByZ3xYFANYOAAUOAgAaALsAIAYOJABzBi4mLjYOAHIASA4WDgC-ADcWDgCyABUA
-sgAaBhgACL8AGRZNAANfAF-WDgDeBaQHH34F-xYB1g7mAgBfHtYF7vBQAB9_7xYF1h7mDgIAT9b_
-AQVQAB8f8DEAnFBtPTl9fQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMyAwMDo0MDoyNyIscmV2aXNpb249MjI3XV1sejQASREAAFVKAADxI3tbMF09e2JtcD1weHUA
+QyAQEATwVgcQB8AX0BfABxAH8FYsZmxhZ3M9MSxwYW5feD0wCADKeT0wLHpvb209OX0sPgBIDxYF
+DgIAVxUPFQUNAgDzBP0MBQ5dBQ5tBW0F-SIFDu0F-VdiAB8wYgAUoQXvFQ8WBd8VBe5sAPMGDa4F
+LgWuDQXeBe4NBV4FDV4FfgVeDwCDHgUNngU_BZ4PAB-eagAc0u8VBd4FDxbuBZ4FDR5pAELeBQ3u
+ZgBCDW4Fbg8Akq4FDQ4FDb4FHg8AP94FDWgAHD--FfAyABwbBWcBKh4FZwH0CxXtDgXdBe0OBS0O
+BY0FPQVdDgUdDgWdBS0FGQCx3QVNDgV9DgU9BY0PAA_BACwbDucBMA0F3d0BkN0FDo0FDj0FHfUB
+ZS0FDi0FrRkAMO0FfRsAQg6NBU0PAA_DABzwBb8ZBA4EHhQPFCQNJA00DgQODSQNBgDSNA0EHSQd
+BB0kDQ4UDRwAAggAJmQNJQAkJB0lAAICAAMrAC4kDUgAG2QjAJQdBA0PFQ0EDQwEABMtAgAPKgMc
+kv8VAwUuBS4FfkEBRwVeBQ4CAEE_BQ5lBgBQBQ41DhVJA0IONQ417AFlDgUOhT6FDAAAGAAPHgAa
+Hx6gAh7DVwUPFu8VBf4iBQ8W_wJK-gsFDgIAKg0FAgAPZgAcYPWCDxUlDgIASfUCDgUCAEj1AQ4F
+AgABxwAJEAARLgIAHw5zAB0PeAMdIw8VagAOggAPsQAKANMAA9wAH4LvBCXETgWODxYFPg0FfgXu
+0QRwBa4FLg0FLvEEEB4bABWOGQAfDpwBOiLfFQECpY4FPgUPFn4FDU7sBDPuBS4gBYReBT4FjgUN
+LhkAALYCBwIAPh0FDYMAD_8DhwcrAAYlACMOFEkAD_wDHC8fFa8DGA-rA2nxDz8PDxYPDw8Wjw9-
+Fg8P7xYPD98WBf4ADw-uDd4F7gIAMv4ADQ0Ar36VDhUOtQ4VDhVlAEhP7hVulWMAIFBvGQ8UPzIC
+8xAPFA7kDlQOZA4E7Q4kDUQNRA70Aw5EDlTtZA1kDfQAGwCKNA1EDfQFDQQCAG89DxVNDE3rARwm
+BF97AHH0Bw5kDv0AXgBxCQ5EDkT9AHcABxcAD3UAQyX9AXQAMDT9AXQA9wHkDWQOdO1EDUQNNA3k
+HQQNAgAeXXIAD2EBIBoNYQFCNA0E7XgAXw5UDoTdeQA3IA8ZBAQQDgIAMQ8ZFAgAcDQNBA0OJA4G
+ALQ0DgQeJB4EHiQODRwAAggAJmQOJQAkJB4lAAICAAMrAC4kDkgAOWQOJAIAJw0UJQAjDRRJAA8O
+BGoCGwgKMwgrBQ5VCBF_tgYv-gNHAxxB1R8VpUEAUYUONQ61CgAu1R4SADEVDiWJAAEOAAUKAAQC
+ABHVrQAHAgAPvwcGD44HRFkFHtUOBQIANRUO1QoAMyUOFSAAQbUONQ5eAS8OpRIAAQ_eABwv8PAx
+AE0A9QvwBg4PFgU9FS0FHg0PDwcNBS0ORQ4NPF8HUB4lHg1MCQCwDh0MBw0FDRwdBQ0IAIA8BQ0M
+DRUNHAsAMA0lLRcAAAwA8QoMBwUdDB0VDRwFDSwNBS0VDj0sDSUNFR4dEABgDiUuFR0sZQgSLioA
+MA0VDggAYCwVLQUOLEoAYBUNFQ4sDS0Ajw41LRwNBRwdOQ4ecw8PBQ8VAD8IACBPFt8AAgYA8REv
+FhUfFVUeNS4AbgAuED8PBw8WDgA9Dw8FDg1MDQ4FTVMO0FUeVQ4AbgANDAUOAD0FACFNBRsARQUt
+FR48AAEZACI8BzUAAD0Av1UeXQUOAF4AVQ4AiQSSBCMAlB4EDg8VDgQODAQAEy4CAA7GAA_mAhQP
+MQD-----iA-JBP9t8BBAVnAWXxYWQAYeVR4GIAYOFVYVDgYABg4FDhYFHgUmBwAADQDxAwYOFg4F
+FgUWBQYFDgY_Bg4FBgwAO34FBhQAcRYFDhYOBg4WABIGRQDwAQYeBQYFAA4GBR42HgUGDhAWAP8D
+PgUWDgUgBR5WHgVAFV4VcFVAuAAdhA8fBBAOBJAOBgBmBA8UkAQNEwAFDAAjBA0SAC8OBB4ADCYE
+DRgALw4EkgAdMwAGFQIAWiAPFh8VBAAzIAURAgAPCgABMTAWDgIAL-CTIAIeD7MC8SNfFbQCMB1R
+HV0CRA2RDQUGABWxBAAAkAITkYoCFHGIAh8xiAItYAcPD9AHDgMAMQ4PFgcAog3QBw5HDgcuHR4I
+APEAFx4HXgcOJx4nXg0OJx4XIAAEMwAALAAf0GEBHg8xAP8T8gAVVXAVDxY2DhVABR4GBR7oASMO
+BssERwYOBRC4BBMQzAQKFAAjDgbNBAAuABIGRwAwBh4FOgJRFQ42DhU6As9VDgYFQBUGThVwVfD0
+FB0j8Ac-Agg8AiTwHgoABSYCL-AHWQAc0f8WAPYA-gD-FQDwcP4LAC-9AEMAHP8TfxZwdl4QflYe
+fxVeFnBdHtAd8FBugGYuUG4mHjBtLhYeEFEAHPcK8BAPFuAGHsAOFh6gDxUeFh6QHR4WDqAdDgUA
+UrAdDgYOBQBpDQ4GDsANCgAfEGYCHg8xAP8Sp2AvFR8WFg6gHxWFAYDAHQ7QDQ7gDQIAL-BggwAe
+DzEA--------1fgCZA8U9A8OdP4A5A70D-4BZA4OAA9MABzxCycvDwcuBw43HjceBx4HDgcOVx4n
+HicuFx4XEAAAFgBANx4XDgwA8QcnDhcuFx4nHhceFz4HDjcONw4HDg8fWAwAAgBgBw0OBw5HZQwA
+CwBwNx4nDg03DYYMIA4NWAAQFx8AYCcODScONwoAAxYAISceNwAQDUIAbx43DQ4NR6kZIPAFXhUu
+FR4AXhAuEP4BJR4VLhU_IB4NAPAMBBWOFS4QLiUuEH4gDhVuFU4QLhUeEC4VThBuHQD-AB4FHhVu
+EB4AHhAOJc4gXngAHf9FEk0PHR0OTQ8SXQwdDK0ODB0MDo0ODD0MDm0ODF0MDj0eDH0MHh0cnRx9
+Hn0ePRw9Hh0cDn0OHD0MDl0ODG0MDj0ODI0MDh0ODK0MHQy9DB0MXQ7d-QAdWggPGAgOAgARKAIA
+E0gIAB4IAgAPMAB6D-AAHP9eFlcFHxZFFwYnBgc_FQ4FJyYHBgVeBQcWR2UOBhcGNw4VLhVHFgcV
+DgUuBSY3Bh4lHgV3ZR5VDicGBwYXLiUOBRcGRzUuBRY3BgcFbhcGFwYXFS4VDicWJ3UGBwY3Bh4V
+LgVHFgclDgUuBxY3BpwAHPEVJw8XZw5XLkcuN04nThduB24HDw5ODQ8PDU4NDAcNLg0nDS4N4gKb
+DQ4NVw1nDWcOLwAAKQAPLQAFHzdUBE0RtFQEQCT_ADROBFqk-gC0DhAAD1AAHJAPDyceBy5XLidB
+BFAOJw4HHgoAMEceBz8EUC4HHkcOWQQhBw5RBKEuFx43Dgc_Zy4nUQQgDodCBHInLicuDRcNUwQR
+BygEIB43DgHiDkcODQc_Jw0OBy4NVy5ABH8HHocNDg03kyIdKS8VIwQwLhUeJQQQECUEYN4QPhXe
+ECQEE64iBDAuFR5rBBAQawQo-gZpBB8BngFNDOgDMC4YHgIAA1YDOB4IDgIAPxgOCCwAbh8I4QAc
+8CcmRx8WNR5XBgcVHgUOFTcWFxVOBQcmFwYHJU5nBgUONR4WJwYXTiUXFhcWBR5FBicGJ1VeJQ4b
+APAEVQY3FgclPgUHJjcFPiUXBkdOFfAD8AUWBxUeNTcGJwUOFR4VBwZXDhU_BT4AD5gAHDcXLxei
+AwECAGAPDm4dTg2uAxQXqQNILUctR8oDAQIAHw0nAAEfJyoCTQQ3HlEkDiQPHwcAEA3fHXGkDiQN
+JA5kDAAABAANBgAIHgAADAADAgADHgAGAgAPwABN8AxPFQUALhAFTgUgXhAFDgUQXgAFLgAOAI4Q
+bgCRKPAFIAVeIAVOAA4FEE4QBT4QjiAF7jAnAP8JriB_BQDOBQCeEAUQngUeAE4FEC4QfgBurwAe
+DzEA4Dg0DxTpAQnvAR8OTgIBIA2kHAItDSQ1AAMGAADcKCUO5EwCDzQCTnAgBV8VEAVeFgLZPgAF
+XhBuEAUQBb4AHhoCgN4AngUQBQA_GQJRHgBOAL5oApFuEF4QBS4FAE5nAq8FEG4QPgAuBd4AswAe
+DzEA-9bxAgdWhyYnFicmFxZHBkcWBwZXOgoGCABQRxYHFkcgAMEmN1b3AlY3JhcmJxYVAAspADFX
+BgdDABEXTwA-h1YH6wAeDzEA-----_mRBA8fDw8VBp8WCQBRBQ8WFo4KAP8NLhZ_DxQEDw8FLoUP
+FATfDwAPFBS-HxAfFLTwgGMAHP8HLxaVXg8VdQ3_A-UADw-RDA8f3Qv0AEcAHgBwKkwPHwSACACB
+NQ8PBA8UgE8GAK8vHxQPFJAkHvCLagEeDzEAf-EmOQgPF1APFggPFxcIDgcPDggnCA4PFgcPGAgD
+DxMPGAgPEwMNCA4PFA8OCAcEDQgOAw0TCA4eAJEUFwwDDw4IDQQQAMINAw0PFQcPFgcNEw0XAP8M
+HxUPDggPFgAIDicIDkcIDw4QDxgIIA8OCPA4pQAd1EEPFrcOAA4HBA8UBA0CAFgHDgcEDQIAEheL
+NwQCAN8MBw4HvAcOAA63DvBBMSQeYBUVHxYFgFQtAQIAEmAHAMAOBR5QnmB_YJVQlVBhL1dQDgUO
+RR4AEHBtLl8ukD7wNnEAHDAglFDdABIOAgBQUJ5gdHACADAOVA4GAO8EDhQOBA6ADgQeBA7wVUUC
+Hg_nArLwAQlQDxYECRcECQcPGQQnCAmlAhEZpQIQGaUC8gUOCAkPFA8ZBAcEDgQJAw4TBAkNBKQC
+YA0IDgQICbsCEg6iArEOEw4DDQQOBB8VCaACzwknBAlHBA0QDQQgDZ0CIPAFFR8bBwYegD4TBwMO
+UAMuEx4DDkBjAPAZPg8TA0ADHQMuEw4DBzAHHg0TDg0uBzANIx0TDQMNBjAGTg0uHTANAywAUB4D
+Dg1AOgP-AR0DHWAHDQMNEwYNkA0WB-D-EB2CMHdgl1AWBwYCAPMEYHZgBncGUJdQl1AGh1AHBmcG
+UBoAbwcWYHbwROgBHg8xAOHwBSYPHSAOUA4gDQ4NAA0KDQAOEA0KfQTwDA8SBw0HDAcNBw0ADxYM
+BA0HDQ4PFA4LDQ4NDGYCYAQOBAwNDhYAwAwOBAsXDQcNBA4MCxMAEg4qBfAGDgwPFQ0ODQkMCgwJ
+DA4HDxYNBw0XtQQQDC0AzxAMMA0HDTAMgAzwKLIAHPAWQFhwmEC4INgQ2AAIDxjIHsgOGA7IHggO
+qD4IDogOCA4CHggOaAgAIwAu-BNSDggeEAINAKI_AiACngJAEg4CAgAvcFLlJh2w8AQPGKggDggO
+mCBSACCIIHAABAIAUCAOAq4gZBiSYiAOSA4CTiBYHQAADgADIgAwWB5IDgCCWCAeKC5IIAIWAEEI
+DjgwBwAQAqIYP0AuEP4ZHUvwAPghlBWP-gHyAP4BCA4zFQETAggAEVgGALG4DgIO2A7YDgIOuBAA
+H0heFx5Q8AC4MKgABxCY4wAmCA4CAHACIK4CDiBiaxlzIE4CDkgOIBkAElgnAFEeSA4gOA8AEEgL
+AHNYHigOAiBIUwEAGgABqwBvAjBeEC5APQMeDzEA------99eQX-FgDmBQ4CAIEeBg4GDgYPFQcA
+EA0GAGDmDjYuJi4AMABCRVAFLQUeFtY5IwUNBgAwDgYO_DkBBAAADAAyDi0FBAAIGAAyFgUNBkIB
+BgAHTAACXAA-5gXuvAAcmd8WBQDWDgAFDgIAGgC7ACAGDiQAcwYuJi42DgByAEgOFg4AvwA3Fg4A
+sgAVALIAGgYYAAi-ABkWTQADXwBf1g4A3gWkBx9_Bf8WAdYO5gIAXx7WBe7wUAAffu8WBdYe5g4C
+AE-W-gEFUAAfH-AxAJxQbT05fX0=
 :: gfx/1.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA3IDIwOjQ3OjUyIixtb2RpZmllZD0iMjAyNS0x
 MC0yMiAyMjowNjoyNiIscmV2aXNpb249Nl1dbHo0AOUCAADNNAAA8yF7WzBdPXtibXA9cHh1AEMg
@@ -1288,43 +1420,40 @@ FpYOBRAOtQ4QBhUOBQIAKAYQLAQBDwAflgYAAgA5AH8FDpYOBfAhfAAdxAMFDxZWDgVQDnUOUHwA
 JAZQeAABCwAfVgYAGgFJAG8OVg4F8AM8Ax4PMQD---------------------------------BFBt
 PTh9fQ==
 :: map/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-09 01:56:27"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:04:52"]]
 :: map/0.map
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
-MC0wNyAwMTo0Mjo1NCIscmV2aXNpb249MTI2XV1sejQAXgEAAO0gAADwCHt7Ym1wPXVzZXJkYXRh
-KCJpMTYiLDMyAwAvIjABAE4-NDEwAQAID4AA-0ZMNjA0OQQAHzABAFhMYTA0OQQAD3ABVC45Y2wA
-DxwAACI0MgQAD4AAZQWoAR8xBAA5DmQALDQwgAAKMAAPAQA9DIAADxwAAA8BADxAYzA0MgQAD4AA
-ZQ_AA-sPgAXzD4AA----------_d9gsiKSxoaWRkZW49ZmFsc2UscGFuX3g9NTQuNgEAETcWAFl5
-PS0xMRgAkyx0aWxlX2g9MQoAEHcKAK96b29tPTAuNX0sdhBaIjEyBAAjMDLzDAQEABczHAAOAQAP
-gADmLzEyBABDD4AACQkEAB8xBABDD4AAFS8wMQQARB80BAAAHzEEAAAfNAQA-20fOQQARB80BAAA
-HjkEAC8xMoADbA_AAGwPAQA9D4AAEQ8BAEkPgAD-----------8kD3YQQ1AwLjV9fQ==
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMyAwMDoyNjo0MCIscmV2aXNpb249MTI3XV1sejQAAgEAANkDAAD3B3t7Ym1wPXB4dQBMgCAg
+ABcAAABBAB4GAHAcAAAESWAaBgC0oBgAAABJAABJwAQJAH0AAAABQgATGABiAgAAE0FgDAB1AQAA
+AEAAARsALkFgMAAQE0gALcAAGAAXGH4AFxyWAA8GAFn2DAYAACxoaWRkZW49ZmFsc2UscGFuX3g9
+NTQuNgEAETcWAFl5PS0xMRgAkyx0aWxlX2g9MQoAEHcKALp6b29tPTAuMjV9LH8BAAcBoBIAAAIA
+AgQAAAMMAB8WEgAQRwIAABUSAFoEEgAVEQ8A0QEABAQABAEAXwQAFQkMABkJMwAaGj8AD4cAAA8S
+AP9DHwJaAkNQMC41fX0=
 :: map/1.map
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA2IDIwOjQ5OjQ4Iixtb2RpZmllZD0iMjAyNS0x
-MC0wNiAyMTozMDowNCIscmV2aXNpb249MTRdXWx6NACKAQAA5SAAAPAIe3tibXA9dXNlcmRhdGEo
-ImkxNiIsMzIDAC8iMAEANiIxMgQAAAEANTUxMAEAFzQMAC41MSwALzEyBAA5TzYwNDkEAA0IMABP
-MDAxMQQAOU82MDRhBAANCDAAHzABADYA2AAAXAAPLAAbTzYwNTEEADEPgAAhAjgADwEANQ_AAB8O
-LAAPgAFhLzQxBAAxD4AABy80MIABBwicAw8BAC0OgAAPLAARDwAD-3AvMTKABWwPgAA9H2EEAA0I
-MAAfMAEANg8AByMPgAD----------3X1CyIpLGhpZGRlbj1mYWxzZSxwYW5feD0zOC42AQARNxUA
-SHk9LTkWAKM2LHRpbGVfaD0xCgAQdwoAj3pvb209MX0schBSBQEAEzLnDA8EAAUuMzABAA_AAOkf
-MQQAPB80BAAQFzEEAB80BAD-bC8xOQQALUY2MDA4UAAPBAD-nx85BAA8HzQEABAXOQQAD4AF7Q_A
-AE0fOIAAaRE2JAQvMDSAAP----------DQ9yED9QbT0xfX0=
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA2IDIwOjQ5OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMyAwMDoyNjozNSIscmV2aXNpb249MTVdXWx6NAAeAQAAjAUAAPAGe3tibXA9cHh1AEyAICAA
+EQAAARIAAQBxUQABAAAAQQYANFEAABgA8AITEgAISWACEgATEQAISmACETMAdABJAABKAAgJAGwA
+AAARUWAVAC5RYCoAHxI8AAITQTwAdQMAAABAAAMbAB9BQgABD34AKAXPACEWEswAHxL-AAwfEh4A
+-_v1DAAAACxoaWRkZW49ZmFsc2UscGFuX3g9MzguNgEAETcVAEh5PS05FgCjNix0aWxlX2g9MQoA
+EHcKALp6b29tPTAuMjV9LIQD3xMAAAACAAYEAAADABYMAATxCwIAABMBAAgEAAIBAF8EABAZAAAI
+YG0EABMJFQAfCUUADHsCBAAACAACEgAvGWASAP8UHwIKAj9QbT0xfX0=
 :: map/2.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTA2IDIxOjAxOjU2Iixtb2RpZmllZD0iMjAyNi0w
-Mi0wMyAyMjoyMTo1OCIscmV2aXNpb249NzhdXWx6NAC5AgAAxAgAAPYke3tibXA9cHh1AEyAICAA
+Mi0xMyAwMjozNTowMCIscmV2aXNpb249ODFdXWx6NACuAgAAyQgAAPYke3tibXA9cHh1AEyAICAA
 -wAA---SADgALgAALGhpZGRlbj1mYWxzZSxwYW5feD0tNC4zAQABFQB2eT0tNDEuNgEAkyx0aWxl
-X2g9MQoAEHcKAIp6b29tPTF9LG8Acb8AAB9SAB8GAPIHUwAAAADAkgAAAZUAAwAAANAAGQAAAAwA
-YcFAAMBAGA8AHB4GABVADABiBZUAAHBhJwDxAQEAAAB6AQB6wQCVAABxYRhXAGUAAAADlQAMAN8A
-ecEAeMEAQIEAQMGv8AAERjIyLjkBAB838gAucBIAAApJYBQGALSgEgAAAEkAAEnACgkAHhASAC5R
-YCQADzYADxNBNgB_BAAAAEAABDwAD3IAPQjYAIAJAAAABwAAEwYAUQMUAAAVCQBBAAAAUZcBEUEG
-AHFRAA0AAAAPnAAfDx4AABILRQBBAAAAFyQAHx8kAAQTDyQAHwkeAAIXF0IADmYADiQAHxckAAof
-HyQAEAK0AD8TAAH5AAcCLQAfBksADhQWPwAPJwAHFQHYAA8kAAURHwwAAj4BHx8kAAQCrQEQFAkA
-HwK3AAcfGBIANB8DawMDNjkuMAEABFsEGDVwBB80aAMZ9wESAAACAAgEAAADAAESABIRDwDxBhEA
-EgEACgQAAQEAPwQAMAwAAQsACgYAHxAMAAVhEGABCgAKBgBRPwQAEgk-ABkJZgAaFHIAYAQ4AAAK
-YF8BYQxgCB0AAR4AfwMEAAAIAAMkAAHnAIUAAI0AAB0AAIAAAIgGAAg8AB8QPAAEIB0APwAaHTkA
-H4g8ABYNeAAvAYB1AGAvAIDtAFg-iAAEbAAXEI0GAC8DpWMAGC4BHTAAD2MADR8dYwAbLwCFMwAY
-HwgkAApfAQsACAwhAAdPGWAKCh4AAy8QOBgAEBYYGAAPYwcCHzhUCAIvODliBxFQbT0xfX0=
+X2g9MQoAEHcKAKp6b29tPTAuNX0scQBxvwAAH1IAHwYA8gdTAAAAAMCSAAABlQADAAAA0AAZAAAA
+DABhwUAAwEAYDwAcHgYAFUAMAGIFlQAAcGEnAPEBAQAAAHoBAHrBAJUAAHFhGFcAZQAAAAOVAAwA
+3wB5wQB4wQBAgQBAwa-yAARGMjIuOQEAHzf0AB0cMfIAcBIAAApJYBQGALSgEgAAAEkAAEnACgkA
+HhASAC5RYCQADzYADxNBNgB_BAAAAEAABDwAD3IAPQjYAIAJAAAABwAAEwYAUQMUAAAVCQBBAAAA
+UZcBEUEGAHFRAA0AAAAPnAAfDx4AABILRQBBAAAAFyQAHx8kAAQTDyQAHwkeAAIXF0IADmYADiQA
+HxckAAofHyQAEAK0AD8TAAH5AAcCLQAfBksADhQWPwAPJwAHFQHYAA8kAAURHwwAAj4BHx8kAAQC
+rQEQFAkAHwK3AAcfGBIANB8DXQRU9wISEgAAAgAIBAAAAwABEgASEQ8A8QYRABIBAAoEAAEBAD8E
+ADAMAAELAAoGAB8QDAAFYRBgAQoACgYAUT8EABIJPwAZCWYAGhRyAGAEOAAACmBiAWEMYAgdAAEe
+AH8DBAAACAADJAAB5wCFAACNAAAdAACAAACIBgAIPAAfEDwABCAdAD8AGh05AB_IPAAWDXgALwGA
+dQBgLwCA7QBYP4gABGwAFxCNBgAvA6VjABguAR0wAA9jAA0fHWMAGy8AhTMAGB8IJAAKXwELAAgM
+IQAHTxlgCgoeAAMvEDgYABAWGBgAD-sDAh84-AMCLzg5-AMRUG09MX19
 :: sfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-09 01:56:27"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:04:52"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
