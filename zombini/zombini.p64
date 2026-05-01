@@ -44,7 +44,7 @@ function blur(element, count)
 	element.blur[1].y = element.y
 end
 :: collision.lua
---[[pod_format="raw",created="2025-10-08 00:26:05",modified="2026-02-13 03:04:52",revision=303,xstickers={}]]
+--[[pod_format="raw",created="2025-10-08 00:26:05",modified="2026-02-18 01:17:27",revision=324,xstickers={}]]
 --MODULE: AABB collision
 
 --[[
@@ -381,6 +381,47 @@ function wallCollisionLoop(_obj)
 	return intersecting
 end
 
+function weaponCollides(_obj, _intersects)
+	-- For an object with a tool, check if it collides with a destructible object
+	local xOffset = sin(_obj.z + _zMod) * _xMod
+	local yOffset = cos(_obj.z + _zMod) * _yMod
+	
+	-- Initialize and sort list of vertices that make up the weapon
+	local collisionList = {}
+	for i = 0, _obj.tool:height() - 2 do
+	
+		-- Get vertices at base and tip of weapon
+		local base = userdata("i16", 2, 1,
+			_obj.tool:get(i, 0),
+			_obj.tool:get(i, 1)
+		)
+		
+		local tip = userdata("i16", 2, 1,
+			_obj.tool:get(i, 2),
+			_obj.tool:get(i, 3)
+		)
+		
+		-- Calculate position of X midpoints
+		-- where X = _intersects
+		local length = userdata("i16", 2, 1,
+			abs(base[0] - tip[0]),
+			abs(base[1] - tip[1])
+		)
+		
+		local section = length / _intersects
+		
+		-- Assemble one big userdata with all of the intersection points
+		local weaponVertices = {
+			base,
+			tip
+		}
+		
+		add(collisionList, weaponVertices)
+	end
+	
+	
+end
+
 function euclidDist(x1, y1, x2, y2)
 	return sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
@@ -439,7 +480,7 @@ function log2(x)
 	return l1 + (diff) * f
 end
 :: enemy.lua
---[[pod_format="raw",created="2025-10-11 00:15:30",modified="2026-02-13 02:49:11",revision=326,xstickers={}]]
+--[[pod_format="raw",created="2025-10-11 00:15:30",modified="2026-02-17 19:29:30",revision=327,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 include("movement.lua")
@@ -657,7 +698,7 @@ falsefalsefalsefalse
 --[[pod_format="raw",created="2025-10-08 19:04:09",modified="2025-10-08 22:11:23",revision=34830]]
 Cell 1: 272.0,288.0,16,16   Cell 2: 304.0,288.0,16,16   Cell 3: 288.0,272.0,16,16   Cell 4: 288.0,304.0,16,16   
 :: main.lua
---[[pod_format="raw",created="2025-10-04 00:27:00",modified="2026-02-13 03:07:21",revision=297,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:00",modified="2026-02-18 00:38:27",revision=299,xstickers={}]]
 include("player.lua")
 include("enemy.lua")
 include("shading.lua")
@@ -675,6 +716,9 @@ function _init()
 		enemyInitialize(210, 300, 7, 27),
 		enemyInitialize(10, 10, 7, 17),
 	}
+	
+	-- Initialize list of destructible objects (just enemies for now)
+	destructible = enemies
 	
 	-- Initialize camera focus
 	cFocus = player
@@ -722,6 +766,9 @@ function _update()
 		enemies = enemySpawn(enemies)
 		randomSpawnTimer = flr(t())
 	end
+	
+	-- Update list of destructible objects (just enemies currently)
+	destructible = enemies
 end
 
 function _draw()
@@ -772,7 +819,7 @@ function shadeTest()
 	end
 end
 :: movement.lua
---[[pod_format="raw",created="2025-10-15 22:53:01",modified="2026-02-13 01:42:50",revision=100,xstickers={}]]
+--[[pod_format="raw",created="2025-10-15 22:53:01",modified="2026-02-17 19:29:01",revision=101,xstickers={}]]
 include("collision.lua")
 
 function moveRandAngle(_obj)
@@ -842,7 +889,7 @@ function moveWait(_obj)
 	return _obj
 end
 :: player.lua
---[[pod_format="raw",created="2025-10-04 00:27:14",modified="2026-02-13 01:26:15",revision=857,xstickers={}]]
+--[[pod_format="raw",created="2025-10-04 00:27:14",modified="2026-02-18 01:17:30",revision=860,xstickers={}]]
 include("blur.lua")
 include("collision.lua")
 include("ease.lua")
@@ -1305,9 +1352,9 @@ end
 --[[pod_format="raw",created="2025-10-08 21:05:45",modified="2025-10-08 22:21:12",revision=61671]]
 false
 :: .info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:07:21",runtime=24,workspaces={{location="main.lua#20,17",workspace_index=1},{location="blur.lua#1,25",workspace_index=1},{location="collision.lua#327,39",workspace_index=1},{location="shading.lua#145,12",workspace_index=1},{location="enemy.lua#43,23",workspace_index=1},{location="movement.lua#48,15",workspace_index=1},{location="player.lua#115,15",workspace_index=1},{location="ease.lua#2,28",workspace_index=1},{location="gfx/0.gfx#0",workspace_index=2},{location="gfx/1.gfx",workspace_index=2},{location="map/0.map",workspace_index=3},{location="map/1.map",workspace_index=3},{location="map/2.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-18 01:17:30",runtime=24,workspaces={{location="main.lua#69,2",workspace_index=1},{location="blur.lua#1,25",workspace_index=1},{location="collision.lua#363,3",workspace_index=1},{location="shading.lua#145,12",workspace_index=1},{location="enemy.lua#72,4",workspace_index=1},{location="movement.lua#68,4",workspace_index=1},{location="player.lua#254,4",workspace_index=1},{location="ease.lua#2,28",workspace_index=1},{location="gfx/0.gfx#0",workspace_index=2},{location="gfx/1.gfx",workspace_index=2},{location="map/0.map",workspace_index=3},{location="map/1.map",workspace_index=3},{location="map/2.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:07:21"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-18 01:17:30"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Mi0xMyAwMDo0MDoyNyIscmV2aXNpb249MjI3XV1sejQASREAAFVKAADxI3tbMF09e2JtcD1weHUA
@@ -1420,7 +1467,7 @@ FpYOBRAOtQ4QBhUOBQIAKAYQLAQBDwAflgYAAgA5AH8FDpYOBfAhfAAdxAMFDxZWDgVQDnUOUHwA
 JAZQeAABCwAfVgYAGgFJAG8OVg4F8AM8Ax4PMQD---------------------------------BFBt
 PTh9fQ==
 :: map/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:07:21"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-18 01:17:30"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Mi0xMyAwMDoyNjo0MCIscmV2aXNpb249MTI3XV1sejQAAgEAANkDAAD3B3t7Ym1wPXB4dQBMgCAg
@@ -1453,7 +1500,7 @@ AH8DBAAACAADJAAB5wCFAACNAAAdAACAAACIBgAIPAAfEDwABCAdAD8AGh05AB_IPAAWDXgALwGA
 dQBgLwCA7QBYP4gABGwAFxCNBgAvA6VjABguAR0wAA9jAA0fHWMAGy8AhTMAGB8IJAAKXwELAAgM
 IQAHTxlgCgoeAAMvEDgYABAWGBgAD-sDAh84-AMCLzg5-AMRUG09MX19
 :: sfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-13 03:07:21"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-02-18 01:17:30"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO

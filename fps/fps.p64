@@ -170,7 +170,7 @@ function _draw()
 	end
 end
 :: procgen.lua
---[[pod_format="raw",created="2025-10-23 22:33:23",modified="2026-02-10 02:52:13",revision=520,xstickers={}]]
+--[[pod_format="raw",created="2025-10-23 22:33:23",modified="2026-04-29 00:17:52",revision=524,xstickers={}]]
 -- CONTENT GENERATION
 --[[
 	Generate a map with walls at map edges + algorithmic maze generation 
@@ -795,9 +795,9 @@ function drawRoom()
     raycast()
 end
 :: .info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 02:52:13",runtime=24,workspaces={{location="main.lua#33,15",workspace_index=1},{location="procgen.lua#57,29",workspace_index=1},{location="intro.lua#1,16",workspace_index=1},{location="start.lua#86,1",workspace_index=1},{location="raycast.lua#185,4",workspace_index=1},{location="gfx/0.gfx",workspace_index=2},{location="map/0.map",workspace_index=3}}]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-04-29 00:17:53",runtime=26,workspaces={{location="main.lua#33,15",workspace_index=1},{location="procgen.lua#25,23",workspace_index=1},{location="intro.lua#1,16",workspace_index=1},{location="start.lua#86,1",workspace_index=1},{location="raycast.lua#185,4",workspace_index=1},{location="gfx/0.gfx",workspace_index=2},{location="map/0.map",workspace_index=3}}]]
 :: gfx/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 02:52:13"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-04-29 00:17:53"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTIzIDIzOjQxOjA4Iixtb2RpZmllZD0iMjAyNS0x
 MC0zMCAwNDo0ODoxOSIscmV2aXNpb249MTU4XV1sejQApAUAAJA6AADzIXtbMF09e2JtcD1weHUA
@@ -899,7 +899,7 @@ D0AAX18wLgD_J1sBTT8wPvBVAR1vfhBeYA7wKiUfQCBOUB4CAC9ALtUAHg8xAOAf8DEATiBALgIA
 nzA_MD4gTiBOEJ0tHw_WAf8TbxcOUB4wPl4BHl8QXgBuAHEmHx8wlAHhTycOYA5lAB4PMQD-Q0Rg
 DmAO5QUvQC7pBSAPMQD-QwbjBQFWBA9aMR8PMQD-----Q1BtPTd9fQ==
 :: map/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 02:52:13"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-04-29 00:17:53"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
 MC0zMCAwNDo0NDo0MyIscmV2aXNpb249NV1dbHo0ACwBAADpAQAA8BF7e2JtcD1weHUATICAQAAF
@@ -909,7 +909,7 @@ PAASBiEAAR4AEgs5AASNABIFGwA0HgALNgAmASfbAEVnAAAOMAAEigARAxgAFA0wABQCGAARAhgA
 AD8AZDgAADkADxgAFQEYAGQ6AAA7ABAYABoAGAAUERgAr2cAABcOAP8AAP8BAAPxCn8saGlkZGVu
 PWZhbHNlLHBhbl94PS0xODgLAPIAeT0tMTAsdGlsZV9oPTE2CgAQdwoAsHpvb209MC4yNX19
 :: sfx/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 02:52:13"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-04-29 00:17:53"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
