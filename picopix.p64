@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: canvas.lua
---[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-01 06:38:34",revision=232,xstickers={}]]
+--[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-01 07:39:25",revision=249,xstickers={}]]
 function newCanvas(_w, _h, _color)
 	local w = _w == nil and cw or _w
 	local h = _h == nil and ch or _h
@@ -144,24 +144,24 @@ end
 -- Takes a canvas and returns a hexadecimal string for that canvas' colors
 function isolateColor(_c, _canvas)
 	local canvas = _canvas == nil and gc or _canvas
-	local result = "\f"
+	local result = ""
 	
 	if _c == nil or _c < 0 or _c > 31 then
 		return
 	else
-		result = result .. _c
+		result = "/f" .. _c
 	end
 	
 	local bitCanvas = 0
 	
-	result = result .. "\^:"
+	--result = result .. "\^:"
 	
 	for x = 1, #canvas do
 		local val = 0
 		local ref = 1
 		
 		for y = 1, #canvas[1] do
-			if canvas[x][y] == _c and _c ~= 0 then
+			if canvas[x][y] == _c then
 				val = val + ref
 			end
 			ref = ref * 2
@@ -169,10 +169,12 @@ function isolateColor(_c, _canvas)
 		local attach = tostr(val, true)
 		local attach = sub(attach, 3, #attach)
 		
+		if #attach > 1 then
+			 attach = "0" .. attach
+			end
+		
 		result = result .. attach
 	end
-	
-	result = result .. "\-8"
 
 	return result
 end
@@ -185,13 +187,16 @@ function binarizeCanvas(_canvas)
 	
 	if colors ~= nil then
 		for i = 1, #colors do
-			local cap = i < #colors and "\-8" or ""
-			result = result .. isolateColor(colors[i]) .. cap
+			--local cap = i < #colors and "\-8" or ""
+			local cap = ""
+			local insert = isolateColor(colors[i])
+			result = result .. insert .. cap
 		end
 	end
 	
-	
-	set_clipboard(result)
+	if #result > 0 then
+		set_clipboard(result)
+	end
 end
 :: main.lua
 --[[pod_format="raw",created="2026-04-30 20:23:24",modified="2026-05-01 00:26:29",revision=61,xstickers={}]]
@@ -250,9 +255,9 @@ end
 
 
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 06:38:34",runtime=26,workspaces={{location="main.lua#40,8",workspace_index=1},{location="canvas.lua#100,5",workspace_index=1},{location="gfx/tiles.gfx#27",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25",runtime=26,workspaces={{location="main.lua#40,8",workspace_index=1},{location="canvas.lua#165,27",workspace_index=1},{location="gfx/tiles.gfx#27",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 06:38:34"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAyMDoyMjo1OSIscmV2aXNpb249MTRdXWx6NAAWBwAAJT8AAPMhe1swXT17Ym1wPXB4dQBD
@@ -327,14 +332,14 @@ Dxz_AhIN4AATDbMGMgwXAe8RD8AAcATlBQwEAA9hBAJDDA8ODJsAEwubACwNC2EEHhxhBA8ZCSIv
 8PAxAP-------3MPHQeIDpsADwQAE28PFp4NQJ2LBx8PMQD-----------------------------
 ------------------_8UG09N319
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 06:38:34"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAxNzo0MDowNSIscmV2aXNpb249Ml1dbHo0AEwAAABQAAAA8Rx7e2JtcD1weHUATIAgIAD-
 AAD---8DLGhpZGRlbj1mYWxzZSxwYW5feD0wCADSeT0wLHRpbGVfaD0xNgoAEHcKAIB6b29tPTF9
 fQ==
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 06:38:34"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
