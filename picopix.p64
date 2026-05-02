@@ -5,23 +5,25 @@ version 2
 :: map/
 :: sfx/
 :: canvas.lua
---[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-01 07:39:25",revision=249,xstickers={}]]
+--[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-02 01:15:19",revision=391,xstickers={}]]
+-- Returns a canvas object with specified width, height, color
 function newCanvas(_w, _h, _color)
 	local w = _w == nil and cw or _w
 	local h = _h == nil and ch or _h
-	local color = _color == nil and 0 or math.min(0, math.max(32, _color))
+	local col = _color == nil and math.random(31) or math.min(0, math.max(32, _color))
 	local canvas = {}
 	
 	for i = 1, w do
 		canvas[i] = {}
 		for j = 1, h do
-			canvas[i][j] = color
+			canvas[i][j] = col
 		end
 	end
 	
 	return canvas
 end
 
+-- What do you think this does?
 function drawCanvas(_canvas)
 	local canvas = _canvas == nil and gc or _canvas
 	
@@ -36,7 +38,8 @@ function drawCanvas(_canvas)
 	rect(0, 0, cwpx-1, chpx-1, 7)
 end
 
-function trackMouse()
+-- Mouse event handler
+function trackMouse(_stack)
 	local mx, my, mb = mouse()
 	mx = math.floor(mx / cSize) + 1
 	my = math.floor(my / cSize) + 1
@@ -47,16 +50,20 @@ function trackMouse()
 		eyedrop(mx, my)
 	else
 		mContained = false
+		_stack:checkpoint()
 	end
 	
+	return _stack
 end
 
+-- Check if mouse is hovering over canvas
 function inCanvasRange(_x, _y)
 	local inX = _x >= 1 and _x <= cw
 	local inY = _y >= 0 and _y <= ch
 	return inX == true and inY == true
 end
 
+-- Paint on canvas at x / y coords
 function paint(_x, _y)
 	local action = interact(_x, _y)
 	if action ~= nil then
@@ -64,6 +71,7 @@ function paint(_x, _y)
 	end
 end
 
+-- Get color at x / y coords
 function eyedrop(_x, _y)
 	local action = interact(_x, _y, 1)
 	if action ~= nil then
@@ -71,6 +79,17 @@ function eyedrop(_x, _y)
 	end
 end
 
+-- Set canvas color to provided color
+function bucket(_c)
+	local c = _c == nil and 0 or _c
+	for x = 1, cw do
+		for y = 1, ch do
+			gc[x][y] = c
+		end
+	end
+end
+
+-- Core function for paint, eyedrop, bucket, and other mouse-based interactions
 function interact(_x, _y, _type)
 	local x = _x == nil and -1 or _x
 	local y = _y == nil and -1 or _y
@@ -78,13 +97,25 @@ function interact(_x, _y, _type)
 	
 	if inCanvasRange(x, y) then
 		mContained = true
-		return
-			type == 0 and function() gc[x][y] = color end or
-			type == 1 and function() color = gc[x][y] end
+		if key("ctrl") then
+			return bucket(paintColor)
+		else
+			return
+				type == 0 and function() gc[x][y] = paintColor end or
+				type == 1 and function() paintColor = gc[x][y] end
+		end
 	elseif mContained == false then
-		local mx, my = mouse()
+		local mx, my, mb = mouse()
 		if mx > 0 and mx < cwpx and my > 0 and my < chpx + 40 then
-			return function() color = pget(mx, my) end
+			if key("ctrl") then
+				if mb == M1 then
+					return function() setTrans(pget(mx, my)) end
+				elseif mb == M2 then
+					return function() setTextColor(pget(mx, my)) end
+				end
+			else
+				return function() paintColor = pget(mx, my) end
+			end
 		else
 			return nil
 		end
@@ -93,6 +124,31 @@ function interact(_x, _y, _type)
 	end
 end
 
+-- Set transColor
+function setTrans(_c)
+	local c = _c == nil and 0 or _c
+	transColor = c
+	paintColor = c
+end
+
+-- Set textColor
+function setTextColor(_c)
+	local c = _c == nil and 7 or _c
+	textColor = c
+end
+
+-- Implement hotkeys 0 - 9, a - v for colors
+function colorHotkeys()
+	for i = 1, #decTable do
+		if keyp(superdecimal(i)) then
+			if (superdecimal(i) ~= "c" or key("ctrl") == false) and i < 32 then
+				paintColor = i
+			end
+		end
+	end
+end
+
+-- Draw palette
 function palette()
 	for i = 0, 32 do
 		local w = cwpx / 8
@@ -102,18 +158,65 @@ function palette()
 		if i < 32 then	
 			rectfill(x, y+chpx, x+w-1, y+chpx+w-1, i)
 		else
-			rectfill(x, y+chpx, x+w*8-1, y+chpx+w-1, color)
-			rect(x, y+chpx, x+w*8-1, y+chpx+w-1, 7)
+			rectfill(x, y+chpx, x+w*8-1, y+chpx+w, paintColor)
+			print("\014hello", x+2, y+chpx+2, textColor)
+			crosshatch()
+			rectfill(x + cwpx/2, y + chpx, x + w*8-1, y+chpx+w-1, transColor)
+			crosshatch(false)
+			rect(x, y+chpx, x+w*8-1, y+chpx+w, 7)
 		end
 	end
 end
 
+-- Binarize canvas and copy result to clipboard
 function copy()
-	if btn("c") then
+	if key("c") and key("ctrl") then
 		binarizeCanvas()
+		tx = ti
 	end
 end
 
+-- Stack undo
+function undo(_stack)
+	if keyp("z") and key("ctrl") then
+		_stack:undo()
+	end
+	return _stack
+end
+
+-- Stack redo
+function redo(_stack)
+	if keyp("y") and key("ctrl") then
+		_stack:redo()
+	end
+	return _stack
+end
+
+-- Takes a canvas and returns a hexadecimal string for that canvas' colors
+function binarizeCanvas(_canvas)
+	local canvas = _canvas == nil and gc or _canvas
+	local result = ""
+	
+	local colors = countColors()
+	
+	if colors ~= nil then
+		for i = 1, #colors do
+			if colors[i] ~= transColor then
+				local cap = i < #colors and "\-8" or ""
+				local insert = isolateColor(colors[i])
+				result = insert ~= nil and result .. insert .. cap or result
+			end
+		end
+	end
+	
+	result = result .. "\f" .. superdecimal(textColor)
+	
+	if #result > 0 then
+		set_clipboard(result)
+	end
+end
+
+-- Returns list of all non-transparent colors on the canvas
 function countColors(_canvas)
 	local canvas = _canvas == nil and gc or _canvas
 	local colors = {}
@@ -123,7 +226,7 @@ function countColors(_canvas)
 				local alreadyMatched = false
 				
 				for i = 1, #colors do
-					if canvas[x][y] == colors[i] then
+					if canvas[x][y] == colors[i] or canvas[x][y] == transColor then
 						alreadyMatched = true
 						break
 					end
@@ -133,7 +236,9 @@ function countColors(_canvas)
 					table.insert(colors, canvas[x][y])
 				end
 			else
-				colors[1] = canvas[x][y]
+				if canvas[x][y] ~= 0 then
+					colors[1] = canvas[x][y]
+				end
 			end
 		end
 	end
@@ -141,35 +246,33 @@ function countColors(_canvas)
 	return #colors > 0 and colors or nil
 end
 
--- Takes a canvas and returns a hexadecimal string for that canvas' colors
+-- Returns colored one off character given a color and canvas
 function isolateColor(_c, _canvas)
 	local canvas = _canvas == nil and gc or _canvas
 	local result = ""
 	
 	if _c == nil or _c < 0 or _c > 31 then
-		return
+		return nil
 	else
-		result = "/f" .. _c
+		result = "\f" .. superdecimal(_c)
 	end
 	
-	local bitCanvas = 0
+	result = result .. "\^:"
 	
-	--result = result .. "\^:"
-	
-	for x = 1, #canvas do
+	for y = 1, #canvas do
 		local val = 0
 		local ref = 1
 		
-		for y = 1, #canvas[1] do
+		for x = 1, #canvas[1] do
 			if canvas[x][y] == _c then
 				val = val + ref
 			end
 			ref = ref * 2
 		end
 		local attach = tostr(val, true)
-		local attach = sub(attach, 3, #attach)
+		attach = sub(attach, 3, #attach)
 		
-		if #attach > 1 then
+		if #attach < 2 then
 			 attach = "0" .. attach
 			end
 		
@@ -179,27 +282,46 @@ function isolateColor(_c, _canvas)
 	return result
 end
 
-function binarizeCanvas(_canvas)
-	local canvas = _canvas == nil and gc or _canvas
-	local result = ""
+-- Hexadecimal superset for numbers past 15
+function superdecimal(_n)
+	local reverse = _r == nil and false or _r
+	local n = _n == nil and 0 or _n
+	return tostr(decTable[n])
+end
+
+-- Fill pattern for checkered print
+function crosshatch(_n)
+	local n = _n == nil and true or false
 	
-	local colors = countColors()
-	
-	if colors ~= nil then
-		for i = 1, #colors do
-			--local cap = i < #colors and "\-8" or ""
-			local cap = ""
-			local insert = isolateColor(colors[i])
-			result = result .. insert .. cap
-		end
-	end
-	
-	if #result > 0 then
-		set_clipboard(result)
+	if n == true then
+		fillp(
+			0b00110011,
+			0b00110011,
+			0b11001100,
+			0b11001100,
+			0b00110011,
+			0b00110011,
+			0b11001100,
+			0b11001100
+		)
+	else
+		fillp()
 	end
 end
 :: main.lua
---[[pod_format="raw",created="2026-04-30 20:23:24",modified="2026-05-01 00:26:29",revision=61,xstickers={}]]
+--[[pod_format="raw",created="2026-04-30 20:23:24",modified="2026-05-02 01:26:22",revision=127,xstickers={}]]
+
+--  ~,* PICOPIX *,~  --
+-- One-off character --
+--   generator for   --
+--       P8SCII      --
+-- f:e7a5ff5a423c00008v:0042000000423c0081:00000024000000008g:000000002400000088:0000000018000000  making your programs 100% cuter! f:e7a5ff5a423c00008v:0042000000423c0081:00000024000000008g:000000002400000088:0000000018000000
+-- Controls:
+---- Left click: Paint / Select color from palette
+---- Right click: Select color from picopix window (palette or canvas)
+---- Ctrl + c: Copy one-off character
+---- 0 - 9, a - v: Select color from palette
+
 include("canvas.lua")
 
 function _init()
@@ -211,35 +333,59 @@ function _init()
 	-- Size of each canvas cell in pixels
 	cSize = 8
 	
+	-- Width of canvas in pixels
 	cwpx = cw * cSize
+	-- Height of canvas in pixels
 	chpx = ch * cSize
+	
+	-- Primary canvas
+	gc = newCanvas()
+	
 	-- Window
 	w = window{
 	  width		= cwpx,
-	  height		= chpx + 40,
+	  height		= chpx + 41,
 	  resizeable	= false,
 	  autoclose	= true,
 	  z			= 10,
 	  cursor		= "crosshair",
 	  title		= "picopix"
 	}
-	color = 7
+	-- Current color used for painting
+	paintColor = 8
+	-- Transparent color when image is exported
+	transColor = gc[1][1]
+	-- Text following the pasted character will be this color
+	textColor = 7
+	
+	-- Hexadecimal supertable that counts from 0 - 31
+	decTable = {[0] = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"}
+	
+	-- Timer
+	ti = 0
+	-- Timer reference for "Copied!" message
+	tx = -200
 	
 	-- Mouse contained in canvas
 	mContained = false
+	
+	-- Undo stack
+	stack = create_undo_stack(function() return gc end, function(_obj) gc = _obj end)
 	
 	---- Constants
 	-- Mouse 1: Left click by default
 	M1 = 0x1
 	-- Mouse 2: Right click by default
 	M2 = 0x2
-	
-	gc = newCanvas()
 end
 
 function _update()
-	trackMouse()
+	ti = ti + 1
+	stack = trackMouse(stack)
+	colorHotkeys()
 	copy()
+	stack = undo(stack)
+	stack = redo(stack)
 end
 
 function _draw()
@@ -247,52 +393,27 @@ function _draw()
 	drawCanvas()
 	palette()
 	
-	local mx, my = mouse()
-	print(mx .. " " .. my, 2, 2, 7)
-	print(math.floor(mx / cSize) + 1 .. " " .. math.floor(my / cSize) + 1, 2, 10, 7)
-	print(pget(mx, my), 2, 18, 7)
+	if ti - tx < 200 then
+		local xOff = 16
+		local yOff = 27
+		print("Copied!", xOff - 1, yOff, 0)
+		print("Copied!", xOff + 1, yOff, 0)
+		print("Copied!", xOff, yOff + 1, 0)
+		print("Copied!", xOff, yOff - 1, 0)
+		print("Copied!", xOff, yOff, 7)
+	end
 end
 
 
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25",runtime=26,workspaces={{location="main.lua#40,8",workspace_index=1},{location="canvas.lua#165,27",workspace_index=1},{location="gfx/tiles.gfx#27",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,author="DorkOrca / gachapon.party",created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000000000000000000000001010100000000000000000000000101090a0100000000000000000000010707190901000000000000000000010707060d01000000000000000000010704060d0601000000000000000001070814191501000000000000000001070418150d01000000000000000001070c14020d01000000000000000001070410150d01000000000000000001070a14010d01000000000000000001070409150d01000000000000000001070814190d01000000000000000001071418150d01000000000000000000010615020d010000000000000000000000010d0d01000000000000000000000000000101000000000000000000000000"),modified="2026-05-02 01:26:37",notes="- Left click: Paint / Color palette\n- Right click: Select color\n- Ctrl + c: Copy one-off character",runtime=26,title="picpopix",version="0.1",workspaces={{location="main.lua#45,19",workspace_index=1},{location="canvas.lua#204,52",workspace_index=1},{location="gfx/0.gfx#54",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
-NC0zMCAyMDoyMjo1OSIscmV2aXNpb249MTRdXWx6NAAWBwAAJT8AAPMhe1swXT17Ym1wPXB4dQBD
-IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADaeT0wLHpvb209MTF9LD8AkCCXQA8P
-lw4wDgQA8BAnDA8QHCcOMA4XDQsPGxsNFw4wDgcNAwoPDggKCwwHDgBTAQoIFwkMAPAPDQMPGBcI
-Cg0HDjAeAQMKCAYKCwweMA4XARMKAw0OIwBQJxENAQ5GADMnPidkAK_XDjAPFp4FQJUgqwAmMDcb
-N1MAMC8bC1UAMCcDLQcAMTcTDgcAIx43aQAiNxwmACAQDBgAMScBKh8AGhEmAG8PFp4JQJmLACMw
-FxtXBgGgLxsLRw4wHgMtRzkBIRMOBwAxHh8OfgASKH0AMQ8YKHcAExp_ACAfDBUBQUcvEA9KAZFH
-AS8QHjAOVxE1AT9XHheZACsA-gBRFxwXGxefAFEQDC8bC6MBUC8QAy8boQExER4TagBTFx4XHhcv
-AUEXGxccMQBhLQsvEAwH0gAgASouADwTHhEuAA_eAEsiHw6fAFMnKA0OFz8BAQkAUxcbGhwXdAEE
-pQAiLxs9AQ_nAD0kFxujAEIbCy0LEAEhAy1pACAXExkAURcfDh4ccgBBBygMKI0AUA8YKAooIwAx
-GhcaIwAcHCIAFAohACgeGq0AD6kAKSEHGwIA8REOMA4vGwsdCx0LDjAOAx0DHQMtDjAeEw4TDhMe
-MA4HHgIAArcAA_kBD7YAAS8OB7cACyEOByMAD1kBKjQcFxz8AREtXgAxAS0BWQFiDQwOBw0MegAf
-LRwANEMRDgcRsgA-C0CbYgFJYB8OBxwHHCYA8QkoDBgMGAwOMA4PGBgKGAooDjAeGg4aDhomAFEM
-BxkHGUwA_AgQCRYJFgkOMA4BFgEWASYOMB4RDhEOEa4BDyoFJfAdNxg3QA8PNw8YAQ4IF0APDycI
-HxABDw8XDTANJwEPEA8cAQ8QAQcNMA0XHxsLACIPHA4AcA8bAw8QIQ0MALABDAMPEw8ODxcYDA8A
-8AcMBx8bDggPFwgBDA0wDQcPGw0LDhgdGgCACw0HCw4IDSdcACINCwkAQDcLCDcHADANCwgPABFH
-BwBvDxadCkCagwEjojcPGw8RNw8PMA4KAABGBSEDDwgGQTcPEwMIACodNwAGBSkADTIAHA0xAG8P
-Fp4MQJybAFYSBzMAThsPEQcOAAA8ABEDxAKxDQM3DQMeMB4dNx0VAi83HskCLBAXZQADBQA3DzAO
-DwAA9gNRAw8bFwP0B3EXDxMDFwwDCwADrgMHVgWRDgcNDxE3DQsHCwAUCwoAQQMNNwMLCEAMAzcM
-twA5HDcctwAP-QEmByEBLw8PMAEDAXkAJA8TegBSBwgPDgd_ADIHCAv5BFM3DxgIN74AYwcCDxgH
-DUEAcw0KDhIODQrFAD8HHgfHAAUP_QQsAbgACAUABMwABwUAA9EAAIMABdQAQgcMAweKAEgOHA4c
-HwQFjgFFBw0LB5EBBw0AJgMNSgAfDEkABA_eASkzNwgOaQQQCAIDUQ03Ag8Y_QMREgYAEB0GAAPe
-ADIMDxwKAAATAADjAEEPEA8MCQAwDTAd5gDxBQEPEAcPEwMdMB0cDRENHB0wDQcdAgAPRAAUEgxD
-ABcMQgA_Dxad9QUPrgEteA8aAw8bDxqvATADDxMGAASxATMNHgNnAScXDjwCDzwDAEUPGhcKqwFE
-AwwDDasBQg4DDQ5EAADLAQysAQ_DAiICxwAjCA90AgDjAAFDASIYCAgAEg9tAgAaAyAPE3sAWB0O
-Eg4degAbDkMAAbcAB0MAAbMEAlsDD0AAOA_cBSkBcgFCDxBMD8QEMCEfEEMCA4sBAAQAYCcIBxgP
-Fx0AICdIewGRDhcfGA0LDw4LTgghF1gWBGEXDggNCgiCCiANeBEAcgcOCA0bDQgkAAAHAAEdAA_Z
-ASUCmgVQECwPHCdlAkInER8QsAAOugAPtgB4A7IAAF0IIBEPnQADUwYyEBwPeQ0QEWgIHyfHAAIP
-eQF4QQdfEAy6AABMBBYcBAARDGMAUg0BDQEMEwePAQ0PHAcBDBeDAQATC8AAUwsKDw4KwAATCcAA
-IgsJwAAUC8AAPwsaC8AAAD8GQJbAAB9RJw8cBx6CAUEPEAwdxwDwBQsXDg0HDg0nCzALBw4NAQwB
-DQwXDABwDQwNDg0ODQwAECcWADABDAcLAALFAAAKACBIChEAkRcfGAoJDw4JCw0AIVgGBwBgCwgK
-BggLJgAgCngRAHIHCwgKGQoIJAAABwABHQA-Dxab1Q8qDAQADyECAkMMDw4MYQEUCyECHAshAh4c
-IQIP3wYjL-DwMgD---------LA-WB4kOnAAPBAATbw8Wng1AnUUIIA8yAP------------------
-------------------------------99UD0xMX19
+NS0wMSAyMToyMDowNyIscmV2aXNpb249MTVdXWx6NACAAAAAEjIAAPMhe1swXT17Ym1wPXB4dQBD
+IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADbeT0wLHpvb209MTF9LD8AH-AyAP--
+---------------------------------------------------------------XUD0xMX19
 :: gfx/tiles.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTA0LTMwIDIwOjIzOjA0Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAyMDo0MDoxMiIscmV2aXNpb249MTNdXWx6NAC4BwAA1T8AAPMhe1swXT17Ym1wPXB4dQBD
@@ -331,15 +452,229 @@ AUMBDAcPSgITJ0ICAvMCMScfEMMAgCcBDxwHDQ8QFABvFwsNEQsNxAB0WDcMDxw3gQEjRw8fETQM
 Dxz_AhIN4AATDbMGMgwXAe8RD8AAcATlBQwEAA9hBAJDDA8ODJsAEwubACwNC2EEHhxhBA8ZCSIv
 8PAxAP-------3MPHQeIDpsADwQAE28PFp4NQJ2LBx8PMQD-----------------------------
 ------------------_8UG09N319
+:: label.qoi
+b64$cW9pZgAAAeAAAAEOBAH_vZrf-f39-f39-f39-f39-f394f5lRojEB-39-f39-cY6B8Y6wQfA
+OsEHyzrBB8g6xAfG-iRjsMYHyToHOgfNOsUH-f39-f39wTrABzrAB8Y6wQfAOsEHxjrCBzrBB8g6
+B8I6B8YgxgfKOgfSOgc6B-39-f39-cA6BzrABzoHxjrBB8A6wQfGOsIHOsEHyDoHwjoHxiDGB8Y6
+xwfKOsEHOsEH-f39-f39OsMHOgfGOsYHxjrCB8w6B8I6B8YgxgfGOsAHwzrAB8o6BzoH-f39-f39
+wjoHOsAHOsAHxzoHOsIHOgfGOsUHyToHwDrBB9Y6wAfDOsAHyjrFB-39-f39-DrGB8Y6BzrCBzoH
+xjrFB8c6wQfAOsEHxiDGB8Y6wAfDOsAHyzrEB-39-f39-TrEB8c6xgfGOsUHxzrBB8sgwAfCIMAH
+xjrHB-39-f39-f39-f39-f39-eP_AAAA-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
+-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f3_HStTNcgoNf39-f39-f3gKMA1xijANf39
+-f39-f3gKDXJKDX9-f39-f393yg1wSjDNcEoNf39-f39wSjDNf391SjANcEoxTXBKMA1-ccowzX9
+xyjDNf394CjFNf391CjANcEoNSjBNSg1wSjANf3GKMU1-cUoxTX9-d8oNSjBNSg1-f3ZKDUowTUo
+Nf3LKDUowTUoNf3FKDUowTUoNf393yg1KME1KDX9-dMoNSg1wSjBNSjBNcEoNSg1-cUoNSjBNSg1
+-cUoNSjBNSg1-f3fKME1KME1-f3UKDXDKMM1wyg1-cYowTUowTX9xSjBNSjBNf394P7-8ejKNf39
+zig1wyg1KDUoNcMoNf3HKMM1-ccowzX90iDBB8E1-cY-zDX95SjDNd8oNc0oNf3HKDUoNSg1-cco
+NSg1KDX90SDBB8IoNf3FP8w1-eQoxTXeKMA1KMM1KMM1KMA1-f395gfMKMA1-SjANSjAP8w1-eQo
+NSjBNSg13ijANSjANcEoNcEowDUowDX9wSjANSjDNSjDNSjANfkowDUowzUowzUowDX9xAfMNSg1
+-SjANSjAP8w1-eQoNSjBNSg14ijCNSjCNf3FKMA1KMA1wSg1wSjANSjANfkowDUowDXBKDXBKMA1
+KMA1-cQHzDUoNfwoNcIoP8w1-eQowTUowTXiKDXBKDXBKDX9xCg1wijCNSjCNcIoNfcoNcIowjUo
+wjXCKDX9wwfMKMA1-Cg1wig-zDX95SjDNeUowDUowDX9xig1wig1wSg1wSg1wig19yg1wig1wSg1
+wSg1wig1-cMHzCg1-CjANcM-zDX95Sg1KDUoNeQoNcAoNcAoNf3EKMA1xCjANSjANcQowDX1KMA1
+xCjANSjANcQowDX9wgfMKDX9KDXDBz-KBzX9-dQowTX9xyg1wyg1wCg1wCg1wyg19yg1wyg1wCg1
+wCg1wyg1-cMHzDX7KMA1xQfMNf3fKMA1KMM1KMM1KMA14Sg1-cUowDXHKME1-CjANccowTX9ywfM
+KMI1KMA19CjANcUHwCDAB8g1-d8owDUowDXBKDXBKMA1KMA14CjBNf3EKMA1yCg1xijANfMowDXI
+KDXGKMA1-cIHzDXAKMA1KMA19Cg1xwfKKDX93ig1wijCNSjCNcIoNdwowDXAKDXAKMA1-cEoNcgo
+wTXFKMA18yg1yCjBNcUowDX9wgfMKME1wig18yg1xSjANcAoNcAowDXCKDX93yg1wig1wSg1wSg1
+wig13CjHNf3BKDXFKMA1wCg1wCjANcIoNfQoNcUowDXAKDXAKMA1wig1-cMHzDXAKDXCKDXzKDXF
+KMc1wig1-d8oNcQowDUowDXEKMA1-ecoNcUoxzXCKDX0KDXFKMc1wig1-cYoNcQowDUowDXEKMA1
+8Sg1KDXRKDX93ig1KDXCKDXAKDXAKDXDKDXcKMA1wyjANf3AKDUoNdEoNfMoNSg10Sg1-cUoNSg1
+wig1wCg1wCg1wyg1_yjANcMowDXBKDUoNf3dKMA1xSjBNcUowDXbKMA1wyjANf3JKMA1wyjANcEo
+NSg1_yjANcMowDXBKDUoNf3EKMA1xSjBNcUowDX6KMA1wyjANf3jKMA1xig1xijANdsoNcYowjX9
+xSjANcMowDX9wyjANcMowDX9yijANcYoNcYowDX5KDXHKDX94CjANccowTXHKMI11yg1yCg1-cUo
+NccoNf3BKDXHKDX9xyjANccowTXHKMI11z-9zTX4KMA1xijANcAoNcAowDXGKDXYKDXLKMA1-cEo
+NccoNf3BKDXHKDXzP_810j-9zzX4KDXGKMc14Cg1KDXKKMA1-cAowDXIKMA1-CjANcgowDXwP-E1
+0T-9zzX9-cEowjX7KDXIKDX9wCg1yCg18T-xNdE--c81-cMowDXDKMA18yg1-f39zT-xNdE-xP6D
+dpzBP8EQP8sQP9UQwT-GED-PNf3DKMA1wyjANcEoNd0owDX9yyjANc0owDX3KMA1zCjANe8-xBDB
+P80QP8oQP8s10T-EED-AED-OED-VED-AED-XNfoowDUowjXHKME1wSjANdkowDX9yyjANc0owDX3
+KMA1zCjANe8-xBA-wBA-2RA-yzXRP8QQP8AQPxDAP8EQwT-AEMA-wBDCPxA-EMA-wBDAP8AQwT-F
+ED-AED8QPxDAPxDAP8AQP8AQP8AQwD-FNfoowDXAKDXMKDXAKMA12Sg1-c4oNc4oNfgoNc0oNe4-
+xBA-wBA-ED8QwD-AEMA-whDAP8AQwD-BEME-EMI-wBDBP8Q10T-EEME-wRA-wBA-whA-wBA-wBA-
+wRDAP8EQP8AQPxA-wBA-xBA-wBA-EMA-whA-wBA-wBA-ED-AED-ENfYowjXTKDXbKDX9zig1zig1
+_Cg1zSg17j-EEME-wBDAP8EQP8AQP8IQPxA-wBA-ED-DED-BED-HNdE-xBA-wxA-wBA-whA-wBA-
+wBA-wRA-whA-wBA-ED-AED-EED-AED8QP8MQP8AQP8AQPxDCP8Q19yg11Sg12yg1-c4owDXNKMA1
+9yjANcwowDXtP8QQP8IQP8IQP8AQP8IQPxDCPxA-wxA-whDAP8U10T-EED-DED-AED-CED-AED-A
+ED-BED-CED-AED8QP8AQP8QQP8AQPxA-wxA-wBA-ED-AED-HNf3QKMA12ig1KDX9zSg1zig1_Cg1
+zSg17j-EED-CED-CED-AED-CED8QP8IQP8MQP8QQP8Q10T-EED-CEME-wBDBP8AQwD-CEMA-ED-D
+EMA-wBA-wBA-xBDBP8AQP8IQwT8QwD-CEME-xDX90Sg1-f39-T-EED-CED-DEMA-wBA-wBA-wBDB
+P8AQwT-BEMA-EME-xTXRP-3PNf39-f390z-UEMA-2TXRP-3PNf39-f390z-xNdE--c81-f39-f3T
+P-E10j-9zTX9-f39-dU-7zX9-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
+-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-eAoNSg1-f39-f39-eooNf39-f39-f3eKMM1
+xig1-f39-f39-d0oxTXFKDXpKMM1-f39-f396yg1KME1KDXFKMA15yjFNf39-f39-eooNSjBNSg1
+xSjANecoNSjBNSg1-f39-f393Cg1yyjBNSjBNcMoNeooNSjBNSg1-f39xCg1-f3wB8k11SjANcwo
+wzXEKMA16SjBNSjBNf39-cQowDX9-e4-NQfJNdYoNcsoNSg1KDXEKDXrKMM1-f39xSg1-eEgwQfB
+Nf3IB8A-xAfBNdYoNdYoNesoNSg1KDX8B-w1-cUoNcMowzX9yyjDNcQgwQfCNf3HB8E-xQfANdco
+wDUoNcEowDUowzUowzUowDX98Af9wDX9wijANcMoxTX9ySjDB8w1-cY-NQfEPwc-B8A11yjANcAo
+wzUowDXBKDXBKMA1KMA15ijANSjDNSjDNSjANfUH1SgH0CgH0zX9wijANcMoNSjBNSg1-ckoNSjB
+B8w1-cgHwD-BBz-BB8A12ig1xSjCNSjCNeoowDUowDXBKDXBKMA1KMA19QfEOsUH6jrBB8I1-cko
+NSjBNSg1-ckoNSjBB8w1-ccHwT8HPwfENeIoNcEoNcEoNekoNcIowjUowjXCKDX0B88owQfAKMAH
+wSjBB8AowAfAKMEHwCjAB8AoB8AoB8U6B8E6B8E1-cMoNcMowTUowTX9ySjBNSgHzDX9xj81B8A-
+xQfANeQowDUowDXrKDXCKDXBKDXBKDXCKDX0B8Q6xQfCKAfAKAfAKAfAKAfCKAfAKAcoB8AoB8Ao
+B8AoB8AoB8U6B8E6B8E1-cIowDXEKMM1ySjANfwowgfMNf3IB8E-xAfANeMoNcAoNcAoNeooNcQo
+wDUowDXFKMA18gfPKAfAKAfAKAfAKAfCKAfAKAcoB8AoB8AoB8EowAfGOgfBOgfBNf3DKDXEKDUo
+NSg1xig1wCjANfwoNSg1B8w1-ccHyjXlKME16yg1KDXCKDXAKDXAKDXEKDXzB8Q6xQfCKMEHwSgH
+wCgHwigHwCgHKMEHwSgHwCgHwCgHxjrBB8I1-cMoNc8owjXBKMI1-AfMNf3GPzUHyDXnKDX1KME1
+yCjANfAHzygHwijBB8AowQfAKMAHwCgHwijBBygHwCgHzTX9xCjANSjDNSjDNSjANccoNfMowDUo
+wzUoB8w1-dI-NeUowTXrKMA1xig1ySjANfAHzygH0CgH2TX9xCjANSjANcEoNcEowDUowDX9KMA1
+KMA1wSg1B8w1-cg-yAc14ijANcAoNcAowDXDKMA14SjANcUowTXIKDXxB-3ANf3IKMI1KMI1-cIo
+NcIowjUoB8w1-cgHyDXjKMc1wCg1wCjANeEoNcMowDXAKDXAKMA1xSg1-f39KDXBKDXBKDX9wig1
+wig1wSg1B8w1-f3CKMI1wSg14Cg1wyjHNcUoNfE--cA1-coowDUowDX9xCg1xCjANSjANcQowDX9
+-CjANcMowDXFKDXgKDXSKDUoNfA--rkAPs3_4msTxv7-owDON8YSzT81-ckoNcAoNcAoNf3CKDUo
+NcIoNcAoNcAoNcMoNf39KMA1wyjANcYowDXdKDUoNcIowDXDKMA1_T8SzTfGIc43xhLNPzX9yyjB
+Nf3EKMA1xSjBNcUowDX9-Cg1zig15SjANcMowDX5PxLNN8YhzjfGEs0-Nf3MKDX9xSjANcYoNcYo
+wDX9-Cg19Sg1xyg1_D8SzTfGIc43xhLNPzX9yyjBNf3CKMA1xyjBNccowjXuP-k1yyg19Sg1xyg1
+_D8SzTfGIc43xhLNPzX9yCjANcAoNcAowDX7KMA1xD-bNeU-_zXJKDUoNfMowDXIKMA19j8SzTfG
+Ic43xhLNPzX9yCjHNfwoNcM-3TXkP-s1-cQoNcgoNfc-Es03xiHON8YSzT81-f3XP9015D-7Nf39
+yz8SxSHG-v-sJ94hxhLFPzX9yCjANcMowDX9xD-dNeQ-1hA-zxA-xxA-xjXKKMA18SjANcwowDX0
+PxLFIcYf3iHGEsU-Nf3IKMA1wyjANcEoNf3AP8UQwD-UNeQ-1hA-zxA-xxA-xjXKKMA18SjANcwo
+wDX0PxLFIcYf3iHGEsU-Nf3BKMA1KMI1xyjBNcEowDX2KMA1KD-EED-AED-TNeQ-xBA-EMA-wBDA
+P8EQwD-BEME-EMA-ED-BEMA-xBDCPxA-wBA-EMI-xDXKKDXxKDXNKDX2PxLFIcYf3iHGEsU-Nf3B
+KMA1wCg1zCg1wCjANfYowDXAP8QQP8AQPxDBP8AQwT-BEME-xDXkP8QQwD-BED-AED-CED8QP8AQ
+PxA-ED8QPxA-wBA-xBA-wRA-wBA-wBA-xjXKKDXxKDXNKDX2PxLFIcYf3iHGEsU-NfsowjXTKDX6
+KDU-xBDCPxA-wBA-ED-AED8QP8c15D-EED-CEMI-wBDBPxA-wBA-ED8QPxA-EMI-xBA-whDAP8EQ
+P8Y1yig18Sg1zSg19j8SxSHGH94hxhLFPzX8KDXVKDX6KDU-xBA-wBA-ED-AED8QP8AQP8AQwD-F
+NeQ-xBA-whA-whA-wBA-ED-AED8QP8EQPxA-xxA-wRA-wBA-wBA-xjXJKDUoNe8oNSg1yyg1KDX1
+PxLFIcYf3iHGEsU-Nf3VKMA1_yg-xBA-wBA-EME-wBDBP8MQP8Q15D-EED-DEME-wBDBP8AQwT8Q
+P8EQP8AQwT-AED-CEMA-ED-AED-BEMA-xDX9-cs-EsUhxh-eIcYSxT81-dYoNfsoP8QQP8AQPxA-
+whA-whDBP8U15D-7Nf39yz83xR-GKMYfzijGH8Y3xT81-f3XP8kQP8IQP8w15D-7Nf39yz83xR-G
+KMYfzijGH8Y3xT81-f3XP9015D-7Nf39yz83xR-GKMYfzijGH8Y3xT81-f3XP9015T-5Nf39zD83
+xR-GKMYfzijGH8Y3xT81-f3YP9s1-f398T83xR-GKMYfzijGH8Y3xT81-f39-f396j83xR-GKMYf
+zijGH8Y3xT81-f39-f396j83xR-GKMYfzijGH8Y3xT81-f39-f396j83xR-GKMYfzijGH8Y3xT81
+-f39-f396j8hxR-GIMYfziDGH8YhxT81-f39-f396j8hxR-GIMYfziDGH8YhxT81-f39-f396j8h
+xR-GIMYfziDGH8YhxT81-f39-f396j8hxR-GIMYfziDGH8YhxT81-f39-f396j8hxR-GIMYfziDG
+H8YhxT81-f39-f31KDUoNe4-IcUfxiDGH84gxh-GIcU-Nf3BKDUoNf39-f3wKDXvPyHFH8Ygxh-O
+IMYfxiHFPzX9wig1-f39-eQowzXGKDXvPyHFH8Ygxh-OIMYfxiHFPzX9wig1xyjDNf39-f3VKMU1
+xSg17z8hxR-uIcU-Nf3BKMM1wyjFNf3TKMM1-f34KDUowTUoNcUowDXuPyHFH_4hxT81-cAoxTXC
+KDUowTUoNf3SKMU1-f33KDUowTUoNcUowDXuPyHFH_4hxT81-cAoNSjBNSg1wig1KME1KDX90ig1
+KME1KDX9yig1xijBNf3RKDXLKME1KME1wyg18T8hxR-uIcU-Nf3AKDUowTUoNcIowTUowTXKKDX9
+xSg1KME1KDX9ySjANcQowCEfKDX90CjANcwowzXEKMA18D8hxR-uIcU-Nf3AKMU1wyjDNcsowDX9
+xCjBNSjBNf3LKDXCKD-ANyEoNf3SKDXLKDUoNSg1xCg18T8hxR-uIcU-Nf3BKMM1xCg1KDUoNcso
+Nf3GKMM1-cIowzXDKDXBKD-A-sLDxxAoNf3TKDXWKDXxPyHFH_4hxT81-cEoNSg1KDXSKDXBKDX9
+xig1KDUoNf3BKMU1wyjBP-6rUjY7EDsoNf3UKMA1KDXBKMA1KMM1KMM1KMA18j8hxR-uIcU-Nf3G
+KMA1KMM1KMM1KMM1wCjANf39zyg1KME1KDXDKMA--v8ATf5wMi43-kUtMig1-dUowDXAKMM1KMA1
+wSg1wSjANSjANfI-N8Ufzg3OH843xT81_SjANSjDNSjGNcAoNcEowDUowDXBKDUowDX9wSjANSjD
+NSjDNSjANfkoNSjBNSg1wyg-ChIDECg1-dkoNcUowjUowjX2PzfFH84Nzh-ON8U-NfkowDUowDXB
+KDXBKMA1KMI1KMI1-cwowDUowDXBKDXBKMA1KMA1_SjBNSjBNcIoP-4prf8B-n4lUxAoNf3iKDXB
+KDXBKDX2PzfFH84Nzh-ON8U-NfgoNcIowjUowjXAKDUoNSg1wSg1-csoNcIowjUowjXCKDXsKMA1
+ySjDNcIoP-6rUjYgAxAoNf3lKMA1KMA1_D83xR-ODc4fzjfFPzX4KDXCKDXBKDXBKDXCKMA1KMA1
+-c0oNcIoNcEoNcEoNcIoNewowDUoNccoNSg1KDXBKD8fASgQKDX95Sg1wCg1wCg19z83xR-ODc4f
+zjfFPzX4KDXEKMA1KMA1wyg1KMA1wCg1-csowDXEKMA1KMA1xCjANekowDXCKME1yyg-CiEDECg1
+-egowTX5PzfFH84Nzh-ON8U-NfcoNSg1wig1wCg1wCg1xCjBNf3OKDXDKDXAKDXAKDXDKDXoKMA1
+wyg1wSjANSjDNSjCPw0BNxAoNf3qKDX6PzfFH84Nzh-ON8U-Nf3CKME1xyjANf3LKMA1xyjBNfEo
+NccowDUowDXBKDXAKD8BEgMQKDX96ijBNfk-N8Ufzg3OH843xT819yjANcYoNccowTX9yyjANcgo
+Nf3CKMI1KME7Ay0QKDX96CjANcAoNcAowDXEKMA17j8SxSHGH8YNzh-GIcYSxT819yjANcUowTXD
+KMA1wCg1wCjANf3IKDXIKME1-cEoNcEoNcEoEMAoNf3pKMc1wCg1wSjANe4-EsUhxh-GDc4fxiHG
+EsU-NfgoNcIowDUowDXAKMA1wCjHNf3IKDXFKMA1wCg1wCjANf3AKMA1KMA1wCjANf3zKMI1wig1
+7T8SxSHGH8YNzh-GIcYSxT81_Cg1wijJNcIoNf3MKDXFKMc1-Sg1wCg1wCg1-e0owDXDKMA1xig1
+7T8SxSHGH8YNzh-GIcYSxT81yig16yg1xCg1wig1wSjANSg1KDUowDX9xyg1KDX90CjBNf3vKMA1
+wyjANccowDXrPxLFIcYfxg3OH8YhxhLFPzXJKD8oNekoNSg1wSjBNcIowDXAKMA1wyjANf3QKMA1
+wyjANf3CKDX98Cg1zyg17D8SxSHGH8YNzh-GIcYSxT81ySg-wCg17ijBNcIowDXHKDX90SjANcMo
+wDX9wSjBNf3vKDX9wD8SxSHGH8YNzh-GIcYSxT81ySg-wSg17Cg1xyg1xig1-dAoNccoNfI-7TX9
+zyg1-cA-EsUhxh-GDc4fxiHGEsU-NckoP8IoNesoNccoNcYoNf3QKDXHKDXxP_81-c0oNSg1-T8S
+zTfGIc43xhLNPzXJKD-AKMA16yjANcgowDXDKDUoNf3OKMA1yCjANe8-7zX9-dE-Es03xiHON8YS
+zT81yijAPyg17Cg1yCg1-dgoNcgoNfA-7zX9-dE-Es03xiHON8YSzT81-f395D-KED-VED-KNf3O
+KMA1-T8SzTfGIc43xhLNPzX4KMA1zSjANcIowDX9yyjANcwowDXuP_81-c4owDX9PxLNN8YhzjfG
+Es0-NfgowDXNKMA1wijANf3LKMA1zCjANe4-xBDBP8AQwD-BEME-EME-wRDAP8AQwT-AEMA-wBA-
+wBA-xDX9zig1-cA-Es03xiHON8YSzT819yg1zig1xCg1-c4oNc0oNe0-xBA-wBA-wBA-wBA-whA-
+wBA-ED-AED8QP8AQP8AQP8AQP8AQP8Q1-c4oNf3APxLNN8YhzjfGEs0-NfcoNc4oNcQoNf3OKDXN
+KDXtP8QQP8AQP8AQP8AQP8IQP8AQPxA-wBA-ED-AED-AED-BEMA-xTX9zig1-cA--cA19yg1zig1
+xCg1-c4owDXMKMA17D-EEME-wRA-wBA-whDBP8AQP8AQPxDBP8EQP8AQP8AQP8Q1-c0oNSg1-cco
+xi3G-gCHUcYKxv5fV0-GO8Y-xjX2KDUoNcwoNSg1wig1KDX9zSg1zSg17T-EED-CEME-wBDBPxA-
+wxDAP8AQP8IQwT8QP8AQP8Q1-f3ZKMYtxg-GCsYuxjvGP8Y1-f395D-EED-LED-HED-QNf392SjG
+LcYPxgrGLsY7xj-GNf39-eQ-7zX9-dkoxi3GD8YKxi7GO8Y-xjX9-f3kP_81-f3ZKMYtxg-GCsYu
+xjvGP8Y1-f395T-tNf392ijGLcYPxgrGLsY7xj-GNf39-f39-fIoxi3GD8YKxi7GO8Y-xjX9-f39
+-f3yKMYtxg-GCsYuxjvGP8Y1-f39-f396g3GIcYfxv4A5DbG-imt-8YQxv7-d6jG-v-MqsY1-f39
+-f396g3GIcYfxiPGCsYQxh3GFMY1-f39-f396g3GIcYfxiPGCsYQxh3GFMY1-f39-f396g3GIcYf
+xiPGCsYQxh3GFMY1-f39-f396g3GIcYfxiPGCsYQxh3GFMY1-f39-f396g3GIcYfxiPGCsYQxh3G
+FMY1-f39-f396g3GIcYfxiPGCsYQxh3GFMY1-f39-fMoNSg1-fANxiHGH8YjxgrGEMYdxhTGNf39
+-f30KDX98SDG-gClocY6xv4SU1nGAcYDxv6iiHnG-v_sxcY1-f39-fQoNcYowzX95CDGFcY6xjnG
+AcYDxhLGMcY1-f39-fQoNcUoxTXqKMM18CDGFcY6xjnGAcYDxhLGMcY1-f39-fMowDXFKDUowTUo
+NekoxTXvIMYVxjrGOcYBxgPGEsYxxjX9-f398yjANcUoNSjBNSg16Sg1KME1KDXvIMYVxjrGOcYB
+xgPGEsYxxjX9-f399Sg1xCjBNSjBNcooNdwoNSjBNSg17yDGFcY6xjnGAcYDxhLGMcY1-f39-fQo
+wDXFKMM1yyjANdsowTUowTXvIMYVxjrGOcYBxgPGEsYxxjX9-f399ig1xCg1KDUoNcsoNd0owzXw
+IMYVxjrGOcYBxgPGEsYxxjX9-f36KMk17Sg10ig1wSg13Sg1KDUoNfD_uQA_xjfG-pXwS8b_ALJR
+xv5k3-bGB8b_5A2rxv70lnHGNcMowzXNKMM1-e0owzX95Sj_-6zFySg17SjANSjDNSjDNSjDNcAo
+wDX91xLGN8b_lfBLxibGNsYHxg-GFsY1wijFNcsoxTX96yjFNf3jKD8o-v_sxckoNewowDUowDXB
+KDXBKMA1KMA1wSg1KMA12CjANSjDNSjDNSjANeoSxjfG-pXwS8YmxjbGB8YPxhbGNcIoNSjBNSg1
+yyg1KME1KDX96yg1KME1KDX95CjA-v_sxcA-xDHBKDXwKMI1KMI14yjANSjANcEoNcEowDUowDXq
+EsY3xv6V8EvGJsY2xgfGD8YWxjXCKDUowTUoNcsoNSjBNSg1-esoNSjBNSg1-eQo-v_sxcE-xTHA
+KDXwKDXBKDXBKDXiKDXCKMI1KMI1wig16RLGN8b_lfBLxibGNsYHxg-GFsY1wijBNSjBNcsowTUo
+wTX95Sg1wyjBNSjBNf3jKD8o-v_sxcEKwT8dPzHAKDXyKMA1KMA15Cg1wig1wSg1wSg1wig16RLG
+N8b_lfBLxibGNsYHxg-GFsY1wyjDNc0owzX95SjANcQowzXIKMA1-dkowP7-rMXAP8EKP8ExwCg1
+8Sg1wCg1wCg14yg1xCjANSjANcUowDXnEsY3xv6V8EvGJsY2xgfGD8YWxjXDKDUoNSg1zSg1KDUo
+Nf3mKDXEKDUoNSg1xig1KMA1-dko-v_sxcE-HT8KwTHBKDXzKME15Cg1KDXCKDXAKDXAKDXEKDXo
+EsY3xv6V8EvGJsY2xgfGD8YWxjX9-cYoNc8owjXAKMI1-dQoPyj_-6zFwD-FMcAoNfQoNe4owTXH
+KMA15j-9wDXAKMM1KMM1KMA1wSjANSjDNSjDNSjANf3hKMA1KMM1KMM1KMA1xig1-dYowDHBP8Qx
+wCg18yjBNeQowDXGKDXIKMA15j8g3RLANcASwDXAEsA1wBLANcASwDXAEsA1wBLANcASwDU-NcAo
+wDXBKDXBKMA1KMA1wSjANSjANcEoNcEowDUowDX94SjANSjANcEoNcEowDUowDX93ygxyig16CjA
+NcQowDXAKDXAKMA14SjANcUowTXHKDXnPyDdNcASwDXAEsA1wBLANcASwDXAEsA1wBLANcASwDXA
+Ej81wSjCNSjCNcIoNSg1wijCNSjCNcIoNf3kKMI1KMI1-eIoPygxyCjANegowDXAKDXBKMc14Sg1
+wyjANcAoNcAowDXEKDXnPyDdNcASwDXAEsA1wBLANcASwDXAEsA1wBLANcASwDXAEj81wSg1wSg1
+wSg1wig1KDXCKDXBKDXBKDXCKDX95Cg1wSg1wSg1-eMoyj8oNecoNcMowTXqKDXDKMc1xCg15z8g
+3RLANcASwDXAEsA1wBLANcASwDXAEsA1wBLANcASwDU-NcMowDUowDXEKME1xCjANSjANcQowDX9
+5SjANSjANf3lKMA-yDEoNecoNcIoNcEowDXDKMA14Sg10Sg1KDXmPyDdEsA1wBLANcASwDXAEsA1
+wBLANcASwDXAEsA1wBLANT81wig1wCg1wCg1wyjANSg1wig1wCg1wCg1wyg1-eUoNcAoNcAoNf3l
+KDHIKDXnKMA1xijANcMowDXgKDUoNcIowDXDKMA17j8g3TXAEsA1wBLANcASwDXAEsA1wBLANcAS
+wDXAEsA1wBI-NcQowTXFKME1xSjBNcUowDX95ijBNf3oKMg16Sg1zSg16CjANcMowDXvP-w1xig1
+xijBNcYoNcYowDX95yg1-f3wKDXnKDXHKDX99SjBNcQowDUowjXCKME1xyjCNf3iKME1-f3vKDXn
+KDXHKDX95yjANccowDXAKDXAKMA1KMA1wyg1wCjANcAoNcAowDXGKDX94CjANcAoNcAowDX9-eso
+NSg15SjANcgowDX95ig1xyjHNcAoNcYoxzX96SjHNf39-dgoNcgoNf39-f39zT-9yDX9-f3IKMA1
+wyjANckowDXDKMA1-ekowDXDKMA1-cQ--co12ijANeIowDXNKMA1-e4owDXDKMA1wSg1xSjANcMo
+wDXBKDX95SjANcMowDXBKDX9wD-9yjXaKMA14ijANc0owDX95ijANcAowjXHKMk1xyjBNcAowDX9
+2ijANcAowjXHKME1wCjANfs--co12ig14ig1zig1-egowDXBKDXMKMI1KDXMKDUowDXBKDX91ijA
+NcEoNcwoNSjANfs-xBDBP8EQP8sQP9UQP8EQP8AQP8AQP8MQP8U12ig14ig1zig1-eQowjXTKMA1
+0yjBNf3TKMI10yg1-T-EED-AED-OED-VED-BED-DED-LNdooNeIoNc4oNf3lKDXVKMA11ig1-dMo
+NdUoNf0-xBA-wBA-EMA-wRDBP8AQwD-AEMI-ED8QwD-AEMA-wBDBP8UQP8EQPxDAP8AQP8AQPxDA
+P8U12Sg1KDXgKDUoNcwoNSg1-fsowDUowDX9-cMowDX9P8QQwT-BED-AED-CED-AED-AED-BEMA-
+wRA-wBA-ED-AED-EED8QPxA-wBA-wBA-ED-BED-FNf39-dQoNSg1-f3FKDX9P8QQP8MQP8AQP8IQ
+P8AQP8AQP8EQP8IQP8AQPxA-wBA-xBA-ED8QP8AQP8AQwD-CED-FNf39-f39-eA-xBA-wxA-wBA-
+whA-wBA-wBA-wRA-whA-wBA-ED-AED-EEMA-EMA-wBA-wBA-ED-BED-FNf39-f39-eA-xBA-whDB
+P8AQwT-AEMA-whDAPxA-wxDAP8AQP8AQP8QQP8EQPxDBPxA-wBA-EME-xDX9-f39-f3gP-3KNf39
+-f39-eA--co1-f39-f394D-9yjX9-f39-f3hP-3INf39-f39-f39-f39-f39-f39-f39-f39-f39
+-f39-f39-f39-f39-f39-f39-f39-f39-f39-eooNSg1-f39-f39-eooNf39-f39-f3rKDXHKMM1
+-f39-f39xCjDNf3SKDXGKMU1-f39-f39wijFNf3RKMA1xSg1KME1KDX9-f39-f3CKDUowTUoNf3R
+KMA1xSg1KME1KDX9-f39-f3CKDUowTUoNf3TKDXEKME1KME1yig1-f3CKDX92ig1_yg1-dEowTUo
+wTX90ijANcUowzXLKMA1-f3BKMA1-dgowDX7KMA1-dEowzX91Sg1xCg1KDUoNcsoNf39wig1-dso
+NfooNf3SKDUoNSg1-dUoNdIoNcEoNf3GKMM18yg1wyjDNf3HKMM1wyg1_ig1wyjDNf395SjANSjD
+NSjDNSjDNcAowDX9xijFNfAowDXDKMU1-cUoxTXDKMA19ijANcMoxTX9wSjANSjDNSjDNSjANf3Q
+KMA1KMA1wSg1wSjANSjANcEoNSjANf3GKDUowTUoNfAowDXDKDUowTUoNf3FKDUowTUoNcMowDX2
+KMA1wyg1KME1KDX9wSjANSjANcEoNcEowDUowDX91CjCNSjCNf3RKDUowTUoNfcoNSjBNSg1-cUo
+NSjBNSg1-cYoNSjBNSg1-cAoNcIowjUowjXCKDX90yg1wSg1wSg1-dEowTUowTXxKDXDKME1KME1
+-cUowTUowTXCKDUoNfcoNcMowTUowTX9wCg1wig1wSg1wSg1wig1-dUowDUowDX91CjDNfEowDXE
+KMM1ySjANesowDXJKMM1xCg19yjANcQowzXJKMA18ig1xCjANSjANcUowDX90ig1wCg1wCg1-dMo
+NSg1KDXyKDXEKDUoNSg1xig1wCjANesowDUoNccoNSg1KDXEKDX4KDXEKDUoNSg1xig1wCjANfEo
+NSg1wig1wCg1wCg1xCg1-dUowTX9-dAoNc8owjXBKMI15SjANcIowTXPKDX4KDXPKMI1wSjCNfYo
+wTXHKMA1-dQoNf3QKMA1KMM1KMM1KMA17SjANSjDNSjDNSjANccoNeQowDXDKDXBKMA1KMM1KMM1
+KMA1_ijANSjDNSjDNSjANccoNe4owDXGKDXIKMA1-dMowTX9zyjANSjANcEoNcEowDUowDXtKMA1
+KMA1wSg1wSjANSjANe8oNccowDUowDXBKDXBKMA1KMA1_ijANSjANcEoNcEowDUowDX4KMA1xSjB
+NccoNf3KKMA1wyjANcAoNcAowDX9yyg1wijCNSjCNcIoNfAowjUowjX9wyjCNSjCNf3EKMI1KMI1
+-Cg1wyjANcAoNcAowDXEKDX9yijANSg1wSjHNf3LKDXCKDXBKDXBKDXCKDXwKDXBKDXBKDX9wyg1
+wSg1wSg1-cQoNcEoNcEoNfwoNcMoxzXEKDX9ySg1wijBNf3UKDXEKMA1KMA1xCjANfEowDUowDX9
+xyjANSjANf3IKMA1KMA1-cAoNdEoNSg1-cgoNcEoNcEowDXDKMA1-cooNSg1wig1wCg1wCg1wyg1
+8Sg1wCg1wCg1-cUoNcAoNcAoNf3GKDXAKDXAKDX8KDUoNcIowDXDKMA1-c8owDXFKMA1wyjANf3K
+KMA1xSjBNcUowDXyKME1-ckowTX9yijBNf3HKMA1wyjANf3QKDXMKDX9yyjANcYoNcYowDXzKDX9
+yyg1-cwoNf3HKDXHKDX93ig1-ckowDXHKME1xyjCNe4owTX9ySjBNf3KKME1-cYoNccoNf3eKDX9
+xyjANcYowDXAKDXAKMA1xig17CjANcAoNcAowDX9wyjANcAoNcAowDX9xCjANcAoNcAowDX9wijA
+NcgowDX92yg1KDX9xyg1xijHNfUoxzX9wyjHNf3EKMc1-cMoNcgoNf39-f39-f39-f3hKMA1wyjA
+NfUowDXDKMA1-cMowDXDKMA1-cQowDXDKMA1-SjANc0owDX92ijANf3QKMA1wyjANcEoNfEowDXD
+KMA1wSg1-SjANcMowDXBKDX9wCjANcMowDXBKDX5KMA1zSjANf3aKMA1-cgowDXAKMI1xyjBNcAo
+wDXmKMA1wCjCNccowTXAKMA18ijANcAowjXHKME1wSjANfIowDXAKMI1xyjBNcEowDX0KDXOKDX9
+3Cg1-ckowDXBKDXMKDUowDXmKMA1wSg1zCg1KMA18ijANcEoNcwoNcAowDXBKDXuKMA1wSg1zCg1
+wCjANfQoNc4oNf3cKDX9xSjCNdMoNeQowjXTKDX2KDXUKME16yjCNdQoNfYoNc4oNf3cKDX9xig1
+1Sg15Sg11Sg19ig11yg16yg11ig19Sg1KDXMKDUoNf3aKDUoNf3cKMA1-CjANfcowDX93SjANf39
+-f3LKDX9KDX3KDX93yg1-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
+-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
+-f3NAAAAAAAAAAE=
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAxNzo0MDowNSIscmV2aXNpb249Ml1dbHo0AEwAAABQAAAA8Rx7e2JtcD1weHUATIAgIAD-
 AAD---8DLGhpZGRlbj1mYWxzZSxwYW5feD0wCADSeT0wLHRpbGVfaD0xNgoAEHcKAIB6b29tPTF9
 fQ==
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-01 07:39:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
