@@ -3,9 +3,43 @@ version 2
 
 :: gfx/
 :: map/
+:: presets/
 :: sfx/
 :: canvas.lua
---[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-02 01:15:19",revision=391,xstickers={}]]
+--[[pod_format="raw",created="2026-04-30 22:12:28",modified="2026-05-04 02:43:19",revision=419,xstickers={}]]
+function canvas_init()
+	-- Primary canvas
+	gc = newCanvas()
+	
+	-- Current color used for painting
+	paintColor = 8
+	-- Transparent color when image is exported
+	transColor = gc[1][1]
+	-- Text following the pasted character will be this color
+	textColor = 7
+	-- Mouse contained in canvas
+	mContained = false
+	
+	-- Undo stack
+	stack = create_undo_stack(function() return gc end, function(_obj) gc = _obj end)
+	
+	menuitem{
+		id="canvas",
+		label="Canvas",
+		shortcut="ALT-C",
+		action=function() stage = 1 end
+	}
+end
+
+function canvas_update()
+	stack = trackMouse(stack)
+	colorHotkeys()
+	copy()
+	stack = undo(stack)
+	stack = redo(stack)
+	dropLoad()
+end
+
 -- Returns a canvas object with specified width, height, color
 function newCanvas(_w, _h, _color)
 	local w = _w == nil and cw or _w
@@ -309,37 +343,48 @@ function crosshatch(_n)
 	end
 end
 :: main.lua
---[[pod_format="raw",created="2026-04-30 20:23:24",modified="2026-05-02 01:26:22",revision=127,xstickers={}]]
+--[[pod_format="raw",created="2026-04-30 20:23:24",modified="2026-05-04 05:47:44",revision=219,xstickers={}]]
 
 --  ~,* PICOPIX *,~  --
 -- One-off character --
 --   generator for   --
 --       P8SCII      --
--- f:e7a5ff5a423c00008v:0042000000423c0081:00000024000000008g:000000002400000088:0000000018000000  making your programs 100% cuter! f:e7a5ff5a423c00008v:0042000000423c0081:00000024000000008g:000000002400000088:0000000018000000
--- Controls:
----- Left click: Paint / Select color from palette
----- Right click: Select color from picopix window (palette or canvas)
----- Ctrl + c: Copy one-off character
----- 0 - 9, a - v: Select color from palette
 
 include("canvas.lua")
+include("storage.lua")
 
 function _init()
-	---- Variables
+	---- Constants
+	-- Mouse 1: Left click by default
+	M1 = 0x1
+	-- Mouse 2: Right click by default
+	M2 = 0x2
+	-- Timer reference for "Copied!" message
+	tx = -200
+	-- Hexadecimal supertable that counts from 0 - 31
+	decTable = {[0] = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"}
+	-- Table referencing global loop functions
+	stages = {
+		canvas_update,
+		storage_update
+	}
 	-- Canvas width (cells)
 	cw = 8
 	-- Canvas height (cells)
 	ch = 8
 	-- Size of each canvas cell in pixels
 	cSize = 8
-	
 	-- Width of canvas in pixels
 	cwpx = cw * cSize
 	-- Height of canvas in pixels
 	chpx = ch * cSize
+
+	---- Variables
+	-- Global stage
+	stage = 1
+	lastStage = 0
 	
-	-- Primary canvas
-	gc = newCanvas()
+	screenshot = userdata(u8, cwpx, chpx + 41)
 	
 	-- Window
 	w = window{
@@ -351,64 +396,412 @@ function _init()
 	  cursor		= "crosshair",
 	  title		= "picopix"
 	}
-	-- Current color used for painting
-	paintColor = 8
-	-- Transparent color when image is exported
-	transColor = gc[1][1]
-	-- Text following the pasted character will be this color
-	textColor = 7
-	
-	-- Hexadecimal supertable that counts from 0 - 31
-	decTable = {[0] = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"}
 	
 	-- Timer
 	ti = 0
-	-- Timer reference for "Copied!" message
-	tx = -200
 	
-	-- Mouse contained in canvas
-	mContained = false
+	canvas_init()
+	storage_init()
+end
+
+-- Engage stage-based program loop
+function _loop()
+	if lastStage ~= stage then
+		if stage == 2 then
+			screenshot = get_display()
+			w = nil
+			popup = window{
+				width = 301,
+				height = 12,
+				reizeable = false,
+				autoclose = true,
+				z = 0,
+				title = "picopix - character manager"
+			}
+		else
+			screenshot = nil
+			popup = nil
+			w = window{
+			  width		= cwpx,
+			  height		= chpx + 41,
+			  resizeable	= false,
+			  autoclose	= true,
+			  z			= 10,
+			  cursor		= "crosshair",
+			  title		= "picopix"
+			}
+			storage_init()
+		end
+		lastStage = stage
+	end
 	
-	-- Undo stack
-	stack = create_undo_stack(function() return gc end, function(_obj) gc = _obj end)
+	--if screenshot ~= nil then
+	--	blit(screenshot)
+	--end
 	
-	---- Constants
-	-- Mouse 1: Left click by default
-	M1 = 0x1
-	-- Mouse 2: Right click by default
-	M2 = 0x2
+	if stage > 0 and stage <= #stages then
+		local action = stages[stage]
+		action()
+	else
+		cls(0)
+		print("Error ;-;", 2, 2, 8)
+		print("Stage doesn't exist!", 2, 12, 7)
+	end
 end
 
 function _update()
 	ti = ti + 1
-	stack = trackMouse(stack)
-	colorHotkeys()
-	copy()
-	stack = undo(stack)
-	stack = redo(stack)
+	_loop()
 end
 
 function _draw()
 	cls(7)
-	drawCanvas()
-	palette()
-	
-	if ti - tx < 200 then
-		local xOff = 16
-		local yOff = 27
-		print("Copied!", xOff - 1, yOff, 0)
-		print("Copied!", xOff + 1, yOff, 0)
-		print("Copied!", xOff, yOff + 1, 0)
-		print("Copied!", xOff, yOff - 1, 0)
-		print("Copied!", xOff, yOff, 7)
+	if stage == 1 then
+		drawCanvas()
+		palette()
+		if ti - tx < 200 then
+			local xOff = 16
+			local yOff = 27
+			print("Copied!", xOff - 1, yOff, 0)
+			print("Copied!", xOff + 1, yOff, 0)
+			print("Copied!", xOff, yOff + 1, 0)
+			print("Copied!", xOff, yOff - 1, 0)
+			print("Copied!", xOff, yOff, 7)
+		end
+	elseif stage == 2 then
+		drawStoragePrompts()
 	end
+	
+	
+end
+
+
+:: storage.lua
+--[[pod_format="raw",created="2026-05-03 19:32:51",modified="2026-05-04 06:43:20",revision=307,xstickers={}]]
+function storage_init()
+	fileName = {
+		["text"] = "",
+		["done"] = false,
+		["saved"] = false
+	}
+	
+	selector = nil
+	selecting = false
+	fileLoaded = false
+	
+	storageStage = 1
+	
+	-- Menu option to save the current character
+	menuitem{
+		id="save",
+		label="Save",
+		shortcut="ALT-S",
+		action=save
+	}
+	
+	-- Menu option to load a different character
+	menuitem{
+		id="load",
+		label="Load",
+		shortcut="ALT-L",
+		action=load
+	}
+	
+	storageStages = {
+		textInput,
+		storeCanvas,
+		overwriteWarning,
+		saveResult,
+		selectFile,
+		loadFile,
+		loadResult
+	}
+	
+	alphabet =
+	{
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
+		"g",
+		"h",
+		"i",
+		"j",
+		"k",
+		"l",
+		"m",
+		"n",
+		"o",
+		"p",
+		"q",
+		"r",
+		"s",
+		"t",
+		"u",
+		"v",
+		"w",
+		"x",
+		"y",
+		"z",
+	}
+	
+	numbers =
+	{
+		"0",
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+	}
+	
+end
+
+function storage_update()
+	storage_loop()
+end
+
+function storage_loop()
+	if storageStage > 0 and storageStage <= #storageStages then
+		local action = storageStages[storageStage]
+		action()
+	else
+		cls(0)
+		print("Error ;-;", 2, 2, 8)
+		print("Sub-stage doesn't exist!", 2, 12, 7)
+	end
+end
+
+-- Switch loop from canvas_update to storage_update
+function save()
+	stage = 2
+end
+
+function makeDirectory(_name)
+	local name = _name == nil and "/appdata/picopix" or _name
+	_storageExists = ls(name)
+	
+	if not _storageExists then
+		mkdir(name)
+	end
+	
+	local presetDir = _name .. "/presets"
+	local presetExists = ls(presetDir)
+	if not presetExists then
+		mkdir(presetDir)
+	end
+	cp("./presets", presetDir)
+end
+
+function checkForFile(_type, _f)
+	local fileType = _type == nil and 1 or _type
+	local directory = "/appdata/picopix/"
+	makeDirectory(directory)
+	local f = _f == nil and directory .. fileName.text .. ".pix" or _f
+	
+	local result = nil
+	
+	if fileType == 1 then
+		result = fetch(f)
+		
+		if result ~= nil then
+			return true
+		end
+	end	
+	
+	return false
+end
+
+function getKeyPressed()
+	local _keysPressed = {}
+	
+	for i = 1, #alphabet do
+		_keysPressed[alphabet[i]] = keyp(alphabet[i])	
+	end	
+	
+	for i = 1, #numbers do
+		_keysPressed[numbers[i]] = keyp(numbers[i])
+	end
+	
+	_keysPressed.backspace = keyp("backspace")
+	
+	_keysPressed.space = keyp("space")
+	
+	return _keysPressed
+end
+
+function textInput()
+	if fileName.done == false then
+		for k, v in pairs(getKeyPressed()) do
+			if v then
+				if k == "backspace" then
+					fileName.text = sub(fileName.text, 1, #fileName.text - 1)
+				elseif k == "space" then
+					if fileName.text == "" then
+						fileName.text = tostring(date("%Y_%m_%d_%H_%M_%S"))
+					end
+					
+					fileName.done = true
+				else
+					if #k == 1 and k:match("[a-z0-9]") and #fileName.text < 20 then
+						fileName.text = fileName.text .. k
+					end
+				end
+			end
+		end
+	else
+		storageStage += 1
+	end
+end
+
+function storeCanvas(_overwrite, _c)
+	local c = _c == nil and gc or _c
+	local ov = _overwrite == nil and false or _overwrite
+	
+	local fileExists = checkForFile()
+	if fileExists == true then
+		storageStage += 1
+	elseif fileExists == false or ov == true then
+		local data = pod(c, {cart="picopix", pc=paintColor, tc=transColor, tx=textColor})
+		store("/appdata/picopix/" .. fileName.text .. ".pix", data)
+		
+		storageStage += 2
+	end
+end
+
+function overwriteWarning()
+	if keyp("y") then
+		storeCanvas(true)
+	elseif keyp("n") then
+		fileName.text = ""
+		fileName.done = false
+		storageStage = 1
+	end
+end
+
+function saveResult()
+	fileName.saved = checkForFile()
+	if keyp("space") then
+		fileName = {
+			["text"] = "",
+			["done"] = false,
+			["saved"] = false
+		}
+		storageStage = 1
+		stage = 1
+	end
+end
+
+function load()
+	stage = 2
+	storageStage = 5
+	selecting = false
+end
+
+function selectFile()
+	local mx, my, mb = mouse()
+	if selecting == false then
+		local path = "/appdata/picopix/"
+		makeDirectory(path)
+		selector = chooser({
+			path=path,
+			intention="select_file",
+			title="picopix - Load a character",
+			prompt="Select .pix"
+			}, function(msg) loadFile(msg.filename) end)
+		selecting = true
+	end
+end
+
+function loadFile(_file)
+	local file = fetch(_file)
+	if file == nil then
+		storageStage = storageStage + 1
+	else
+		local result, msg = unpod(file)
+		if msg ~= nil and result ~= nil then
+			if msg.cart == "picopix" then
+				gc = result
+				paintColor = msg.pc
+				transColor = msg.tc
+				textColor = msg.tx
+				fileLoaded = true
+			end
+		end
+		
+		storageStage = storageStage + 1
+	end
+end
+
+function loadResult()
+	if keyp("space") or fileLoaded == true then
+		fileLoaded = false
+		selecting = false
+		storageStage = 1
+		stage = 1
+	end
+end
+
+function dropLoad()
+	on_event("drop_items", function(msg)
+		stage = 2
+		storageStage = 6
+		if msg.items[1].fullpath ~= nil then
+			loadFile(msg.items[1].fullpath)
+		else
+			storageStage = 7
+		end
+	end)
+end
+
+
+
+function drawStoragePrompts()
+	rect(0, 0, 300, 11, 13)
+	rectfill(1, 1, 299, 10, 6)
+	local preicon = "\f8\^:0000020202020000\-8\f9\^:0000040404040000\-8\fa\^:0000080808080000\-8\fb\^:0000101010100000\-8\fc\^:0000202020200000\-8\ft\^:0000404040400000\f0 "
+	local message = "Working..."
+	
+	if stage ~= 2 then
+		return
+	end
+	
+	if storageStage == 1 then
+		local _blink = flr(t()) % 2 == 0 and "_" or ""
+
+		message = "File name (space to save): " .. fileName.text .. _blink
+	elseif storageStage == 3 then
+		message = "A file with this name already exists! Overwrite? (y / n)"
+	elseif storageStage == 4 then
+		if fileName.saved == true then
+			message = "Successfully saved! Press space to continue..."
+		else
+			message = "Could not save :( Sandboxed? Space to continue..."
+		end
+	elseif storageStage == 5 then
+		message = "Select a file to load!"
+	elseif storageStage == 7 then
+		if fileLoaded == true then
+			message = "File loaded! Press space to continue..."
+		else
+			message = "Could not load :( Press space to continue..."
+		end
+	end
+	
+	print(preicon .. message, 2, 2, 0)
 end
 
 
 :: .info.pod
---[[pod,author="DorkOrca / gachapon.party",created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000000000000000000000001010100000000000000000000000101090a0100000000000000000000010707190901000000000000000000010707060d01000000000000000000010704060d0601000000000000000001070814191501000000000000000001070418150d01000000000000000001070c14020d01000000000000000001070410150d01000000000000000001070a14010d01000000000000000001070409150d01000000000000000001070814190d01000000000000000001071418150d01000000000000000000010615020d010000000000000000000000010d0d01000000000000000000000000000101000000000000000000000000"),modified="2026-05-02 01:26:37",notes="- Left click: Paint / Color palette\n- Right click: Select color\n- Ctrl + c: Copy one-off character",runtime=26,title="picpopix",version="0.1",workspaces={{location="main.lua#45,19",workspace_index=1},{location="canvas.lua#204,52",workspace_index=1},{location="gfx/0.gfx#54",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev262",created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000000000000000000000001010100000000000000000000000101090a0100000000000000000000010707190901000000000000000000010707060d01000000000000000000010704060d0601000000000000000001070814191501000000000000000001070418150d01000000000000000001070c14020d01000000000000000001070410150d01000000000000000001070a14010d01000000000000000001070409150d01000000000000000001070814190d01000000000000000001071418150d01000000000000000000010615020d010000000000000000000000010d0d01000000000000000000000000000101000000000000000000000000"),modified="2026-05-04 06:47:08",notes="A utility for generating multicolored\none-off P8SCII characters.",runtime=26,sandbox=false,title="picopix",version="0.4",workspaces={{location="main.lua#83,14",workspace_index=1},{location="canvas.lua#31,12",workspace_index=1},{location="storage.lua#119,27",workspace_index=1},{location="gfx/0.gfx#54",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-04 06:47:08"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NS0wMSAyMToyMDowNyIscmV2aXNpb249MTVdXWx6NACAAAAAEjIAAPMhe1swXT17Ym1wPXB4dQBD
@@ -667,14 +1060,86 @@ wCjANfQoNc4oNf3cKDX9xSjCNdMoNeQowjXTKDX2KDXUKME16yjCNdQoNfYoNc4oNf3cKDX9xig1
 -f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
 -f3NAAAAAAAAAAE=
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-04 06:47:08"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAxNzo0MDowNSIscmV2aXNpb249Ml1dbHo0AEwAAABQAAAA8Rx7e2JtcD1weHUATIAgIAD-
 AAD---8DLGhpZGRlbj1mYWxzZSxwYW5feD0wCADSeT0wLHRpbGVfaD0xNgoAEHcKAIB6b29tPTF9
 fQ==
+:: presets/.info.pod
+--[[pod,created="2026-05-04 06:20:50",file_item={},modified="2026-05-04 06:50:24"]]
+:: presets/anxious.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwMjoyNjoyOSIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTRdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCw0LDI1LDksOSwwLDB9LHswLDQsNSwxLDEwLDEw
+LDksMH0sezQsNSwxLDIyLDEwLDEwLDEwLDl9LHs0LDUsMjIsMTAsMjUsMjUsMjUsOX0sezQsNSwy
+MiwxMCwyNSwyNSwyNSw5fSx7NCw1LDEsMjIsMTAsMTAsMTAsOX0sezAsNCw1LDEsMTAsMTAsOSww
+fSx7MCwwLDQsMjUsOSw5LDAsMH19
+:: presets/blank.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNjo0NzozNSIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6NDc6MzUiLHJldmlzaW9uPTBdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCw5LDI1LDI1LDksMCwwfSx7MCwyNSw3LDcsNyw3
+LDI1LDB9LHs5LDcsMCw1LDcsNSw3LDl9LHsyNSw3LDcsNyw3LDIxLDcsMjV9LHsyNSw3LDcsNyw3
+LDIxLDcsMjV9LHs5LDcsMCw1LDcsNSw3LDl9LHswLDI1LDcsNyw3LDcsMjUsMH0sezAsMCw5LDI1
+LDI1LDksMCwwfX0=
+:: presets/blush.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNDo1Nzo1NSIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTFdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTQsdGM9MCx0eD03XV17ezAsMCw5LDksMzAsOSwwLDB9LHswLDksNyw3LDE0LDEw
+LDksMH0sezksMTAsMCw0LDEwLDEwLDEwLDl9LHs5LDEwLDEwLDEwLDEwLDI1LDEwLDl9LHs5LDEw
+LDEwLDEwLDEwLDI1LDEwLDl9LHs5LDEwLDAsNCwxMCwxMCwxMCw5fSx7MCw5LDcsNywxNCwxMCw5
+LDB9LHswLDAsOSw5LDMwLDksMCwwfX0=
+:: presets/evil.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwMjozMTozNSIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MjIiLHJldmlzaW9uPTFdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTIyLHRjPTAsdHg9N11de3swLDAsNCwyNSw5LDksMCwwfSx7MCw0LDUsMjIsMjIs
+MTAsOSwwfSx7NCw1LDI0LDEsMTAsMjUsMTAsOX0sezQsNSwyMiwyMiwxMCw3LDQsOX0sezQsNSwy
+MiwyMiwxMCw3LDQsOX0sezQsNSwyNCwxLDEwLDI1LDEwLDl9LHswLDQsNSwyMiwyMiwxMCw5LDB9
+LHswLDAsNCwyNSw5LDksMCwwfX0=
+:: presets/neutral.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNjowODo0NSIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTFdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTE4LHRjPTAsdHg9N11de3swLDAsOSw5LDksOSwwLDB9LHswLDksMTAsMTAsMTAs
+MTAsOSwwfSx7OSwxMCwxLDE4LDEwLDEwLDEwLDl9LHs5LDEwLDEwLDEwLDEwLDI1LDEwLDl9LHs5
+LDEwLDEwLDEwLDEwLDI1LDEwLDl9LHs5LDEwLDEsMTgsMTAsMTAsMTAsOX0sezAsOSwxMCwxMCwx
+MCwxMCw5LDB9LHswLDAsOSw5LDksOSwwLDB9fQ==
+:: presets/picotron.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNjoxNjoyMiIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTFdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTcsdGM9MCx0eD03XV17ezAsMCwwLDAsMCwwLDAsMH0sezcsNywwLDcsNyw3LDAs
+MH0sezcsNywxMiw3LDE0LDcsNywwfSx7Nyw3LDEyLDcsNyw3LDcsMH0sezcsNywxMiwxMiwxMiw3
+LDcsMH0sezcsNyw3LDcsMTIsNyw3LDB9LHs3LDcsMTQsNywxMiw3LDcsMH0sezAsNyw3LDcsMCw3
+LDcsMH19
+:: presets/shock.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNDo1MDoxMiIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTJdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCw5LDksOSw5LDAsMH0sezAsOSwxMCwxMCwxMCwx
+MCw5LDB9LHs5LDEwLDEsMTIsMTAsMTAsMTAsOX0sezksMTAsMTAsMTAsMiwyNCw4LDl9LHs5LDEw
+LDEwLDEwLDIsMjQsOCw5fSx7OSwxMCwxLDEyLDEwLDEwLDEwLDl9LHswLDksMTAsMTAsMTAsMTAs
+OSwwfSx7MCwwLDksOSw5LDksMCwwfX0=
+:: presets/sick.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNjo0NjozNyIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6NDY6MzciLHJldmlzaW9uPTBdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCwxNywyNywyNywyNywwLDB9LHswLDE2LDEyLDAs
+MjYsMjYsMjcsMH0sezEsMTIsMCwyNiwyNiwyNiwyNiwyN30sezEsMTIsMTcsMjYsMywxOSwxMCwy
+NX0sezEsMTIsMTcsMjYsMywxOSwyNiwyN30sezEsMTIsMCwyNiwyNiwyNiwyNiwyN30sezAsMTYs
+MTIsMCwyNiwyNiwyNywwfSx7MCwwLDE3LDI3LDI3LDI3LDAsMH19
+:: presets/smile.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwMjoyNDowMCIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTNdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCw5LDksOSw5LDAsMH0sezAsOSwxMCwxMCwxMCwx
+MCw5LDB9LHs5LDEwLDEsMywxMCwyNSwxMCw5fSx7OSwxMCwxMCwxMCwxMCwxMCwyNSw5fSx7OSwx
+MCwxMCwxMCwxMCwxMCwyNSw5fSx7OSwxMCwxLDMsMTAsMjUsMTAsOX0sezAsOSwxMCwxMCwxMCwx
+MCw5LDB9LHswLDAsOSw5LDksOSwwLDB9fQ==
+:: presets/sunglasses.pix
+b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwNjo0OTo1NCIsbW9k
+aWZpZWQ9IjIwMjYtMDUtMDQgMDY6NDk6NTQiLHJldmlzaW9uPTBdXQotLVtbcG9kLGNhcnQ9InBp
+Y29waXgiLHBjPTAsdGM9MCx0eD03XV17ezAsMCwxLDUsOSw5LDAsMH0sezAsOSwxLDEsMTAsMTAs
+OSwwfSx7OSwxMCwxLDEsMTAsMjUsMTAsOX0sezksMTAsMSwxMCwxMCwxMCwyNSw5fSx7OSwxMCwx
+LDEwLDEwLDEwLDI1LDl9LHs5LDEwLDEsMSwxMCwyNSwxMCw5fSx7MCw5LDEsMSwxMCwxMCw5LDB9
+LHswLDAsMSw1LDksOSwwLDB9fQ==
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-02 01:26:37"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-05-04 06:47:08"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
