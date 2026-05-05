@@ -20,7 +20,7 @@ function checkDrawBuffer(_i)
 	
 end
 :: generate.lua
---[[pod_format="raw",created="2025-09-25 18:44:02",modified="2026-02-18 23:59:23",revision=424,xstickers={}]]
+--[[pod_format="raw",created="2025-09-25 18:44:02",modified="2026-05-04 20:59:28",revision=425,xstickers={}]]
 alphabet =
 {
 	"a",
@@ -156,8 +156,6 @@ function textInput()
 			yPromptOffset -= 1
 		end	
 
-		rectfill(0, 259 + yPromptOffset, 480, 270, 6)
-		print("File name (space to save): " .. fileName.text .. _blink, 5, 261 + yPromptOffset, 1)
 	else
 		yPromptOffset = 11
 		generateStep += 1
@@ -571,9 +569,14 @@ function saveApp()
 	end
 end
 :: main.lua
---[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-02-10 00:29:16",revision=1106,xstickers={}]]
+--[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-05-04 21:01:35",revision=1149,xstickers={}]]
 include("./settings.lua")
 include("./generate.lua")
+
+-- Mouse 1: Left click by default
+M1 = 0x1
+-- Mouse 2: Right click by default
+M2 = 0x2
 
 function setOptions()
 	-- Initialize variables that the program uses
@@ -802,6 +805,26 @@ function generateFunction()
 	end
 end
 
+function trackMouseClicks()
+	local mx, my, mb, wx, wy = mouse()
+	local mHeld = false
+	
+	return function()
+		mx, my, mb, wx, wy = mouse()
+		local results = {mx=mx, my=my, mb=mb, wx = wx, wy = wy}
+		
+		results.mb =
+			((mb == M1 or mb == M2) and mHeld == false) and true
+			or false
+		
+		mHeld = 
+			(mb == M1 or mb == M2) and true
+			or false
+		
+		return results
+	end
+end
+
 --[[GROUP:Loops]]
 function _init()
 	--initializeSettings()
@@ -809,6 +832,9 @@ function _init()
 	h = 1
 	generating = false
 	startTime = t()
+	mHeld = false
+	
+	mouseClicked = trackMouseClicks()
 	
 	settings = setTextLength(settings)
 	setOptions()
@@ -818,13 +844,22 @@ end
 function _update()
 	if firstLoad == true then
 		if generating == false then
+			local mx, my, mb = mouse()
 			if btnp(5) then
 				menu = menu == false and true or false
+			end
+			
+			if mouseClicked().mb == true then
+				menu = true
 			end
 			
 			if menu == true then
 				menuNav()
 			end
+		end
+		
+		if generating == true then
+			generateFunction()
 		end
 	end
 end
@@ -852,9 +887,7 @@ function _draw()
 			drawInstructions(20, 5)
 		end
 		
-		if generating == true then
-			generateFunction()
-		end
+		
 	else
 		cls(1)
 		print("Loading...", 100, 100)
@@ -862,6 +895,8 @@ function _draw()
 		firstLoad = setOptions()
 	end
 end
+
+
 :: settings.lua
 --[[pod_format="raw",created="2025-09-24 00:54:47",modified="2026-02-10 02:54:48",revision=196,xstickers={}]]
 --[[BOOKMARK:Colors]]
@@ -1088,16 +1123,16 @@ ERROR: Could not find 'tLength' variable for General Options
 --[[pod_format="raw",created="2025-09-25 18:35:09",modified="2025-09-26 21:10:00",revision=1]]
 
 :: .info.pod
---[[pod,author="@DorkOrca",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-04-28 23:29:07",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=24,sandbox=false,title="Gogh Maker",version="1.0.0",workspaces={{location="main.lua#288,27",workspace_index=1},{location="settings.lua#59,15",workspace_index=1},{location="generate.lua#219,25",workspace_index=1}}]]
+--[[pod,author="@DorkOrca",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-05-04 21:01:35",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=26,sandbox=false,title="Gogh Maker",version="1.0.0",workspaces={{location="settings.lua#59,15",workspace_index=1},{location="generate.lua#135,1",workspace_index=1},{location="main.lua#282,7",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2025-09-22 22:46:25",modified="2026-02-18 23:59:23"]]
+--[[pod,created="2025-09-22 22:46:25",modified="2026-05-04 21:01:35"]]
 :: gfx/0.lua
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA5LTIzIDE4OjI2OjE0Iixtb2RpZmllZD0iMjAyNS0w
 OS0yNSAyMjoyNzo1MyIscmV2aXNpb249MzFdXWx6NAB_AAAAEjEAAPMhe1swXT17Ym1wPXB4dQBD
 IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADLeT0wLHpvb209OH0sPgAf8DEA----
 ------------------------------------------------------------11BtPTh9fQ==
 :: sfx/.info.pod
---[[pod,created="2025-09-25 18:18:30",modified="2026-02-18 23:59:23"]]
+--[[pod,created="2025-09-25 18:18:30",modified="2026-05-04 21:01:35"]]
 :: snd/.info.pod
---[[pod,created="2025-09-25 18:18:26",modified="2026-02-18 23:59:23"]]
+--[[pod,created="2025-09-25 18:18:26",modified="2026-05-04 21:01:35"]]
 :: [eoc]
