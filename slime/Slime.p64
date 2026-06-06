@@ -4,32 +4,81 @@ version 2
 :: gfx/
 :: map/
 :: sfx/
+:: beauty.lua
+--[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-06-05 00:19:07",revision=6,xstickers={}]]
+ShadeTable = {
+	[0] = {},
+	[1] = {},
+	[2] = {},
+	[3] = {},
+	[4] = {},
+	[5] = {},
+	[6] = {},
+	[7] = {},
+	[8] = {},
+	[9] = {},
+	[10] = {},
+	[11] = {},
+	[12] = {},
+	[13] = {},
+	[14] = {},
+	[15] = {},
+	[16] = {},
+	[17] = {},
+	[18] = {},
+	[19] = {},
+	[20] = {},
+	[21] = {},
+	[22] = {},
+	[23] = {},
+	[24] = {},
+	[25] = {},
+	[26] = {},
+	[27] = {},
+	[28] = {},
+	[29] = {},
+	[30] = {},
+	[31] = {}
+}
+
+function grass(_color, _density)
+	local color = _color == nil and 27 or _color
+	local density = _density == nil and 0.7 or _density
+	
+	
+end
 :: main.lua
---[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-01-31 01:15:42",revision=78,xstickers={}]]
+--[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-06-02 23:20:17",revision=103,xstickers={}]]
 include("slimes.lua")
+
+--		Variables
+t = 0
 
 -- 	World functions
 
 
--- Loops
+-- 	Loops
 function _init()
 	generateSlime()
 end
 
 function _update()
+	t += 1
 	updateSlimes()
 	physics()
 	spawnSlimes()
 end
 
 function _draw()
-	cls(31)
-	rectfill(0,0,480,180,15)
-	rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
-	drawSlimes()
+	if t%2==0 then 
+		cls(0)
+		rectfill(0,0,480,160,1)
+		-- rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
+		drawSlimes()
+	end
 end
 :: slimeAnimations.lua
---[[pod_format="raw",created="2025-09-18 20:12:26",modified="2026-01-31 01:26:57",revision=68,xstickers={}]]
+--[[pod_format="raw",created="2025-09-18 20:12:26",modified="2026-06-03 17:51:10",revision=97,xstickers={}]]
 function drawSlimeJump(_slime)
 	if angle and _slime.y < floor then
 		frame = flr((angle - 22.5) / 45) % 8 + 1
@@ -37,33 +86,36 @@ function drawSlimeJump(_slime)
 	end
 end
 
-slimeFlopR = {1, 11, 12, 11,}
-slimeFlopL = {1, 12, 11, 12,}
+slimeFlopL = {1, 11, 12, 11,}
+slimeFlopR = {1, 12, 11, 12,}
 slimeBounce = {}
 
 function drawSlimeFlop(_slime)
-	if _slime.yLast then
-		if _slime.yLast != _slime.y and _slime.y == floor then
-			_slime.frame = 16
-		end
+	if _slime.yLast and _slime.yLast != _slime.y and _slime.y >= floor then
+		_slime.frame = 16
 	end
 	
-	if _slime.frame > 0 and _slime.y >= floor then
-		_slime.frame -= 1
-		if angle > 270 or angle <= 90 then
-			_slime.sprite = slimeFlopR[flr(_slime.frame / 4) + 1]
-		else
-			_slime.sprite = slimeFlopL[flr(_slime.frame / 4) + 1]
-		end
-	elseif _slime.y >= floor then
+	if _slime.frame <= 0 and _slime.y >= floor-1*scale then
 		_slime.sprite = 1
+	elseif _slime.frame > 0 and _slime.y >= floor-1*scale then
+		_slime.frame -= 1
+		local tileset = (angle > 270 or angle <= 90) and slimeFlopR or slimeFlopL
+		_slime.sprite = tileset[flr(_slime.frame/4) + 1]
 	end
 end
 :: slimes.lua
---[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-02-03 23:44:55",revision=129,xstickers={}]]
+--[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-06-04 18:51:45",revision=280,xstickers={}]]
 include("slimeAnimations.lua")
 
 slimes = {}
+
+slimeVariables = {
+	["Spawn Variables"] = {
+	
+		["Spawn Frequency"] = 180,
+		["Starting Color"] = 0,
+	}
+}
 
 -- Gravity variables
 floor = 180
@@ -74,6 +126,7 @@ dampening = 0.6
 dt = 1/60
 
 spawnFrequency = 180
+startingColor = 0
 spawnTimer = spawnFrequency
 
 maxspeed = 3
@@ -114,6 +167,8 @@ nameParts =
 		"sba","sbi","sbo",
 		"tba","tbi","tbo",
 		"yba","ybi","ybo",
+		"rba", "rbi", "rbo",
+		"gba", "gbi", "gbo",
 	},
 	nameEnd =
 	{
@@ -132,7 +187,7 @@ nameParts =
 palettes = {
 	{8, 14, 23,},
 	{25, 9, 10,},
-	{3, 11, 26,},
+	{3, 27, 26,},
 	{30, 29, 26,},
 	{16, 12, 28,},
 	{5, 22, 6,},
@@ -154,8 +209,8 @@ function physics()
 			slimes[i].xLast = _slimeX
 			slimes[i].yLast = _slimeY
 			
-			_slimeX += _speed
-			_slimeY += _velocity
+			_slimeX += _speed * scale
+			_slimeY += _velocity * scale
 	
 			-- Ensure that position is above world floor
 			if _slimeY > floor then
@@ -203,7 +258,7 @@ function generateSlime()
 	{
 		name = generateName(),
 		x = flr(rnd(400)) + 40,
-		y = 90,
+		y = -10,
 		xLast = x,
 		yLast = y,
 		sprite = 1,
@@ -212,10 +267,10 @@ function generateSlime()
 		velocity = 0,
 		animFreeze = false,
 		inertia = 100,
-		size = 1,
-		width = 4,
-		height = 7,
-		color = flr(rnd(#palettes)),
+		size = startingColor * 4 + 1,
+		width = 3,
+		height = 6,
+		color = rnd(#palettes),
 	}
 end
 
@@ -223,7 +278,9 @@ function spawnSlimes()
 	spawnTimer -= 1
 	
 	if spawnTimer <= 0 then
-		generateSlime()
+		for i=1,2 do
+			generateSlime()
+		end
 		spawnTimer = spawnFrequency
 	end
 end
@@ -256,26 +313,63 @@ function slimeMerge()
 			if j < #slimes then
 				_slime1 = slimes[i]
 				_slime2 = slimes[j+1]
-			
-				_left = _slime1.x - _slime1.width * scale < _slime2.x + _slime2.width * scale
-				_right = _slime1.x + _slime1.width * scale > _slime2.x - _slime2.width * scale
-				_bottom = _slime1.y > _slime2.y + - _slime2.height * scale
-				_top = _slime1.y - _slime1.height * scale < _slime2.y
 				
-				if _left and _right and _top and _bottom then
-					_slime1.speed = _slime1.speed / 2 + _slime2.speed / 2
-					_slime1.velocity += _slime2.velocity
-					_slime1.size +=  _slime2.size / 2
-					table.remove(slimes, j+1)
+				local slime1 = {}
+				local slime2 = {}
+				
+				if _slime1.size > _slime2.size then
+					slime1 = _slime1
+					slime2 = _slime2
+				else
+					slime1 = _slime2
+					slime2 = _slime1
+				end
+				
+				local s1Color = flr((slime1.size-1) / 4)%6+1
+				local s2Color = flr((slime2.size-1) / 4)%6+1
+				
+				if s1Color == s2Color then
+				
+					_left = slime1.x - slime1.width * scale < slime2.x + slime2.width * scale
+					_right = slime1.x + slime1.width * scale > slime2.x - slime2.width * scale
+					_bottom = slime1.y > slime2.y + - slime2.height * scale
+					_top = slime1.y - slime1.height * scale < slime2.y
+					
+					local sizeMod = (slime1.size-1)%4
+					
+					if _left and _right and _top and _bottom then
+						slime1.speed = slime1.speed * 0.8 + slime2.speed * 0.8
+						slime1.velocity += slime2.velocity
+						slime1.size +=  max(1, slime2.size-1)%4 / (1 + sizeMod)
+						if _slime1.size > _slime2.size then
+							table.remove(slimes, j+1)
+						else
+							table.remove(slimes, i)
+						end
+					end
 				end
 			end
 		end
 	end
 end
 
+function slimePop(_slime)
+	if _slime == nil then
+	error("Slime can't pop: " .. _slime);
+		return false
+	end
+	
+	local slime = slimes[_slime]
+	
+end
+
+function splash()
+	
+end
+
 --		Slime drawing
 function drawSlimes()
-	for i=1,#slimes do
+	for i=#slimes,1,-1 do
 		_slime = slimes[i]
 		
 		if _slime.yLast != nil then
@@ -285,64 +379,107 @@ function drawSlimes()
 		drawSlimeJump(_slime)
 		drawSlimeFlop(_slime)
 		
-		sprSize = min(flr(_slime.size - 1), 2) * 12
+		local sprSize = min(flr((_slime.size-1)%4), 3) * 12
+		local sprWidth = get_spr(_slime.sprite + sprSize):width()
+		local sprHeight = get_spr(_slime.sprite + sprSize):height()
+		local sprColor = flr((_slime.size-1) / 4)%6+1
 		
-		sspr(_slime.sprite + sprSize, 0, 0, 16, 16, _slime.x - 8 * scale, _slime.y - 13 * scale, 16 * scale, 16 * scale)
+		for i = 1, 3 do
+			pal(palettes[1][i], palettes[sprColor][i])
+		end
+		
+		local slimeY = _slime.y > floor-1 and floor or _slime.y
+		
+		sspr(_slime.sprite + sprSize, 0, 0, sprHeight, sprWidth, (flr(_slime.x/2)*2 - sprWidth) - 2 * scale, (flr(slimeY/2)*2) - sprHeight + 2 * scale, sprWidth * scale, sprHeight * scale)
+		-- print(string.sub(tostring(_slime.size),1,3), _slime.x - 14, _slime.y + 24, 7)
+		-- print(_slime.name, (_slime.x - 52) - print(_slime.name, -100, -100)/2, _slime.y + 36, 7)
 		
 	end
 end
+:: ui.lua
+--[[pod_format="raw",created="2026-06-03 17:44:37",modified="2026-06-03 17:56:08",revision=8,xstickers={}]]
+function uiLoop()
+
+end
+
+function adminMenu()
+	
+end
+
+function saveSettings()
+	spawnFrequency = slimeVariables["Spawn Frequency"]
+end
 :: .info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-03 23:44:55",runtime=24,workspaces={{location="main.lua#4,1",workspace_index=1},{location="slimes.lua#155,3",workspace_index=1},{location="slimeAnimations.lua#9,20",workspace_index=1},{location="gfx/0.gfx#41",workspace_index=2}}]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08",runtime=26,workspaces={{location="main.lua#15,8",workspace_index=1},{location="slimes.lua#11,1",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#1,11",workspace_index=1},{location="gfx/0.gfx#128",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-03 23:44:55"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
-Mi0wMyAyMzo0Mjo1NiIscmV2aXNpb249MTZdXWx6NAAICAAApzwAAPMhe1swXT17Ym1wPXB4dQBD
+Ni0wNSAwMDoxOTowOCIscmV2aXNpb249NTFdXWx6NABMDAAAVkMAAPMhe1swXT17Ym1wPXB4dQBD
 IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADbeT0wLHpvb209MTJ9LD8A8wxmSJAI
 TghwCB4fFxcOCGAIDk0HCFAIHl0OCEAGAO8NLi0eCFAIDg1OCHBoMGEAHv8RlkiAGE4YUAguHxcX
 HggwCD5NBw4IIAgODQ4NbggwqBBRAB7wDSkosAgOFwiQCA4vFwcIgAgOPQiACB4dDgiACD4PAP8A
 ByiQCB4IwBiwGPAOCPAKYAAegCdYcBgOLxcX9ABABy4tBwkBkQgePQgwCAAYAGkAr5AILggwCGAo
-8FNdAB75CTIIAAjgCAAYwAgOBziACC4PFxcIgBgOLckAAGAAT7Ao8CReAB7wAwgI4AjQCA4IsAgP
-Fx4IoAgHDQwAAAQAEC4wAXQdHgiACD0OBQAgBy1rACAXDmwAHxZsAB7xBzwIAAiQGAAIcDgPFwcI
-cAgPDhcuCGCVAS0YcMwAHyhgAB7wAiRYgAgODxcXDg0YUAgOTQ4NiQFxDj0OCB4IQFoAAI4BEUBe
-AE9gCPBRYAAfD0cCBZCQCC4NCKAoDgc7Ac8NCMAY8AAY8A8I8AVjAB4fF2MAAQoaAQGdAQDcAEGg
-CB4NDwBv0AjgCPAHbAAeEXjIAxRgugI-Hk0HwgMEHyBbAB5gdEiQCC4XuwBAPxcOGB0EHwdbAAMf
-QFsAHmRHKKAYLhh_BAe3AGAHCDAIHn0pBAMGAP8BbR4IIAgNLj0uCDAYDV4YYIoEIKCVaGAYbhgw
-CD4vigSBEAg_bQcOCACKBF_OCBDIAFEAHhkZ4AERcDwFkGAIDl0IYAgePU0F8AAuHQ4IcBg_CHAI
-DQcOKIBPAs_gCAAYoAgACPANCLBxAB7xBBdYYCg-FxcIMBgPDg8XHw4PFw97APIIQBgvDk8XBxhA
-CB8OXxcIYAgfDj8XDw7XBQWEAx9DcAAeEBGpADEACNCxBEAPFwdI5wOfDxcvDhcIcBge9QACGHD2
-Ax8UcgAdkHAI8A8I0AgHCG8AIQiwbgBRBwiQCC8IADCACE9bAAJzAT8fFxd_AAsfUO8AHsAcCAAI
-sAjAGAAIYEhwABFg1QQRDwoGIC0H_wIP7QAJHxlwAB7wHxNYgAgPFxcuKEAIPgcPDi4NGBAIDU4H
-HRgwCA1eDQhAGB0_DQhwCB0eDQiQCC1kAB9KZAAeHxSkAgsAwgAAFgZlPhiQKA4N8wQB9AEAjAEP
-LgQeP1AosKEBEyKQCPYGED7dAAP8BBHAAAVP8A8IcOgAHmVZKKAYDhdLBGAQGBAIHl3eA-8OBxge
-bQcYHg0ejQgACC6NDggQCE5NHgggGI4IUIh_CB8aVGgAANsAAG4A8AQACA5tBw4YDgcYDo0ODR4Y
-Ho0ebwCfTT4IIAiOGECIGwUf0SY4kBg_GGAIHgcPFxf0BhE9QAkhDm1ACREeygAxHn0HBwASjckE
-8AAefR4YDg0uXR4NGB4Njg0kB48OHT4dDhgwmPcFH3BlWGAoXiggmwIxFycNzwDwAH0HDQ4YHp0H
-DhgerQ4YLuQALxieXQAhQHA4kBjdBwDgABEt_gURDlUGgA4NLk0IMAhebglBHh0uHQcGEC0zAmAw
-CC4dHg0dBiBeDQ4BQA4HThgICGE4YAg_CKDxCS-wCeQAHhQYiAAhMDiIABAQjAcAfgaxAAguLS5N
-GJ49GF6HADEACE6HACIQKIcA71AITg0eCGAYPhiQOPAUlgMiFR-aBPECDw44UAg_DxcODRcYMAhO
-LRfvAA8RAQwA-QAMigAPFAcfEgfZBQNrBUAIoAg-ngMASAsiHg-gAg_gAQkQLRMAUy0eHQhQjQCP
-YBguDRiQOFBLByIAEQFUYDg-Dg-hBhEXDAAwIAgf1QgQP-YCQA5fFwcJCA8XARsPTgQfGhSgAiA4
-IAABEQ4IAgB7AHEeHRhePT4YegAwLg0YegAxPggQegA3HiggegAv8Bh7AB0aMHoADnoBD-IAAxQd
-GgOTUBhOHQhwOC4HyAoCGgMPvAoeH1CHABYMAgIyCD4Niw0A1gVBDgigCIQMIA0OhwAP1wofQDdI
-gBiKAgBBDictFxwK8AqNCAAYLg0eXRguDU49BxgOHS4NLi0OGG4N0AZEAAh_HeMFD-kEHx80dAAH
-4CAIHg0uTQ4YAAhuXQcYcwCALg0YPg0eHU4iBCMdTu4FD4gDHx-wMgC08wxmRZAFTxYFcAUeFhcO
-BWAFDkYHBVAFHlYOBUAGAN8GLiYeBVAFDgZOBXBlKQEgDzIA-----zyRZkeQB0AHcAdgAgBTUAeA
-B0AEAG9QB2AHcGeeBCAPMgD----------------------------------------------80fVgw5
-AiAObQMqAgYAMA0OTe80EG7SM08_CJBI1y8fH0ZwOQ8AUjARUC4xj2AIDV4IcAhOagAmQA4PFydt
-ACcdJ2sAEwfSKgFrAAETAB9NagAvcUcIcAgvFzc0M1EvFycIUIQ0ICcIkzQwTxcXQgEwDw5OSzMh
-HT4SMiA9Do8yLz0OcgAmMC8XH1AyMTcPF7suUGAIRw4POQEQZx8wIncOBQC-UAhnCGAIZwhwCEdp
-ACYQD3wuUHAIBy8XVDVQYAgHTxc2ATAXXg9lABAXqjP_AAgnTg0IUAgnLg0IYAg3Lm8ADx4CJAGf
-AREHewIGBgBAUAgHTR0AjycdHghwCCcdagAiHwYeAiQv8DVrAApQPTEyfX0=
+8FNdAB75CTIIAAjgCAAYwAgOBziACC4PFxcIgBgOLckAAGAAT7Ao8CReAB7wBAgI4AjQCAcIsAgO
+DxcHCKAIHg0MABQIMQEGZwAMbAAfFmwAHqA8CAAIkBgACHA4awCBcAgPDhcuCGCVAS0YcGAAHyhg
+AB4wJFiAxgCgFw4NGFAIDk0ODYkBcQ49DggeCEBaAACOARFAXgBPYAjwUWAAHw9HAgWBkAguDQig
+KA5HAc8NCMAY8AAY8A8I8AVjAB4fF2MAAQoaAQKdARcNrAFv0AjgCPAHbAAeEXjIAxRgugI-Hk0H
+wgMEHyBbAB5gdEiQCC4XuwBAPxcOGB0EHwdbAAMfQFsAHmRHKKAYLhh_BAe3AGAHCDAIHn0pBAgG
+ADANHl1DBF8NfghQiMgAH6CVaGAYbhgwCD4vigSBEAg_bQcOCACKBF_OCBDIAFEAHhkZ4AERcDwF
+kGAIDl0IYAgePU0F8AAuHQ4IcBg_CHAIDQcOKIBPAs_gCAAYoAgACPANCLBxAB7xBBdYYCg-FxcI
+MBgPDg8XHw4PFw97APIIQBgvDk8XBxhACB8OXxcIYAgfDj8XDw7XBQWEAx9DcAAeEBGpADEACNCx
+BEAPFwdI5wOfDxcvDhcIcBge9QACGHD2Ax8UcgAdQXAI8A-CBABvACEIsG4AUQcIkAgvCAAwgAhP
+WwACcwE-HxcXfgALH1DvAB7AHAgACLAIwBgACGBIcAARYNUEEQ8KBiAtB-sCD_0ACR8ZcAAe8B8T
+WIAIDxcXLihACD4HDw4uDRgQCA1OBx0YMAgNXg0IQBgdPg0IcAgdHg0IkAgtZAAfSmQAHh8UpAIL
+AMIAEB46B1UYkCgODfMEAfQBAIwBD2YDHj9QKLChARMEjwYQPt0AA-wEEcAABU-wDwhw6AAeZVko
+oBgOF0sEYBAYEAgeXd4D-w4HGB5tBxgeDR6NCAAILo0OCBAITk0eCCAYjghQiH4IHxpUaAAA2wAA
+bgDwBAAIDm0HDhgOBxgOjQ4NHhgejR5vAJ9NPgggCI4YQIgbBR-RJjiQGD4YYAgeBw8XF-QGET1A
+CSEObUAJER7KADEefQcHABKNyQTwAB59HhgODS5dHg0YHg2ODSQHjw4dPh0OGDCYLwUfcGVYYChe
+KCCbAjEXJw3PAPAAfQcNDhgenQcOGB6tDhgu5AAvGJ5dACFAcDiQGN0HAOAAES36BREOVQaADg0u
+TQgwCF5uCUEeHS4dBwYQLTMCYDAILh0eDR0GIF4NDgFADgdOGAgIYThgCD4IoPEJL-AJ5AAeFBiI
+ACEwOIgAEBCMBwB_BrEACC4tLk0Ynj0YXocAMQAITocAIhAohwDvUAhODR4IYBg_GJA48BSWAyIV
+H9oE8QIPDjhQCD4PFw4NFxgwCE4tF_8ADxEBDAD9AAyKAA_eCx8SB9kFA2sFQAigCD_eAwBICyIe
+D_ACD6ABCRAtEwBTLR4dCFCNAI9gGC4NGJA4UEsHIgARAVRgOD8OD_EGERcMADAgCB-VCBA-9gJ-
+Dl8XBx4IIBcBHA9OBB8aFKACIDggAAERDggCAHsAcR4dGF49Phh6ADAuDRh6ADE_CBB6ADceKCB6
+AC-wGHsAHRowegAOegEP8gADFB0aA5NQGE4dCHA4LgfICgIaAw_8Ch4fUIcAFgwCAjIIPg2LDQDW
+BVAOCKAIDeMKIA0OhwAP1wofQDdIgBiKAgBBDictFxwK8AqNCAAYLg0eXRguDU49BxgOHS4NLi0O
+GG4N0AZEAAh_HeMFDygKHx80dAAH4CAIHg0uTQ4YAAhuXQcYcwCALg0YPg0eHU4iBCMdTu4FD4gD
+G-ADGBgE8EFY8AAYXhjACC4nDgcetwFBBx8XbioMUC4HDiceSgdRHR4dHjeTAwDlACEtJ5YBAPsB
+Ek2lABENgAIQPSUGAAwAMF4dBwsAkE4NLg0uHS4IIAQHcQ0eLQ4dPhgsBpEdPh1ODQcuGA44ADJO
+DR4NAGEuDT4NDg3mBIIYHg0uHV4tHv0FUQ0uDQ4NaAH-AgggGC4Nfg0uGFAoniigmPAP7wAe8ATl
+OFA4cBg_WD4YQAguF34XLgggDA_SLgcNBw4XPQceTQMxLT5NCgAQDekCAGkMMAAIXnMBMh0_GIoA
+QE4NPg2NBjANHh2dAFAuLQceGLoAgI4XLggAGD4tHgF-PhgwOJ44kKYAIBXAlAEAgwcQLpUBIG0H
+LQlAHg1eJ8sIIK4H6QMA-QxQDQcuDQeQAQCLAEIOHQceDgAiTh2bAzBQCC4kAgG5BlE_DR49Lh4A
+Qg4Nnh09DaAuDT4dLghQCH4d8gcAfgERPi4MMG4YsAECgBjACF4Y4AgObwDwAvABCD4I8AIILgjw
+AwgeCPAEBQBPBRjwAoQBHpJFWOAoXhigGD7eADBwGD7IAEAeCEAYTAExHh0uhwZgPg0_HU4H6QcA
+ZAEgHh0gB2EdDhgeB143AoAHHgcOGD4dXukAAE4NMCg_HZsBAZcCcggwKD4NHg0OBSFeDSIBoZAY
+Hg0_HR4IsAixAa8I0BhOGPABSPBtvwAe4DlY8AEIXjjACD4HTiigsQNAHh0_KPUEACACAKUBUa4I
+gAjerwFgPgcOBw0ufQowDS4NzgAwcAhuWAMgCHCHAEE9Lg0eHAAQDhEDABUAALcAAsQBEYAfDgDi
+BAIMADIuHS4XAFAeDV4dHsUKUQ1OHQcOHAIB1gAVLdQAH0DTAB1AoBjwBc4BEAPiARABgQcgBx5-
+DUFeCOAIvANACNAIDp4DgQjACD4dPgiwnAAxHg0OYgUxDg1ebwVAPg0eB30FAAgDEQdnC0ENfgcO
+CAAxHj0evAAgPl2TDiEODTMAAfEAAIMCQx4HLg0MACItBx0BER7wAADzAkEOHV4NRgBAHi0eLaAE
+zy49LgjAGF4Y8ABYgLwBHvEJSVjQOF4IkChOBz4IYCg_HxceDR4YUBg_XQQxYAiuVwMQ3kEPUQcN
+Dgc_DwBTHg1OBy5wA0EuDQduEwBRLi0HDgd3ElUdTh0OBycFIg0_CgAhLQ7hAADAABEu8QEAUQUh
+Xg25AS8tTrgBAx-QzwAeET0pBCIosCkEAX0CMR1OB8sDIR0uIwMwDS4YlQVQTg0HPg0TDAEgA2Md
+HgcuHR6NBQFLA0FeBx4YDQAgHV7kBAElAIIOBw4dPigACKMFMT4oQFUAEF6CDGsdPgceGKBKAx92
+vwAdHkDnBCJdFyIBEV5SATEeHa5iASAuFzIBE2BYATEHHg29BABvASEdTvsEMk4dHo0BMA0uPYMB
+ABQIIp4NCREhPg1eAnAYPh1_CIAo6gGQDgiwGG4NDgjQswUQCIQAAfYCAGcCIPACAwMQA_UEFwTl
+BA9XBx4egNsAMi0eDd0AAtECEYATBCIHLjsCBvoCChEDBikDADsDFYBLAwFdAyINDm4DEB1tAwA6
+BACQDAEyAAGWAwaiAwC0AxPAwgMT0NIDMOAIXuMDAP4BA9sFEgPsAB_gQwj-sABMCh-wMgAMHzAy
+AP--vJFmR5AHQAdwB2ACAFNQB4AHQAQAf1AHYAdwZzCEAB8PMgD---------------9F8gBADxUP
+FAQgAQ8QDA8cBzAIAPAAEAEPEw8RDxwXIA8VAg8eeByQIA8VDxINDx0GHABgAwsPGgcgCQBRDxsP
+GhBDAGUPHw8PByALAJIgDxUFDxYGBzAIABIABwAiJxAIABIXBwAVN18AICcACwASGN0iFhAMAAJQ
+AFUZCQoXAAsAEwcIABAnpgBjGwsPGicAlAAkFxATACIHEMoAIhcACAAkJxDAACQHAAoAAVMAAmcA
+JRcQigAVB8MAJScACwAfF4kBHw8yAP-------------------------------75QPTEwfX0=
 :: map/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-03 23:44:55"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-02-03 23:44:55"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
