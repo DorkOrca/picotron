@@ -1,0 +1,394 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: gfx/
+:: map/
+:: sfx/
+:: boid.lua
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-09 02:03:11",revision=171,xstickers={}]]
+-- boid.lua
+include("utilities.lua")
+
+--[[GROUP:Initialization]]
+function newBoid(_obj)
+	-- Add a table to the provided object containing 3 boid parameters.
+	if _obj.angle == nil then
+		error("Error in newBoid(): object does not have an angle :(  -  " .. _obj)
+	end
+	_obj.boid = {
+		angle = _obj.angle,
+		separationStrength = 0.0004,
+		alignmentStrength = 0.0001,
+		cohesionStrength = 0.0001,
+		targetStrength = 0.0001,
+		targetDist = 50,
+		target = nil,
+	}
+	
+	return _obj
+end
+
+
+
+--[[GROUP:Separation]]
+function boidGetNeighbors(_obj, _targets, _sorted, _dist)
+	-- Return a table of objects within targetDist range of _obj
+	if _obj == nil then
+		error("boidGetNeighbors(): _obj provided was nil.")
+	end
+	
+	if _targets == nil then
+		error("boidGetNeighbors(): _targets provided was nil.")
+	end
+	
+	local maxDistFromObjToNeighbors = _dist == nil and _obj.boid.targetDist or _dist
+	local listShouldBeSorted = _sorted == nil and false or _sorted
+	
+	local neighbors = {}
+	
+	for index, value in ipairs(_targets) do
+		local target = value
+		if euclidDist(_obj.x, _obj.y, target.x, target.y) == 0 then
+			goto BGNcontinue
+		end
+		
+		local distFromObjToTarget = euclidDist(_obj.x, _obj.y, target.x, target.y)
+		
+		if distFromObjToTarget < maxDistFromObjToNeighbors then
+			if listShouldBeSorted == true then
+				target.dist = distFromObjToTarget
+			end
+			
+			add(neighbors, target)
+		end
+		
+		::BGNcontinue::
+	end
+	
+	if listShouldBeSorted == true then
+		neighbors = sortTableBy(neighbors, "ascending", "dist")
+	end 
+	
+	return neighbors
+end
+
+function boidSeparation(_obj, _neighbors)
+	-- Update boid angle, turning away from neighbors that are too close
+	local obj = _obj
+	local objAngle = (obj.boid.angle + 180) % 360
+	local neighbors = _neighbors
+	local closeNeighbor = neighbors[1]
+	
+	if closeNeighbor == nil then
+		return obj
+	end
+	
+	local neighborDist = euclidDist(obj.x, obj.y, closeNeighbor.x, closeNeighbor.y)
+	
+	if neighborDist < obj.boid.targetDist/2 then
+		obj.color = (obj.color + 1) % 31 + 1
+		local targetAngle = getAngle2D(obj, closeNeighbor)
+		local separationInfluence = obj.boid.separationStrength
+		
+		local awayAngle = (targetAngle + 180) % 360
+		local diff = angleDiff(objAngle, awayAngle)
+		local turnDirection = diff > 0 and 1 or -1
+		obj.boid.angle += diff * ((obj.boid.targetDist/2 - neighborDist) / (obj.boid.targetDist/2)) * separationInfluence
+		obj.boid.angle = obj.boid.angle * turnDirection
+	end
+	
+	return obj
+end
+
+--[[GROUP:Alignment]]
+function boidGetNeighborAverageAngle(_obj, _neighbors)
+	-- Returns value equal to average angle of _obj and _neighbors
+	local angleTable = {}
+	
+	add(angleTable, _obj.angle%360)
+	
+	for index, neighbor in ipairs(_neighbors) do
+		add(angleTable, neighbor.angle%360)
+	end
+	
+	return tableAverage(angleTable)
+end
+
+function boidAlignment(_obj, _neighbors)
+	-- Update boid angle, pointing toward average angle of neighbors
+	local neighborAvgAngle = boidGetNeighborAverageAngle(_obj, _neighbors)
+	local alignmentInfluence = _obj.boid.alignmentStrength
+	
+	_obj.boid.angle += (neighborAvgAngle - _obj.boid.angle) * alignmentInfluence
+	
+	return _obj
+end
+
+--[[GROUP:Cohesion]]
+function boidGetNeighborAveragePosition(_obj, _neighbors)
+	-- Returns table with "x" and "y" values equal to average position of _obj and _neighbors
+	local avgXTable = {}
+	local avgYTable = {}
+	
+	add(avgXTable, _obj.x)
+	add(avgYTable, _obj.y)
+	
+	for index, neighbor in ipairs(_neighbors) do
+		add(avgXTable, neighbor.x)
+		add(avgYTable, neighbor.y)
+	end
+	
+	local avgX = tableAverage(avgXTable)
+	local avgY = tableAverage(avgYTable)
+	
+	return {
+		x = avgX,
+		y = avgY
+	}
+end
+
+function boidCohesion(_obj, _neighbors)
+	-- Update boid angle, pointing toward center mass of neighbors
+	local neighborAvgPosition = boidGetNeighborAveragePosition(_obj, _neighbors)
+	local targetAngle = getAngle2D(_obj, neighborAvgPosition)
+	local cohesionInfluence = _obj.boid.cohesionStrength
+	
+	_obj.boid.angle += (targetAngle - _obj.boid.angle) * cohesionInfluence
+	
+	return _obj
+end
+
+--[[GROUP:Targeting]]
+function boidTargeting(_obj)
+	-- Update boid angle, pointing toward _obj.boid.target
+	if not (_obj.boid.target == nil) then
+		local targetAngle = getAngle2D(_obj, _obj.boid.target)
+		local targetInfluence = clamp(_obj.boid.targetStrength)
+		_obj.boid.angle += (targetAngle - _obj.boid.angle) * targetInfluence
+	end
+	
+	return _obj
+end
+
+
+--[[GROUP:Main Loop]]
+function updateBoid(_obj, _allies)
+	-- Update boid's angle of influence
+	if _obj.boid == nil then
+		_obj = newBoid(_obj)
+	else
+		_obj.boid.angle = _obj.angle
+	end
+	
+	local neighbors = boidGetNeighbors(_obj, _allies, true)
+	
+	if #neighbors > 0 then
+		_obj = boidSeparation(_obj, neighbors)
+		--_obj = boidAlignment(_obj, neighbors)
+		--_obj = boidCohesion(_obj, neighbors)
+		--_obj = boidTargeting(_obj)
+	end
+	
+	_obj.angle += (_obj.boid.angle - _obj.angle)
+	
+	return _obj
+end
+:: main.lua
+--[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-09 01:15:49",revision=39,xstickers={}]]
+include("boid.lua")
+include("movement.lua")
+
+function _init()
+	boids = {}
+end
+
+function spawnBoid(_color)
+	local color = _color == nil and 7 or _color
+	
+	local newBoid = {
+		x = rnd(480),
+		y = rnd(270),
+		angle = rnd(360),
+		speed = 0,
+		acceleration = 1,
+		color = color,
+	}
+	
+	add(boids, newBoid)
+end
+
+function moveBoids()
+	for key, boid in ipairs(boids) do
+		boid = updateBoid(boid, boids)
+		boid = moveForward(boid)
+		boid = infiniteScreen(boid)
+	end
+end
+
+function drawBoids(_boidList)
+	local boidList = _boidList == nil and boids or _boidList
+	
+	for key, boid in ipairs(boidList) do
+		pset(boid.x, boid.y, boid.color)
+		circ(boid.x, boid.y, 2, boid.color)
+	end
+end
+
+function _update()
+	if #boids < flr(t()) then
+		spawnBoid()
+	end
+	
+	moveBoids()
+end
+
+function _draw()
+	cls(0)
+	drawBoids()
+end
+:: movement.lua
+--[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-08 23:58:22",revision=12,xstickers={}]]
+-- movement.lua
+function moveForward(_obj, _style)
+	_obj.speed = min(_obj.speed + _obj.speed / 50, _obj.speed)
+	
+	local wobbleVariance = 0
+	
+	if style == 1 then
+		wobbleVariance = sin(time()*_obj.acceleration)/12
+	end
+	
+	
+	_obj.collisionAngle = _obj.angle + wobbleVariance
+	_vx = cos(_obj.angle + wobbleVariance) * _obj.acceleration
+	_vy = sin(_obj.angle + wobbleVariance) * _obj.acceleration
+	
+	_obj.x += _vx
+	_obj.y += _vy
+	
+	return _obj
+end
+
+function infiniteScreen(_obj)
+	_obj.x = _obj.x%480
+	_obj.y = _obj.y%270
+	
+	return _obj
+end
+:: utilities.lua
+--[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-09 01:56:10",revision=27,xstickers={}]]
+function angleDiff(a1, a2)
+	local diff = (a2 - a1) % 360
+	
+	if diff > 180 then
+		diff = diff - 360
+	end
+	
+	return diff
+end
+
+function clamp(i, _minVal, _maxVal)
+	-- Return i clamped between _minVal and _maxVal. Clamps between 0 and 1 if _minVal and _maxVal aren't provided
+	local minVal = _minVal == nil and 0 or _minVal
+	local maxVal = _maxVal == nil and 1 or _maxVal
+	
+	return min(minVal, max(maxVal, i))
+end
+
+function euclidDist(x1, y1, x2, y2)
+	local dx = x2 - x1
+	local dy = y2 - y1
+	return sqrt(dx * dx + dy * dy)	
+end
+
+
+function getAngle2D(_obj, _target)
+	-- Return 360-degree angle from _obj to _target
+	local dx = _target.x - _obj.x
+	local dy = _target.y - _obj.y
+	local a = atan2(dy, dx)
+	return a * (180 / 3.14159)
+end
+
+function sortTableBy(_table, _dir, _key)
+	-- Sort table in "ascending" or "descending" corner, with optional _key to sort list of objects by
+	if _table == nil or #_table < 0 then
+		error("sortTableBy(): Table is nill or empty.")
+	end
+	
+	local dir = _dir == nil and "ascending" or _dir
+	local key = _key == nil and nil or _key
+	
+	local sortedTable = {}
+	
+	for i = #_table, 1, -1 do
+		if #sortedTable == 0 then
+			add(sortedTable, _table[i])
+			goto STBcontinue
+		end
+		
+		if not (_key == nil) then
+			for j = #sortedTable, 1, -1 do
+				local tableComparison =
+					dir == "ascending" and _table[i][_key] > sortedTable[j][_key] or
+					_table[i][_key] < sortedTable[j][_key]
+					
+				if tableComparison == true then
+					add(sortedTable, _table[i], j+1)
+					break
+				end
+			end
+		else
+			for j = #sortedTable, 1, -1 do
+				local tableComparison =
+					dir == "ascending" and _table[i] > sortedTable[j] or
+					_table[i] < sortedTable[j]
+					
+				if tableComparison == true then
+					add(sortedTable, _table[i], j+1)
+					break
+				end
+			end
+		end
+		
+		::STBcontinue::
+	end
+	
+	return sortedTable
+end
+
+function tableAverage(_table)
+	-- Returns average of all values in table
+	local average = 0
+	
+	for index, value in ipairs(_table) do
+		average += value
+	end
+	
+	return average / #_table
+end
+:: .info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11",runtime=26,workspaces={{location="main.lua#36,3",workspace_index=1},{location="boid.lua#89,50",workspace_index=1},{location="movement.lua#1,16",workspace_index=1},{location="gfx/0.gfx",workspace_index=2}}]]
+:: gfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+-----------------------------------------------------------XUG09OH19
+:: map/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: [eoc]
