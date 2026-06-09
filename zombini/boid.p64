@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-09 02:03:11",revision=171,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-09 02:04:43",revision=173,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
@@ -184,9 +184,9 @@ function updateBoid(_obj, _allies)
 	
 	if #neighbors > 0 then
 		_obj = boidSeparation(_obj, neighbors)
-		--_obj = boidAlignment(_obj, neighbors)
-		--_obj = boidCohesion(_obj, neighbors)
-		--_obj = boidTargeting(_obj)
+		_obj = boidAlignment(_obj, neighbors)
+		_obj = boidCohesion(_obj, neighbors)
+		_obj = boidTargeting(_obj)
 	end
 	
 	_obj.angle += (_obj.boid.angle - _obj.angle)
@@ -368,23 +368,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11",runtime=26,workspaces={{location="main.lua#36,3",workspace_index=1},{location="boid.lua#89,50",workspace_index=1},{location="movement.lua#1,16",workspace_index=1},{location="gfx/0.gfx",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43",runtime=26,workspaces={{location="main.lua#36,3",workspace_index=1},{location="boid.lua#181,3",workspace_index=1},{location="movement.lua#1,16",workspace_index=1},{location="gfx/0.gfx",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:03:11"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
