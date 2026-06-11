@@ -5,11 +5,33 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-09 02:04:43",revision=173,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-11 00:56:10",revision=615,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
 --[[GROUP:Initialization]]
+function initBoid()
+	local boidControls = {
+		separation = 0,
+		alignment = 1,
+		cohesion = 0,
+		orderedList = {
+			"separation",
+			"alignment",
+			"cohesion"
+		},
+		selected = 1,
+		keypAction = {
+			up = function() boidControls.selected = (boidControls.selected - 2) % 3 + 1 end,
+			down = function() boidControls.selected = (boidControls.selected) % 3 + 1 end,
+			left = function() boidControls[boidControls.orderedList[boidControls.selected]] = max(boidControls[boidControls.orderedList[boidControls.selected]] - 0.01, 0) end,
+			right = function() boidControls[boidControls.orderedList[boidControls.selected]] = min(boidControls[boidControls.orderedList[boidControls.selected]] + 0.01, 1) end
+		}
+	}
+	
+	return boidControls
+end
+
 function newBoid(_obj)
 	-- Add a table to the provided object containing 3 boid parameters.
 	if _obj.angle == nil then
@@ -17,15 +39,60 @@ function newBoid(_obj)
 	end
 	_obj.boid = {
 		angle = _obj.angle,
-		separationStrength = 0.0004,
-		alignmentStrength = 0.0001,
-		cohesionStrength = 0.0001,
-		targetStrength = 0.0001,
-		targetDist = 50,
+		separationStrength = boidControls.separation,
+		alignmentStrength = boidControls.alignment,
+		cohesionStrength = boidControls.cohesion,
+		targetStrength = 0,
+		targetDist = 100,
+		personalDist = 30,
+		personalNeighbors = {},
+		longNeighbors = {},
 		target = nil,
 	}
 	
 	return _obj
+end
+
+function updateBoids(_boids)
+	for key, obj in ipairs(_boids) do
+		if obj.boid ~= nil then
+			obj.boid.separationStrength = boidControls.separation
+			obj.boid.alignmentStrength = boidControls.alignment
+			obj.boid.cohesionStrength = boidControls.cohesion
+		end
+	end
+end
+
+
+
+--[[GROUP:Controls]]
+function navigateBoidControls()
+	local boidControlsChanged = false
+	
+	for key, func in pairs(boidControls.keypAction) do
+		if keyp(key) then
+			boidControls.keypAction[key]()
+			boidControlsChanged = true
+		end
+	end
+	
+	if boidControlsChanged == true then
+		updateBoids(boids)
+	end
+end
+
+function drawBoidControls()
+	if not (boidControls.separation == nil) then
+		rrect(2, 2, 88, 31, 2, 31)
+		rrectfill(2, 2, 87, 30, 1, 7)
+		print("Separation: " .. boidControls.separation, 4, 4, 24)
+		print("Separation: " .. boidControls.separation, 4, 3, 0)
+		print("Alignment: " .. boidControls.alignment, 9, 12, 24)
+		print("Alignment: " .. boidControls.alignment, 9, 13, 0)
+		print("Cohesion: " .. boidControls.cohesion, 14, 22, 24)
+		print("Cohesion: " .. boidControls.cohesion, 14, 23, 0)
+		circfill(95, 6 + ((boidControls.selected - 1) * 10), 2, 8)
+	end
 end
 
 
@@ -45,18 +112,18 @@ function boidGetNeighbors(_obj, _targets, _sorted, _dist)
 	local listShouldBeSorted = _sorted == nil and false or _sorted
 	
 	local neighbors = {}
+	local foundSelf = false
 	
-	for index, value in ipairs(_targets) do
-		local target = value
-		if euclidDist(_obj.x, _obj.y, target.x, target.y) == 0 then
+	for index, target in ipairs(_targets) do
+		local targetDist = euclidDist(_obj.x, _obj.y, target.x, target.y)
+		if targetDist == 0 and foundSelf == false then
+			foundSelf = true
 			goto BGNcontinue
 		end
 		
-		local distFromObjToTarget = euclidDist(_obj.x, _obj.y, target.x, target.y)
-		
-		if distFromObjToTarget < maxDistFromObjToNeighbors then
+		if targetDist < maxDistFromObjToNeighbors then
 			if listShouldBeSorted == true then
-				target.dist = distFromObjToTarget
+				target.dist = targetDist
 			end
 			
 			add(neighbors, target)
@@ -65,7 +132,7 @@ function boidGetNeighbors(_obj, _targets, _sorted, _dist)
 		::BGNcontinue::
 	end
 	
-	if listShouldBeSorted == true then
+	if listShouldBeSorted == true and #neighbors > 0 then
 		neighbors = sortTableBy(neighbors, "ascending", "dist")
 	end 
 	
@@ -75,30 +142,48 @@ end
 function boidSeparation(_obj, _neighbors)
 	-- Update boid angle, turning away from neighbors that are too close
 	local obj = _obj
-	local objAngle = (obj.boid.angle + 180) % 360
-	local neighbors = _neighbors
-	local closeNeighbor = neighbors[1]
+	local separationDiff = 0
+	local personalNeighbors = {}
 	
-	if closeNeighbor == nil then
-		return obj
-	end
-	
-	local neighborDist = euclidDist(obj.x, obj.y, closeNeighbor.x, closeNeighbor.y)
-	
-	if neighborDist < obj.boid.targetDist/2 then
-		obj.color = (obj.color + 1) % 31 + 1
-		local targetAngle = getAngle2D(obj, closeNeighbor)
-		local separationInfluence = obj.boid.separationStrength
+	if #_neighbors > 0 then
+		local objAngle = (obj.boid.angle) % 360
+		local neighbors = _neighbors
+		local intersectRange = max(1, obj.boid.personalDist)
 		
-		local awayAngle = (targetAngle + 180) % 360
-		local diff = angleDiff(objAngle, awayAngle)
-		local turnDirection = diff > 0 and 1 or -1
-		obj.boid.angle += diff * ((obj.boid.targetDist/2 - neighborDist) / (obj.boid.targetDist/2)) * separationInfluence
-		obj.boid.angle = obj.boid.angle * turnDirection
+		local neighborAngles = {}
+	
+		for key, neighbor in ipairs(neighbors) do
+			
+			local neighborDist = euclidDist(obj.x, obj.y, neighbor.x, neighbor.y)
+			
+			if neighborDist < intersectRange then
+				
+				add(personalNeighbors, neighbor)
+				--obj.color = (obj.color + 1) % 31 + 1
+				local targetAngle = getAngle2D(neighbor, obj)
+				local distanceInfluence = (intersectRange - neighborDist) / (intersectRange)
+				add(neighborAngles, {angle = targetAngle, influence = distanceInfluence * distanceInfluence})
+			end
+		end
+		
+		local diff = 0
+		
+		for key, target in ipairs(neighborAngles) do
+			target.angle = angleDiff(objAngle, target.angle)
+			diff += target.angle * target.influence
+		end
+		
+		if diff ~= 0 then
+			diff = diff / #neighborAngles
+			local separationInfluence = obj.boid.separationStrength
+			separationDiff = diff * separationInfluence * 0.001
+		end
 	end
 	
-	return obj
+	return {separationDiff, personalNeighbors}
 end
+
+
 
 --[[GROUP:Alignment]]
 function boidGetNeighborAverageAngle(_obj, _neighbors)
@@ -111,18 +196,35 @@ function boidGetNeighborAverageAngle(_obj, _neighbors)
 		add(angleTable, neighbor.angle%360)
 	end
 	
-	return tableAverage(angleTable)
+	local sx, sy = 0, 0
+	
+	for _, a in ipairs(angleTable) do
+		sx += cos(a/360)
+		sy += sin(a/360)
+	end
+	
+	if sx == 0 and sy == 0 then
+		return _obj.angle
+	end
+	
+	return atan2(sx, sy) * 360
 end
 
 function boidAlignment(_obj, _neighbors)
 	-- Update boid angle, pointing toward average angle of neighbors
-	local neighborAvgAngle = boidGetNeighborAverageAngle(_obj, _neighbors)
-	local alignmentInfluence = _obj.boid.alignmentStrength
+	local alignmentDiff = 0
+	local neighborAvgAngle = nil
 	
-	_obj.boid.angle += (neighborAvgAngle - _obj.boid.angle) * alignmentInfluence
-	
-	return _obj
+	if #_neighbors > 0 then
+		neighborAvgAngle = boidGetNeighborAverageAngle(_obj, _neighbors)
+		local alignmentInfluence = _obj.boid.alignmentStrength
+		
+		alignmentDiff = angleDiff(_obj.angle, neighborAvgAngle) * alignmentInfluence * 0.001
+	end
+	return alignmentDiff, neighborAvgAngle
 end
+
+
 
 --[[GROUP:Cohesion]]
 function boidGetNeighborAveragePosition(_obj, _neighbors)
@@ -149,26 +251,68 @@ end
 
 function boidCohesion(_obj, _neighbors)
 	-- Update boid angle, pointing toward center mass of neighbors
-	local neighborAvgPosition = boidGetNeighborAveragePosition(_obj, _neighbors)
-	local targetAngle = getAngle2D(_obj, neighborAvgPosition)
-	local cohesionInfluence = _obj.boid.cohesionStrength
+	local cohesionDiff = 0
+	local neighborAvgPos = nil
 	
-	_obj.boid.angle += (targetAngle - _obj.boid.angle) * cohesionInfluence
+	if #_neighbors > 0 then
+		neighborAvgPos = boidGetNeighborAveragePosition(_obj, _neighbors)
+		local targetAngle = getAngle2D(_obj, neighborAvgPos)
+		local cohesionInfluence = _obj.boid.cohesionStrength
+		
+		cohesionDiff = angleDiff(_obj.angle, targetAngle) * cohesionInfluence * 0.0005
+	end
 	
-	return _obj
+	return cohesionDiff, neighborAvgPos
 end
+
+
 
 --[[GROUP:Targeting]]
 function boidTargeting(_obj)
 	-- Update boid angle, pointing toward _obj.boid.target
+	local targetingDiff = 0
+	
 	if not (_obj.boid.target == nil) then
 		local targetAngle = getAngle2D(_obj, _obj.boid.target)
 		local targetInfluence = clamp(_obj.boid.targetStrength)
-		_obj.boid.angle += (targetAngle - _obj.boid.angle) * targetInfluence
+		targetingDiff = angleDiff(_obj.angle, targetAngle) * targetInfluence * 0.0001
 	end
 	
-	return _obj
+	return targetingDiff
 end
+
+
+
+--[[GROUP:Extras]]
+function initTrail()
+	trailBuffer = userdata("u8", 480, 270)
+	set_draw_target(trailBuffer)
+	cls(7)
+	for i = 1, 2000 do
+		for j = 0, 2 do
+			pset(rnd(480), rnd(270), 15 + j * 8)
+		end
+	end
+	set_draw_target()
+end
+
+function updateTrail(group)
+	if #group > 0 then
+		set_draw_target(trailBuffer)
+		
+		for key, obj in ipairs(group) do
+			--circfill(obj.x, obj.y, 1, obj.color)
+			pset(obj.x, obj.y, obj.color)
+		end
+	end
+	
+	set_draw_target()
+end
+
+function drawTrail()
+	blit(trailBuffer, get_draw_target(), 0, 0, 0, 0, 480, 270)
+end
+
 
 
 --[[GROUP:Main Loop]]
@@ -181,29 +325,67 @@ function updateBoid(_obj, _allies)
 	end
 	
 	local neighbors = boidGetNeighbors(_obj, _allies, true)
+	_obj.boid.longNeighbors = neighbors
 	
 	if #neighbors > 0 then
-		_obj = boidSeparation(_obj, neighbors)
-		_obj = boidAlignment(_obj, neighbors)
-		_obj = boidCohesion(_obj, neighbors)
-		_obj = boidTargeting(_obj)
+		local diffs = {}
+		
+		local result = boidSeparation(_obj, neighbors)
+		local separationDiff = result[1]
+		_obj.boid.personalNeighbors = result[2]
+		if separationDiff ~= 0 then
+			add(diffs, separationDiff)
+		end
+		
+		local alignmentDiff, neighborAvgAngle = boidAlignment(_obj, neighbors)
+		_obj.boid.neighborAvgAngle = neighborAvgAngle
+		if alignmentDiff ~= 0 then
+			add(diffs, alignmentDiff)
+		end
+		
+		local cohesionDiff, neighborAvgPos = boidCohesion(_obj, neighbors)
+		_obj.boid.neighborAvgPos = neighborAvgPos
+		if cohesionDiff ~= 0 then
+			add(diffs, cohesionDiff)
+		end
+		
+		local targetingDiff = boidTargeting(_obj)
+		if targetingDiff ~= 0 then
+			add(diffs, targetingDiff)
+		end
+		
+		local totalDiff = 0
+		
+		for key, value in ipairs(diffs) do
+			totalDiff += value
+		end
+		
+		_obj.boid.angle = totalDiff
+		_obj.angle += totalDiff * 0.3
+	else
+		_obj.boid.angle = _obj.angle
 	end
-	
-	_obj.angle += (_obj.boid.angle - _obj.angle)
 	
 	return _obj
 end
 :: main.lua
---[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-09 01:15:49",revision=39,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-11 00:49:48",revision=194,xstickers={}]]
 include("boid.lua")
 include("movement.lua")
 
 function _init()
+	boidControls = initBoid()
 	boids = {}
+	
+	for i = 1, 31 do
+		spawnBoid()
+	end
+	
+	initTrail()
 end
 
 function spawnBoid(_color)
-	local color = _color == nil and 7 or _color
+	local color = _color == nil and flr(rnd(31))+1 or _color
 	
 	local newBoid = {
 		x = rnd(480),
@@ -213,6 +395,10 @@ function spawnBoid(_color)
 		acceleration = 1,
 		color = color,
 	}
+	
+	while newBoid.color == 7 do
+		newBoid.color = flr(rnd(31)) + 1
+	end
 	
 	add(boids, newBoid)
 end
@@ -225,33 +411,91 @@ function moveBoids()
 	end
 end
 
+function drawNeighborConnections(_obj, _full)
+	
+	for key, neighbor in ipairs(_obj.boid.longNeighbors) do
+		line(_obj.x, _obj.y, neighbor.x, neighbor.y, 6)
+	end
+	
+	if _full == 1 then
+		if _obj.boid.separationStrength > 0 then
+			for key, neighbor in ipairs(_obj.boid.personalNeighbors) do
+				line(_obj.x, _obj.y, neighbor.x, neighbor.y, 0)
+			end
+		end
+		
+		if _obj.boid.cohesionStrength > 0 then
+			if _obj.boid.neighborAvgPos ~= nil then
+				local nPos = _obj.boid.neighborAvgPos
+				circ(nPos.x, nPos.y, 4, _obj.color)
+				pset(nPos.x, nPos.y, _obj.color)
+			end									
+		end
+		
+		if _obj.boid.alignmentStrength > 0 then
+			if _obj.boid.neighborAvgAngle ~= nil then
+				local nAng = _obj.boid.neighborAvgAngle
+				local nX = _obj.x + cos(nAng) * 10
+				local nY = _obj.y + sin(nAng) * 10
+				line(_obj.x, _obj.y, nX, nY, _obj.color)
+			end
+		end
+		
+		local nAng = _obj.boid.angle
+		local nX = _obj.x + cos(nAng) * 20
+		local nY = _obj.y + sin(nAng) * 20
+		line(_obj.x, _obj.y, nX, nY, 6)
+	end
+end
+
 function drawBoids(_boidList)
 	local boidList = _boidList == nil and boids or _boidList
 	
 	for key, boid in ipairs(boidList) do
-		pset(boid.x, boid.y, boid.color)
-		circ(boid.x, boid.y, 2, boid.color)
+		if key == 1 then
+			circ(boid.x, boid.y, boid.boid.targetDist, boid.color)
+			circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
+		end
+		--pset(boid.x, boid.y, boid.color)
+		circfill(boid.x, boid.y, 3, boid.color)
 	end
 end
 
 function _update()
-	if #boids < flr(t()) then
-		spawnBoid()
+	if (#boids < flr(t())) and (stat(1) < 0.9) then
+		--spawnBoid()
 	end
 	
-	moveBoids()
+	navigateBoidControls()
+	for i = 1, 1 do
+		moveBoids()
+	end
+	
+	for i = 1, 1 do
+		updateTrail(boids)
+	end
 end
 
 function _draw()
-	cls(0)
+	cls(7)
+	--drawTrail()
+	for key, boid in ipairs(boids) do
+		local full = (key == 1) and 1 or 0
+		drawNeighborConnections(boid, full)
+	end
 	drawBoids()
+	drawBoidControls()
+	print(stat(1), 461, 3, 0)
+	print(boids[1].testVar, boids[1].x, boids[1].y + 6, 0)
 end
 :: movement.lua
---[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-08 23:58:22",revision=12,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-11 00:47:56",revision=44,xstickers={}]]
 -- movement.lua
 function moveForward(_obj, _style)
-	_obj.speed = min(_obj.speed + _obj.speed / 50, _obj.speed)
-	
+	_obj.speed = min(_obj.speed + _obj.acceleration / 50, _obj.acceleration)
+	local turnSpeedReduction = 1 - min(0.06, abs(_obj.boid.angle)) / 0.09
+	--_obj.speed = _obj.speed * turnSpeedReduction
+	_obj.testVar = turnSpeedReduction
 	local wobbleVariance = 0
 	
 	if style == 1 then
@@ -260,8 +504,8 @@ function moveForward(_obj, _style)
 	
 	
 	_obj.collisionAngle = _obj.angle + wobbleVariance
-	_vx = cos(_obj.angle + wobbleVariance) * _obj.acceleration
-	_vy = sin(_obj.angle + wobbleVariance) * _obj.acceleration
+	_vx = cos(_obj.angle + wobbleVariance) * _obj.speed * turnSpeedReduction
+	_vy = sin(_obj.angle + wobbleVariance) * _obj.speed * turnSpeedReduction
 	
 	_obj.x += _vx
 	_obj.y += _vy
@@ -275,13 +519,159 @@ function infiniteScreen(_obj)
 	
 	return _obj
 end
+:: quadtree.lua
+--[[pod_format="raw",created="2026-06-09 23:25:56",modified="2026-06-10 01:02:40",revision=63,xstickers={}]]
+points = {}
+
+function newPoint(_x, _y)
+	-- Return a 2d vector where x = _x, y = _y
+	local x = _x == nil and rnd(480) or _x
+	local y = _y == nil and rnd(270) or _y
+	
+	-- Class "point"
+	local point = {
+		-- Variables
+		x = x,
+		y = y,
+		-- Functions
+		add = function(this, diff)
+				return newPoint(this.x + diff.x, this.y + diff.y)
+			end,
+		div = function(this, d)
+			return newPoint(this.x / d, this.y / d)
+			end,
+		mult = function(this, d)
+			return newPoint(this.x * d, this.y * d)
+			end,
+		diff = function(this, other)
+				return newPoint(abs(other.x - this.x), abs(other.y - this.y))
+			end,
+		new = function()
+			local point = newPoint() add(points, point) 
+			end,
+		midpoint = function(this, other)
+			return this.func.add(this.diff(other).div(2))
+			end,
+		distance = function(this, p)
+			local dx = p.x - this.y
+			local dy = p.y - this.y
+			return sqrt(dx * dx + dy * dy)
+			end
+	}
+	
+	return point
+end
+
+function newRect(_p1, _p2)
+	-- Return a rectangle where "p1" and "p2" are points representing opposite corners of the rect
+	local p1 = _p1 == nil and newPoint(0, 0) or _p1
+	local p2 = _p2 == nil and newPoint(480, 270) or _p2
+	-- Class "rect"
+	local rect = {
+		-- Variables
+		p1 = p1,
+		p2 = p2,
+		-- Functions
+		contains = function(this, p)
+			return this.p1.x <= p.x and this.p2.x >= p.x and
+				this.p1.y <= p.y and this.p2.y >= p.y
+			end,
+		size = function(this)
+			return this.p2.diff(this.p1)
+			end,
+		move = function(this, v)
+			return newRect(this.p1.add(v), this.p2.add(v))
+			end,
+		intersects = function(this, r2)
+			return this.p2.x >= r2.p1.x and this.p1.x <= r2.p2.x and
+				this.p2.y >= r2.p1.y and this.p1.y <= r2.p2.y
+			end,
+		distanceToPoint = function(this, point)
+			local px = point.x
+			local py = point.y
+			
+			local closestX = max(this.p1.x, min(px, this.p2.x))
+			local closestY = max(this.p1.y, min(py, this.p2.y))
+			
+			local dx = px - closestX
+			local dy = py - closestY
+			
+			return sqrt(dx * dx + dy * dy)
+			end
+	}
+	
+	return rect
+end
+
+function newQuadtree(_area, _threshold)
+	-- Return a quadtree where _area = table from newRect() and _threshold = number (4 by default)
+	local area = _area == nil and newRect() or _area
+	local threshold = _threshold == nil and 4 or _threshold
+	
+	-- Class "quadtree"
+	local quadtree = {
+		-- Variables
+		zones = {
+			find = function(this, point)
+				for key, zone in ipairs(this.zones) do
+					if zone.contains(zone, point) then
+						return key
+						end
+					end
+				return nil
+				end
+		},
+		elements = {
+			push = function(this, element)
+				add(this.elements, element)
+				end
+		},
+		-- Functions
+		insert = function(this, element)
+			if (#this.zones > 0) then
+				local intersecting = this.zones.find(this, element)
+				if intersecting ~= nil then
+					this.zones.intersecting.insert(element)
+					end
+				return
+				end
+			
+			this.elements.push(element)
+			if (#this.elements >= this.threshold and this.area.size.x > 1 and this.area.size.y > 1) then
+				local halfSize = this.area.size.div(2)
+				local rect = newRect(this.area.p1, this.aprea.p1.add(halfSize))
+				this.zones = {
+					newQuadtree(rect, this.threshold), -- NW
+					newQuadtree(rect.move(new Point(halfSize.x, 0)), this.threshold), -- NE
+					newQuadtree(rect.move(new Point(0, halfSize.y)), this.threshold), -- SW
+					newQuadtree(rect.move(halfSize), this.threshold) -- SE
+					}
+				for key, element in ipairs(this.elements) do
+					this.insert(element)
+					end
+				end
+				
+				this.elements = {
+					push = function(this, element)
+						add(this.elements, element)
+						end
+					}
+			end
+	}
+	
+	return quadtree
+end
+
+drawQuadtree(_quad)
+	
+end
 :: utilities.lua
---[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-09 01:56:10",revision=27,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-11 00:57:55",revision=52,xstickers={}]]
 function angleDiff(a1, a2)
 	local diff = (a2 - a1) % 360
 	
 	if diff > 180 then
-		diff = diff - 360
+		diff -= 360
 	end
 	
 	return diff
@@ -292,7 +682,7 @@ function clamp(i, _minVal, _maxVal)
 	local minVal = _minVal == nil and 0 or _minVal
 	local maxVal = _maxVal == nil and 1 or _maxVal
 	
-	return min(minVal, max(maxVal, i))
+	return min(maxVal, max(minVal, i))
 end
 
 function euclidDist(x1, y1, x2, y2)
@@ -301,19 +691,22 @@ function euclidDist(x1, y1, x2, y2)
 	return sqrt(dx * dx + dy * dy)	
 end
 
+function drawPointer(_obj)
+	
+end
 
 function getAngle2D(_obj, _target)
 	-- Return 360-degree angle from _obj to _target
 	local dx = _target.x - _obj.x
 	local dy = _target.y - _obj.y
-	local a = atan2(dy, dx)
-	return a * (180 / 3.14159)
+	local a = atan2(dx, dy)
+	return a * 360
 end
 
 function sortTableBy(_table, _dir, _key)
 	-- Sort table in "ascending" or "descending" corner, with optional _key to sort list of objects by
-	if _table == nil or #_table < 0 then
-		error("sortTableBy(): Table is nill or empty.")
+	if _table == nil or #_table == 0 then
+		error("sortTableBy(): Table is nil or empty.")
 	end
 	
 	local dir = _dir == nil and "ascending" or _dir
@@ -328,26 +721,42 @@ function sortTableBy(_table, _dir, _key)
 		end
 		
 		if not (_key == nil) then
+			local inserted = false
 			for j = #sortedTable, 1, -1 do
-				local tableComparison =
-					dir == "ascending" and _table[i][_key] > sortedTable[j][_key] or
-					_table[i][_key] < sortedTable[j][_key]
-					
+				local tableComparison = false
+				if dir == "ascending" then
+					tableComparison = _table[i][_key] > sortedTable[j][_key]
+				else
+					tableComparison = _table[i][_key] < sortedTable[j][_key]
+				end
+				
 				if tableComparison == true then
 					add(sortedTable, _table[i], j+1)
+					inserted = true
 					break
 				end
 			end
+			if inserted == false then
+				add(sortedTable, _table[i], 1)
+			end
 		else
+			local inserted = false
 			for j = #sortedTable, 1, -1 do
-				local tableComparison =
-					dir == "ascending" and _table[i] > sortedTable[j] or
-					_table[i] < sortedTable[j]
-					
+				local tableComparison = false
+				if dir == "ascending" then
+					tableComparison = _table[i] > sortedTable[j]
+				else
+					tableComparison = _table[i] < sortedTable[j]
+				end
+				
 				if tableComparison == true then
 					add(sortedTable, _table[i], j+1)
+					inserted = true
 					break
 				end
+			end
+			if inserted == false then
+				add(sortedTable, _table[i], 1)
 			end
 		end
 		
@@ -359,6 +768,10 @@ end
 
 function tableAverage(_table)
 	-- Returns average of all values in table
+	if _table == nil or #_table == 0 then
+		error("tableAverage(): _table is nil or empty.")
+	end
+	
 	local average = 0
 	
 	for index, value in ipairs(_table) do
@@ -368,23 +781,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43",runtime=26,workspaces={{location="main.lua#36,3",workspace_index=1},{location="boid.lua#181,3",workspace_index=1},{location="movement.lua#1,16",workspace_index=1},{location="gfx/0.gfx",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55",runtime=26,workspaces={{location="main.lua#116,2",workspace_index=1},{location="boid.lua#7,17",workspace_index=1},{location="movement.lua#4,71",workspace_index=1},{location="utilities.lua#26,2",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
 :: gfx/0.gfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
-MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-09 02:04:43"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
