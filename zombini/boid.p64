@@ -5,16 +5,16 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-11 00:56:10",revision=615,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-12 01:02:26",revision=710,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
 --[[GROUP:Initialization]]
 function initBoid()
 	local boidControls = {
-		separation = 0,
-		alignment = 1,
-		cohesion = 0,
+		separation = 0.45,
+		alignment = 0.15,
+		cohesion = 0.1,
 		orderedList = {
 			"separation",
 			"alignment",
@@ -39,12 +39,13 @@ function newBoid(_obj)
 	end
 	_obj.boid = {
 		angle = _obj.angle,
+		diff = 0,
 		separationStrength = boidControls.separation,
 		alignmentStrength = boidControls.alignment,
 		cohesionStrength = boidControls.cohesion,
-		targetStrength = 0,
+		targetStrength = 0.3,
 		targetDist = 100,
-		personalDist = 30,
+		personalDist = 50,
 		personalNeighbors = {},
 		longNeighbors = {},
 		target = nil,
@@ -146,11 +147,10 @@ function boidSeparation(_obj, _neighbors)
 	local personalNeighbors = {}
 	
 	if #_neighbors > 0 then
-		local objAngle = (obj.boid.angle) % 360
 		local neighbors = _neighbors
 		local intersectRange = max(1, obj.boid.personalDist)
 		
-		local neighborAngles = {}
+		local neighborInfluence = {x = 0, y = 0}
 	
 		for key, neighbor in ipairs(neighbors) do
 			
@@ -161,26 +161,32 @@ function boidSeparation(_obj, _neighbors)
 				add(personalNeighbors, neighbor)
 				--obj.color = (obj.color + 1) % 31 + 1
 				local targetAngle = getAngle2D(neighbor, obj)
-				local distanceInfluence = (intersectRange - neighborDist) / (intersectRange)
-				add(neighborAngles, {angle = targetAngle, influence = distanceInfluence * distanceInfluence})
+				local influenceFactor = (intersectRange - neighborDist) / intersectRange
+				local vx, vy = cos(targetAngle / 360) * influenceFactor, sin(targetAngle / 360) * influenceFactor
+				neighborInfluence.x += vx
+				neighborInfluence.y += vy
 			end
 		end
 		
 		local diff = 0
 		
-		for key, target in ipairs(neighborAngles) do
-			target.angle = angleDiff(objAngle, target.angle)
-			diff += target.angle * target.influence
+		if neighborInfluence.x ~= 0 and neighborInfluence.y ~= 0 then
+			local objAngle = (obj.boid.angle % 360) / 360
+			
+			local desiredAngle = atan2(neighborInfluence.x, neighborInfluence.y) * 360
+			local diff = angleDiff(objAngle * 360, desiredAngle)
+			obj.boid.diff = diff
+			
+			if diff ~= 0 then
+				local separationInfluence = obj.boid.separationStrength
+				separationDiff = diff * separationInfluence * 0.02
+			end
 		end
+	else
 		
-		if diff ~= 0 then
-			diff = diff / #neighborAngles
-			local separationInfluence = obj.boid.separationStrength
-			separationDiff = diff * separationInfluence * 0.001
-		end
 	end
 	
-	return {separationDiff, personalNeighbors}
+	return separationDiff, personalNeighbors
 end
 
 
@@ -189,8 +195,6 @@ end
 function boidGetNeighborAverageAngle(_obj, _neighbors)
 	-- Returns value equal to average angle of _obj and _neighbors
 	local angleTable = {}
-	
-	add(angleTable, _obj.angle%360)
 	
 	for index, neighbor in ipairs(_neighbors) do
 		add(angleTable, neighbor.angle%360)
@@ -219,7 +223,7 @@ function boidAlignment(_obj, _neighbors)
 		neighborAvgAngle = boidGetNeighborAverageAngle(_obj, _neighbors)
 		local alignmentInfluence = _obj.boid.alignmentStrength
 		
-		alignmentDiff = angleDiff(_obj.angle, neighborAvgAngle) * alignmentInfluence * 0.001
+		alignmentDiff = angleDiff(_obj.angle, neighborAvgAngle) * alignmentInfluence * 0.05
 	end
 	return alignmentDiff, neighborAvgAngle
 end
@@ -259,7 +263,7 @@ function boidCohesion(_obj, _neighbors)
 		local targetAngle = getAngle2D(_obj, neighborAvgPos)
 		local cohesionInfluence = _obj.boid.cohesionStrength
 		
-		cohesionDiff = angleDiff(_obj.angle, targetAngle) * cohesionInfluence * 0.0005
+		cohesionDiff = angleDiff(_obj.angle, targetAngle) * cohesionInfluence * 0.05
 	end
 	
 	return cohesionDiff, neighborAvgPos
@@ -275,7 +279,7 @@ function boidTargeting(_obj)
 	if not (_obj.boid.target == nil) then
 		local targetAngle = getAngle2D(_obj, _obj.boid.target)
 		local targetInfluence = clamp(_obj.boid.targetStrength)
-		targetingDiff = angleDiff(_obj.angle, targetAngle) * targetInfluence * 0.0001
+		targetingDiff = angleDiff(_obj.angle, targetAngle) * targetInfluence * 0.05
 	end
 	
 	return targetingDiff
@@ -284,6 +288,34 @@ end
 
 
 --[[GROUP:Extras]]
+function containBoid(_obj)
+	local x = _obj.x
+	local y = _obj.y
+	
+	local influenceDist = 50
+	
+	local angleX, angleY = 0, 0
+	local influenceX, influenceY = 0, 0
+	
+	if x < 240 then
+		angleX = 270
+		influenceX = min(influenceDist, max(0, influenceDist - x)) / influenceDist
+	else
+		angleX = 90
+		influenceX = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist
+	end
+	
+	if y < 135 then
+		angleY = 0
+		influenceY = min(influenceDist, max(0, influenceDist - y)) / influenceDist
+	else
+		angleY = 180
+		influenceY = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist
+	end
+	--[[BOOKMARK: This whole function is WIP, but especially this part]]
+	return angleX, influenceX, angleY, influenceY
+end
+
 function initTrail()
 	trailBuffer = userdata("u8", 480, 270)
 	set_draw_target(trailBuffer)
@@ -330,9 +362,8 @@ function updateBoid(_obj, _allies)
 	if #neighbors > 0 then
 		local diffs = {}
 		
-		local result = boidSeparation(_obj, neighbors)
-		local separationDiff = result[1]
-		_obj.boid.personalNeighbors = result[2]
+		local separationDiff, personalNeighborList = boidSeparation(_obj, neighbors)
+		_obj.boid.personalNeighbors = personalNeighborList
 		if separationDiff ~= 0 then
 			add(diffs, separationDiff)
 		end
@@ -354,14 +385,27 @@ function updateBoid(_obj, _allies)
 			add(diffs, targetingDiff)
 		end
 		
-		local totalDiff = 0
+		local containX, influenceX, containY, influenceY = containBoid(_obj)
+		if containX ~= 0 then
 		
-		for key, value in ipairs(diffs) do
-			totalDiff += value
+		end
+		if containY ~= 0 then
+		
 		end
 		
-		_obj.boid.angle = totalDiff
-		_obj.angle += totalDiff * 0.3
+		local totalDiff = 0
+		
+		if #diffs > 0 then
+			
+			for key, value in ipairs(diffs) do
+				totalDiff += value
+			end
+			
+			_obj.boid.angle = angleDiff(_obj.angle, _obj.angle + totalDiff) % 360
+			_obj.angle = (_obj.angle + totalDiff) % 360
+		else
+			_obj.boid.angle = _obj.angle
+		end
 	else
 		_obj.boid.angle = _obj.angle
 	end
@@ -369,7 +413,7 @@ function updateBoid(_obj, _allies)
 	return _obj
 end
 :: main.lua
---[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-11 00:49:48",revision=194,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-12 00:18:29",revision=231,xstickers={}]]
 include("boid.lua")
 include("movement.lua")
 
@@ -451,14 +495,32 @@ end
 function drawBoids(_boidList)
 	local boidList = _boidList == nil and boids or _boidList
 	
-	for key, boid in ipairs(boidList) do
-		if key == 1 then
-			circ(boid.x, boid.y, boid.boid.targetDist, boid.color)
-			circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
-		end
+	for key = #boidList, 1, -1 do
+		local boid = boidList[key]
+		--if key == 1 then
+			--circ(boid.x, boid.y, boid.boid.targetDist, boid.color)
+			--circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
+		--end
 		--pset(boid.x, boid.y, boid.color)
-		circfill(boid.x, boid.y, 3, boid.color)
+		drawPointer(boid)
+		circfill(boid.x, boid.y, 2, boid.color)
 	end
+end
+
+function attractBoids(_boidList)
+	local boids = _boidList
+	local mx, my, mb = mouse()
+	if mb == 0x1 and boids[1].boid.target == nil then
+		for key, obj in ipairs(boids) do
+			obj.boid.target = {x = mx, y = my}
+		end
+	elseif mb == 0 and boids[1].boid.target ~= nil then
+		for key, obj in ipairs(boids) do
+			obj.boid.target = nil
+		end
+	end
+	
+	return boids
 end
 
 function _update()
@@ -474,28 +536,32 @@ function _update()
 	for i = 1, 1 do
 		updateTrail(boids)
 	end
+	
+	if #boids > 0 then
+		boids = attractBoids(boids)
+	end
 end
 
 function _draw()
 	cls(7)
-	--drawTrail()
-	for key, boid in ipairs(boids) do
-		local full = (key == 1) and 1 or 0
-		drawNeighborConnections(boid, full)
+	drawTrail()
+	for key = #boids, 1, -1 do
+		local boid = boids[key]
+		--local full = (key == 1) and 1 or 0
+		local full = 0
+		--drawNeighborConnections(boid, full)
 	end
 	drawBoids()
 	drawBoidControls()
 	print(stat(1), 461, 3, 0)
-	print(boids[1].testVar, boids[1].x, boids[1].y + 6, 0)
+	--print(boids[1].testVar, boids[1].x, boids[1].y + 6, 0)
 end
 :: movement.lua
---[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-11 00:47:56",revision=44,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-12 00:18:26",revision=92,xstickers={}]]
 -- movement.lua
 function moveForward(_obj, _style)
-	_obj.speed = min(_obj.speed + _obj.acceleration / 50, _obj.acceleration)
-	local turnSpeedReduction = 1 - min(0.06, abs(_obj.boid.angle)) / 0.09
-	--_obj.speed = _obj.speed * turnSpeedReduction
-	_obj.testVar = turnSpeedReduction
+	_obj.speed = min(_obj.speed + _obj.acceleration / 10, _obj.acceleration)
+	
 	local wobbleVariance = 0
 	
 	if style == 1 then
@@ -504,8 +570,8 @@ function moveForward(_obj, _style)
 	
 	
 	_obj.collisionAngle = _obj.angle + wobbleVariance
-	_vx = cos(_obj.angle + wobbleVariance) * _obj.speed * turnSpeedReduction
-	_vy = sin(_obj.angle + wobbleVariance) * _obj.speed * turnSpeedReduction
+	_vx = cos((_obj.angle + wobbleVariance) / 360) * _obj.speed
+	_vy = sin((_obj.angle + wobbleVariance) / 360) * _obj.speed
 	
 	_obj.x += _vx
 	_obj.y += _vy
@@ -666,7 +732,7 @@ drawQuadtree(_quad)
 	
 end
 :: utilities.lua
---[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-11 00:57:55",revision=52,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-11 23:36:46",revision=66,xstickers={}]]
 function angleDiff(a1, a2)
 	local diff = (a2 - a1) % 360
 	
@@ -692,7 +758,20 @@ function euclidDist(x1, y1, x2, y2)
 end
 
 function drawPointer(_obj)
-	
+	local x = _obj.x
+	local y = _obj.y
+	local col = _obj.color
+	for i = 0, 3 do
+		local vx = cos((_obj.angle + 120 * i) / 360) * 5
+		local vy = sin((_obj.angle + 120 * i) / 360) * 5
+		if i == 0 then
+			local vx2 = cos((_obj.angle + 120 * i-1%3) / 360) * 5
+			local vy2 = sin((_obj.angle + 120 * i-1%3) / 360) * 5
+			line(x + vx, y + vy, x + vx2, y + vy2, col)
+		else
+			line(x + vx, y + vy, col)
+		end
+	end
 end
 
 function getAngle2D(_obj, _target)
@@ -781,23 +860,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55",runtime=26,workspaces={{location="main.lua#116,2",workspace_index=1},{location="boid.lua#7,17",workspace_index=1},{location="movement.lua#4,71",workspace_index=1},{location="utilities.lua#26,2",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27",runtime=26,workspaces={{location="main.lua#37,26",workspace_index=1},{location="boid.lua#307,70",workspace_index=1},{location="movement.lua#8,52",workspace_index=1},{location="utilities.lua#38,6",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-11 00:57:55"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
