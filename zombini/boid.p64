@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-12 01:02:26",revision=710,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-12 06:36:47",revision=721,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
@@ -295,25 +295,28 @@ function containBoid(_obj)
 	local influenceDist = 50
 	
 	local angleX, angleY = 0, 0
-	local influenceX, influenceY = 0, 0
+	local xInfluence, yInfluence = 0, 0
 	
-	if x < 240 then
-		angleX = 270
-		influenceX = min(influenceDist, max(0, influenceDist - x)) / influenceDist
-	else
-		angleX = 90
-		influenceX = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist
+	if x < 50 then
+		angleX = 180
+		xInfluence = min(influenceDist, max(0, influenceDist - x)) / influenceDist * 0.05
+	elseif x > 430 then
+		angleX = 0
+		xInfluence = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist * 0.05
 	end
 	
-	if y < 135 then
-		angleY = 0
-		influenceY = min(influenceDist, max(0, influenceDist - y)) / influenceDist
-	else
-		angleY = 180
-		influenceY = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist
+	if y < 50 then
+		angleY = 90
+		yInfluence = min(influenceDist, max(0, influenceDist - y)) / influenceDist
+	elseif y > 220 then
+		angleY = 270
+		yInfluence = min(influenceDist, max(0, influenceDist - (x - 240 + influenceDist))) / influenceDist
 	end
-	--[[BOOKMARK: This whole function is WIP, but especially this part]]
-	return angleX, influenceX, angleY, influenceY
+	
+	local xDiff = angleDiff(angleX, _obj.angle) * xInfluence
+	local yDiff = angleDiff(angleY, _obj.angle) * yInfluence
+	
+	return xDiff, yDiff
 end
 
 function initTrail()
@@ -385,12 +388,12 @@ function updateBoid(_obj, _allies)
 			add(diffs, targetingDiff)
 		end
 		
-		local containX, influenceX, containY, influenceY = containBoid(_obj)
-		if containX ~= 0 then
-		
+		local xDiff, yDiff = containBoid(_obj)
+		if xDiff ~= 0 then
+			add(diffs, xDiff)
 		end
-		if containY ~= 0 then
-		
+		if yDiff ~= 0 then
+			add(diffs, yDiff)
 		end
 		
 		local totalDiff = 0
@@ -860,23 +863,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27",runtime=26,workspaces={{location="main.lua#37,26",workspace_index=1},{location="boid.lua#307,70",workspace_index=1},{location="movement.lua#8,52",workspace_index=1},{location="utilities.lua#38,6",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 06:36:47",runtime=26,workspaces={{location="main.lua#37,26",workspace_index=1},{location="boid.lua#303,21",workspace_index=1},{location="movement.lua#8,52",workspace_index=1},{location="utilities.lua#38,6",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 06:36:47"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 06:36:47"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 01:02:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-12 06:36:47"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
