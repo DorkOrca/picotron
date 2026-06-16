@@ -5,59 +5,219 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-13 00:46:31",revision=867,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-16 00:01:23",revision=1241,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
+boidPresetChoice = 5
+boidGraphicsChoice = 1
+boidControlMenu = "mainmenu"
+
 boidPresets = {
-	[0] = {
+	[1] = {
 		name = "Disabled",
-		separation = 0,
-		alignment = 0,
-		cohesion = 0,
+		separation = 0.0,
+		alignment = 0.0,
+		cohesion = 0.0,
 		contained = false,
+		gridSize = 1,
+		maxNeighbors = 0,
 	},
-	{
+	[2] = {
 		name = "Free",
 		separation = 0.8,
 		alignment = 0.5,
 		cohesion = 0.3,
 		contained = false,
+		gridSize = 24,
+		maxNeighbors = 10,
 	},	
-	{
+	[3] = {
 		name = "Contained",
-		separation = 1,
+		separation = 1.0,
 		alignment = 0.7,
 		cohesion = 0.3,
-		contained = true
+		contained = true,
+		gridSize = 24,
+		maxNeighbors = 10,
+	},
+	[4] = {
+		name = "Independent",
+		separation = 1.0,
+		alignment = 0.3,
+		cohesion = 0.15,
+		contained = false,
+		gridSize = 24,
+		maxNeighbors = 10,
+	},
+	[5] = {
+		name = "Downstream",
+		separation = 1.0,
+		alignment = 0.5,
+		cohesion = 0.2,
+		contained = false,
+		gridSize = 48,
+		maxNeighbors = 10,
+	},
+	[6] = {
+		name = "Amoeba",
+		separation = 0.5,
+		alignment = 0.2,
+		cohesion = 0.1,
+		contained = true,
+		gridSize = 32,
+		maxNeighbors = 2
 	}
 }
-boidPresetChoice = 2
+
+boidGraphics = {
+	[1] = {
+		name = "Pixel",
+		func = function(boid) pset(boid.x, boid.y, boid.color) end,
+	},
+	[2] = {
+		name = "Pointer",
+		func = function(boid) drawPointer(boid) end,
+	},
+	[3] = {
+		name = "Big Pointer",
+		func = function(boid) drawPointer(boid, 8) end,
+	},
+	[4] = {
+		name = "Huge Pointer",
+		func = function(boid) drawPointer(boid, 16) end,
+	},
+	[5] = {
+		name = "Filled Pointer - S",
+		func = function(boid) drawPointer(boid, 4, true) end,
+	},
+	[6] = {
+		name = "Filled Pointer - M",
+		func = function(boid) drawPointer(boid, 8, true) end,
+	},
+	[7] = {
+		name = "Filled Pointer = L",
+		func = function(boid) drawPointer(boid, 16, true) end,
+	},
+	[8] = {
+		name = "Circle",
+		func = function(boid) circfill(boid.x, boid.y, 2, boid.color) end,
+	},
+	[9] = {
+		name = "Big Circle",
+		func = function(boid) circfill(boid.x, boid.y, 7, boid.color) end,
+	},
+	[10] = {
+		name = "Huge Circle",
+		func = function(boid) circfill(boid.x, boid.y, 15, boid.color) end,
+	},
+	[11] = {
+		name = "Why...",
+		func = function(boid) circfill(boid.x, boid.y, 30, boid.color) end,
+	}
+}
 
 --[[GROUP:Initialization]]
-function initBoid()
+function initBoidControls()
 	local boidControls = {
-		separation = boidPresets[boidPresetChoice].separation,
-		alignment = boidPresets[boidPresetChoice].alignment,
-		cohesion = boidPresets[boidPresetChoice].cohesion,
-		contained = boidPresets[boidPresetChoice].contained,
-		orderedList = {
-			"separation",
-			"alignment",
-			"cohesion"
+	visible = true,
+		mainmenu = {
+			menus = {
+				"submenu1",
+				"submenu2",
+			},
+			selected = 1,
+			btnpAction = {
+				-- Up
+				[2] = function() boidControls.mainmenu.selected = (boidControls.mainmenu.selected - 2) % 2 + 1 end,
+				-- Down
+				[3] = function() boidControls.mainmenu.selected = boidControls.mainmenu.selected % 2 + 1 end,
+				-- O button / Z key
+				[4] = function() boidControlMenu = boidControls.mainmenu.menus[boidControls.mainmenu.selected] end,
+			}
 		},
-		selected = 1,
-		keypAction = {
-			up = function() boidControls.selected = (boidControls.selected - 2) % 3 + 1 end,
-			down = function() boidControls.selected = (boidControls.selected) % 3 + 1 end,
-			left = function() boidControls[boidControls.orderedList[boidControls.selected]] = max(boidControls[boidControls.orderedList[boidControls.selected]] - 0.01, 0) end,
-			right = function() boidControls[boidControls.orderedList[boidControls.selected]] = min(boidControls[boidControls.orderedList[boidControls.selected]] + 0.01, 1) end
+		submenu1 = {
+			-- Direct variable adjustment
+			separation = boidPresets[boidPresetChoice].separation,
+			alignment = boidPresets[boidPresetChoice].alignment,
+			cohesion = boidPresets[boidPresetChoice].cohesion,
+			contained = boidPresets[boidPresetChoice].contained,
+			orderedList = {
+				"separation",
+				"alignment",
+				"cohesion"
+			},
+			gridSize = boidPresets[boidPresetChoice].gridSize,
+			maxNeighbors = boidPresets[boidPresetChoice].maxNeighbors,
+			selected = 1,
+			presetChoice = boidPresetChoice,
+			btnpAction = {
+				-- Left
+				[0] = function() boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = max(boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] - 0.01, 0) end,
+				-- Right
+				[1] = function() boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = min(boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] + 0.01, 1) end,
+				-- Up
+				[2] = function() boidControls.submenu1.selected = (boidControls.submenu1.selected - 2) % 3 + 1 end,
+				-- Down
+				[3] = function() boidControls.submenu1.selected = boidControls.submenu1.selected % 3 + 1 end,
+				-- X
+				[4] = function() boidControlMenu = "mainmenu" end,
+			}
+		},
+		submenu2 = {
+			-- Presets
+			orderedList = {
+				[1] = {
+					name = Parameters,
+					value = boidPresetChoice
+				},
+				[2] = {
+					name = Graphics,
+					value = 1
+				}
+			},
+			selected = 1,
+			btnpAction = {
+				-- Left
+				[0] = function()
+					local referenceList = {}
+					if boidControls.submenu2.selected == 1 then
+						referenceList = boidPresets
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = (boidControls.submenu2.orderedList[boidControls.submenu2.selected].value - 2) % #referenceList + 1
+						boidPresetChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					elseif boidControls.submenu2.selected == 2 then
+						referenceList = boidGraphics
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = (boidControls.submenu2.orderedList[boidControls.submenu2.selected].value - 2) % #referenceList + 1
+						boidGraphicsChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					end
+				end,
+				-- Right
+				[1] = function()
+					local referenceList = {}
+					if boidControls.submenu2.selected == 1 then
+						referenceList = boidPresets
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value % #referenceList + 1
+						boidPresetChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					elseif boidControls.submenu2.selected == 2 then
+						referenceList = boidGraphics
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value % #referenceList + 1
+						boidGraphicsChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					end
+				end,
+				-- Up
+				[2] = function() boidControls.submenu2.selected = (boidControls.submenu2.selected - 2) % 2 + 1 end,
+				-- Down
+				[3] = function() boidControls.submenu2.selected = boidControls.submenu2.selected % 2 + 1 end,
+				-- X
+				[4] = function() boidControlMenu = "mainmenu" end,
+			}
 		}
 	}
 	
 	return boidControls
 end
 
+--[[GROUP:General]]
 function newBoid(_obj)
 	-- Add a table to the provided object containing 3 boid parameters.
 	if _obj.angle == nil then
@@ -66,14 +226,14 @@ function newBoid(_obj)
 	_obj.boid = {
 		angle = _obj.angle,
 		diff = 0,
-		separationStrength = boidControls.separation,
-		alignmentStrength = boidControls.alignment,
-		cohesionStrength = boidControls.cohesion,
-		contained = boidControls.contained,
+		separationStrength = boidControls.submenu1.separation,
+		alignmentStrength = boidControls.submenu1.alignment,
+		cohesionStrength = boidControls.submenu1.cohesion,
+		contained = boidControls.submenu1.contained,
 		borderStrength = 0.15,
 		borderDist = 50,
 		targetStrength = 0.3,
-		targetDist = 100,
+		neighborDist = 100,
 		personalDist = 50,
 		personalNeighbors = {},
 		longNeighbors = {},
@@ -84,45 +244,118 @@ function newBoid(_obj)
 end
 
 function updateBoids(_boids)
+	if boidControlMenu == "submenu2" then
+		boidControls.submenu1.separation = boidPresets[boidPresetChoice].separation
+		boidControls.submenu1.alignment = boidPresets[boidPresetChoice].alignment
+		boidControls.submenu1.cohesion = boidPresets[boidPresetChoice].cohesion
+		boidControls.submenu1.contained = boidPresets[boidPresetChoice].contained
+		boidControls.submenu1.gridSize = boidPresets[boidPresetChoice].gridSize
+		boidControls.submenu1.maxNeighbors = boidPresets[boidPresetChoice].maxNeighbors
+	end
+	
 	for key, obj in ipairs(_boids) do
 		if obj.boid ~= nil then
-			obj.boid.separationStrength = boidControls.separation
-			obj.boid.alignmentStrength = boidControls.alignment
-			obj.boid.cohesionStrength = boidControls.cohesion
-			obj.boid.contained = boidControls.contained
+			obj.boid.separationStrength = boidControls.submenu1.separation
+			obj.boid.alignmentStrength = boidControls.submenu1.alignment
+			obj.boid.cohesionStrength = boidControls.submenu1.cohesion
+			obj.boid.contained = boidControls.submenu1.contained
 		end
+	end
+end
+
+function drawBoid(_boid)
+	boidGraphics[boidGraphicsChoice].func(_boid)
+end
+
+function drawBoids(_boids)
+	local boids = _boids
+	
+	for key = #boids, 1, -1 do
+		local boid = boids[key]
+		
+		drawBoid(boid)
+		--[[
+		if key == 1 then
+			circ(boid.x, boid.y, boid.boid.neighborDist, boid.color)
+			circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
+		end
+		]]
+		
+		
 	end
 end
 
 
 
 --[[GROUP:Controls]]
-function navigateBoidControls()
-	local boidControlsChanged = false
-	
-	for key, func in pairs(boidControls.keypAction) do
-		if keyp(key) then
-			boidControls.keypAction[key]()
-			boidControlsChanged = true
+
+function toggleBoidControls()
+	if (btnp(5) or keyp("space")) and (boidControls[boidControlMenu] ~= nil) then
+		if boidControls.visible == true then
+			boidControls.visible = false
+		else
+			boidControls.visible = true
 		end
 	end
-	
-	if boidControlsChanged == true then
-		updateBoids(boids)
+	return _boidControls
+end
+
+function navigateBoidControls(_boidControls)
+	if boidControls.visible == true then
+		local boidControlsChanged = false
+		
+		for button, func in pairs(boidControls[boidControlMenu].btnpAction) do
+			if btnp(button) then
+				boidControls[boidControlMenu].btnpAction[button]()
+				boidControlsChanged = true
+			end
+		end
+		
+		if boidControlsChanged == true then
+			updateBoids(boids)
+		end
 	end
 end
 
 function drawBoidControls()
-	if not (boidControls.separation == nil) then
-		rrect(2, 2, 88, 31, 2, 31)
-		rrectfill(2, 2, 87, 30, 1, 7)
-		print("Separation: " .. boidControls.separation, 4, 4, 24)
-		print("Separation: " .. boidControls.separation, 4, 3, 0)
-		print("Alignment: " .. boidControls.alignment, 9, 12, 24)
-		print("Alignment: " .. boidControls.alignment, 9, 13, 0)
-		print("Cohesion: " .. boidControls.cohesion, 14, 22, 24)
-		print("Cohesion: " .. boidControls.cohesion, 14, 23, 0)
-		circfill(95, 6 + ((boidControls.selected - 1) * 10), 2, 8)
+	if (boidControls[boidControlMenu] ~= nil) and (boidControls.visible == true) then
+		local selectorOffset = (boidControls[boidControlMenu].selected - 1) * 10
+		rrect(-2, -2, 98, 37, 2, 5)
+		rrect(-2, -2, 98, 36, 2, 6)
+		rrectfill(-2, -2, 97, 35, 1, 6)
+		
+		if boidControlMenu == "submenu2" then
+			rrectfill(2, 2, 92, 10, 3, 7)
+			showSelector(88, 7)
+			
+			local presetLabel = boidControls.submenu2.orderedList[boidControls.submenu2.selected].name
+			local presetValue =
+				boidControls.submenu2.selected == 1 and boidPresetChoice or
+				boidControls.submenu2.selected == 2 and boidGraphicsChoice
+			
+			printShadow(presetLabel, 4, 04, 0, 22)
+			printShadow("Preset: " .. presetValue, 4, 14, 0, 22)
+			
+			if boidControls.submenu2.selected == 1 then
+				printShadow(boidPresets[boidPresetChoice].name, 4, 24, 0, 22)
+			elseif boidControls.submenu2.selected == 2 then
+				printShadow(boidGraphics[boidGraphicsChoice].name, 4, 24, 0, 22)
+			end
+			
+			return
+		end
+		
+		rrectfill(2, 2 + selectorOffset, 92, 10, 3, 7)
+		showSelector(88, 7 + selectorOffset)
+		
+		if boidControlMenu == "mainmenu" then
+			printShadow("Main Parameters", 4, 4, 0, 22)
+			printShadow("Presets", 42, 14, 0, 22)
+		elseif boidControlMenu == "submenu1" then
+			printShadow("Separation: " .. boidControls.submenu1.separation, 4, 4, 0, 22)
+			printShadow("Alignment: " .. boidControls.submenu1.alignment, 9, 14, 0, 22)
+			printShadow("Cohesion: " .. boidControls.submenu1.cohesion, 14, 24, 0, 22)
+		end
 	end
 end
 
@@ -142,12 +375,15 @@ end
 
 function gridNeighbors(_obj, _grid, _cellSize, _dist)
 	local cx, cy = flr(_obj.x / _cellSize), flr(_obj.y / _cellSize)
-	local dist = _dist == nil and _obj.boid.targetDist or _dist
+	local dist = _dist == nil and _obj.boid.neighborDist or _dist
 	local r2 = dist * dist
 	local out = {}
 	for dy = -1, 1 do
 		for dx = -1, 1 do
+			if #out >= boidControls.submenu1.maxNeighbors then break end
+			
 			local cell = _grid[(cx+dx) + (cy+dy) * 480]
+			
 			if cell == nil then
 				goto gridNeighborsContinue1
 			end
@@ -157,11 +393,13 @@ function gridNeighbors(_obj, _grid, _cellSize, _dist)
 					goto gridNeighborsContinue2
 				end
 				
-				local d = euclidDist(_obj.x, _obj.y, t.x, t.y)
+				local d = euclidDistSq(_obj.x, _obj.y, t.x, t.y)
 				if d < r2 then
 					t.dist = d
 					add(out, t)
 				end
+				
+				
 				::gridNeighborsContinue2::
 			end
 			
@@ -176,7 +414,7 @@ end
 
 --[[GROUP:Separation]]
 function boidGetNeighbors(_obj, _targets, _sorted, _dist)
-	-- Return a table of objects within targetDist range of _obj
+	-- Return a table of objects within neighborDist range of _obj (NO GRID, COMPARES AGAINST ALL NEIGHBORS)
 	if _obj == nil then
 		error("boidGetNeighbors(): _obj provided was nil.")
 	end
@@ -185,22 +423,22 @@ function boidGetNeighbors(_obj, _targets, _sorted, _dist)
 		error("boidGetNeighbors(): _targets provided was nil.")
 	end
 	
-	local maxDistFromObjToNeighbors = _dist == nil and _obj.boid.targetDist or _dist
+	local maxDistFromObjToNeighbors = _dist == nil and _obj.boid.neighborDist or _dist
 	local listShouldBeSorted = _sorted == nil and false or _sorted
 	
 	local neighbors = {}
 	local foundSelf = false
 	
 	for index, target in ipairs(_targets) do
-		local targetDist = euclidDist(_obj.x, _obj.y, target.x, target.y)
-		if targetDist == 0 and foundSelf == false then
+		local neighborDist = euclidDistSq(_obj.x, _obj.y, target.x, target.y)
+		if neighborDist == 0 and foundSelf == false then
 			foundSelf = true
 			goto BGNcontinue
 		end
 		
-		if targetDist < maxDistFromObjToNeighbors * maxDistFromObjToNeighbors then
+		if neighborDist < maxDistFromObjToNeighbors * maxDistFromObjToNeighbors then
 			if listShouldBeSorted == true then
-				target.dist = targetDist
+				target.dist = neighborDist
 			end
 			
 			add(neighbors, target)
@@ -257,8 +495,6 @@ function boidSeparation(_obj, _neighbors)
 				separationDiff = diff * separationInfluence * 0.02
 			end
 		end
-	else
-		
 	end
 	
 	return separationDiff, personalNeighbors
@@ -446,7 +682,7 @@ function updateBoid(_obj, _allies, _grid)
 	end
 	
 	--local neighbors = boidGetNeighbors(_obj, _allies)
-	local neighbors = gridNeighbors(_obj, _grid, 24)
+	local neighbors = gridNeighbors(_obj, _grid, boidControls.submenu1.gridSize)
 	_obj.boid.longNeighbors = neighbors
 	local diffs = {}
 	
@@ -455,6 +691,8 @@ function updateBoid(_obj, _allies, _grid)
 		_obj.boid.personalNeighbors = personalNeighborList
 		if separationDiff ~= 0 then
 			add(diffs, separationDiff)
+		else
+			_obj.boid.personalNeighbors = {}
 		end
 		
 		local alignmentDiff, neighborAvgAngle = boidAlignment(_obj, neighbors)
@@ -498,12 +736,14 @@ function updateBoid(_obj, _allies, _grid)
 			_obj.boid.angle = _obj.angle
 		end
 	else
-		local xDiff, yDiff = containBoid(_obj)
-		if xDiff ~= 0 then
-			add(diffs, xDiff)
-		end
-		if yDiff ~= 0 then
-			add(diffs, yDiff)
+		if _obj.boid.contained == true then
+			local xDiff, yDiff = containBoid(_obj)
+			if xDiff ~= 0 then
+				add(diffs, xDiff)
+			end
+			if yDiff ~= 0 then
+				add(diffs, yDiff)
+			end
 		end
 		
 		local totalDiff = 0
@@ -524,12 +764,12 @@ function updateBoid(_obj, _allies, _grid)
 	return _obj
 end
 :: main.lua
---[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-13 00:48:09",revision=282,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-15 23:24:26",revision=362,xstickers={}]]
 include("boid.lua")
 include("movement.lua")
 
 function _init()
-	boidControls = initBoid()
+	boidControls = initBoidControls()
 	boids = {}
 	startingBoidCount = 52
 	
@@ -560,7 +800,7 @@ function spawnBoid(_color)
 end
 
 function moveBoids()
-	local grid = buildGrid(boids, 24)
+	local grid = buildGrid(boids, boidControls.submenu1.gridSize)
 	
 	for key, boid in ipairs(boids) do
 		boid = updateBoid(boid, boids, grid)
@@ -570,57 +810,49 @@ function moveBoids()
 end
 
 function drawNeighborConnections(_obj, _full)
+	-- Draw line between object and neighbors. _full = true: draw affecting forces
+	local neighborSpace = _obj.boid.neighborDist * _obj.boid.neighborDist
 	
 	for key, neighbor in ipairs(_obj.boid.longNeighbors) do
-		line(_obj.x, _obj.y, neighbor.x, neighbor.y, 6)
+		local distanceBetween = euclidDistSq(_obj.x, _obj.y, neighbor.x, neighbor.y)
+		if distanceBetween <= neighborSpace then
+			line(_obj.x, _obj.y, neighbor.x, neighbor.y, 6)
+		end
 	end
 	
-	if _full == 1 then
-		if _obj.boid.separationStrength > 0 then
-			for key, neighbor in ipairs(_obj.boid.personalNeighbors) do
+	
+	if _full == nil or _full ~= 1 then
+		return
+	end
+	
+	-- Draw affecting forces
+	if _obj.boid.separationStrength > 0 then
+		local personalSpace = _obj.boid.personalDist * _obj.boid.personalDist
+		for key, neighbor in ipairs(_obj.boid.personalNeighbors) do
+			local distanceBetween = euclidDistSq(_obj.x, _obj.y, neighbor.x, neighbor.y)
+			if distanceBetween <= personalSpace then
 				line(_obj.x, _obj.y, neighbor.x, neighbor.y, 0)
 			end
 		end
-		
-		if _obj.boid.cohesionStrength > 0 then
-			if _obj.boid.neighborAvgPos ~= nil then
-				local nPos = _obj.boid.neighborAvgPos
-				circ(nPos.x, nPos.y, 4, _obj.color)
-				pset(nPos.x, nPos.y, _obj.color)
-			end									
-		end
-		
-		if _obj.boid.alignmentStrength > 0 then
-			if _obj.boid.neighborAvgAngle ~= nil then
-				local nAng = _obj.boid.neighborAvgAngle
-				local nX = _obj.x + cos(nAng) * 10
-				local nY = _obj.y + sin(nAng) * 10
-				line(_obj.x, _obj.y, nX, nY, _obj.color)
-			end
-		end
-		
-		local nAng = _obj.boid.angle
+	end
+	
+	if _obj.boid.cohesionStrength > 0 and _obj.neighborAvgPos ~= nil then
+		local nPos = _obj.boid.neighborAvgPos
+		circ(nPos.x, nPos.y, 4, _obj.color)
+		pset(nPos.x, nPos.y, _obj.color)		
+	end
+	
+	if _obj.boid.alignmentStrength > 0 and _obj.boid.neighborAvgAngle ~= nil then
+		local nAng = _obj.boid.neighborAvgAngle / 360
 		local nX = _obj.x + cos(nAng) * 20
 		local nY = _obj.y + sin(nAng) * 20
 		line(_obj.x, _obj.y, nX, nY, 6)
 	end
-end
-
-function drawBoids(_boidList)
-	local boidList = _boidList == nil and boids or _boidList
 	
-	for key = #boidList, 1, -1 do
-		local boid = boidList[key]
-		--[[
-		if key == 1 then
-			circ(boid.x, boid.y, boid.boid.targetDist, boid.color)
-			circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
-		end
-		]]
-		--pset(boid.x, boid.y, boid.color)
-		--drawPointer(boid)
-		circfill(boid.x, boid.y, 2, boid.color)
-	end
+	local nAng = _obj.angle / 360
+	local nX = _obj.x + cos(nAng) * 10
+	local nY = _obj.y + sin(nAng) * 10
+	line(_obj.x, _obj.y, nX, nY, _obj.color)
 end
 
 function attractBoids(_boidList)
@@ -656,6 +888,8 @@ function _update()
 	if #boids > 0 then
 		boids = attractBoids(boids)
 	end
+	
+	toggleBoidControls()
 end
 
 function _draw()
@@ -664,16 +898,15 @@ function _draw()
 	for key = #boids, 1, -1 do
 		local boid = boids[key]
 		--local full = (key == 1) and 1 or 0
-		local full = 0
 		drawNeighborConnections(boid, full)
 	end
-	drawBoids()
-	--drawBoidControls()
+	drawBoids(boids)
+	drawBoidControls()
 	print(stat(1), 461, 3, 0)
 	--print(#boids, 461, 13, 0)
 end
 :: movement.lua
---[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-12 00:18:26",revision=92,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-15 18:59:13",revision=93,xstickers={}]]
 -- movement.lua
 function moveForward(_obj, _style)
 	_obj.speed = min(_obj.speed + _obj.acceleration / 10, _obj.acceleration)
@@ -848,7 +1081,7 @@ drawQuadtree(_quad)
 	
 end
 :: utilities.lua
---[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-12 23:58:03",revision=76,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-16 00:00:05",revision=99,xstickers={}]]
 function angleDiff(a1, a2)
 	local diff = (a2 - a1) % 360
 	
@@ -867,25 +1100,35 @@ function clamp(i, _minVal, _maxVal)
 	return min(maxVal, max(minVal, i))
 end
 
-function euclidDist(x1, y1, x2, y2)
+function euclidDistSq(x1, y1, x2, y2)
 	local dx = x2 - x1
 	local dy = y2 - y1
 	return dx * dx + dy * dy
 end
 
-function drawPointer(_obj)
+function drawPointer(_obj, _size, _filled)
 	local x = _obj.x
 	local y = _obj.y
 	local col = _obj.color
+	local size = _size == nil and 4 or _size
+	local filled = _filled ~= nil and _filled or false
+	
+	if filled == true then
+		circfill(x, y, size / 2, col)
+	end
+	
 	for i = 0, 3 do
-		local vx = cos((_obj.angle + 120 * i) / 360) * 4
-		local vy = sin((_obj.angle + 120 * i) / 360) * 4
+		local vx = cos((_obj.angle + 120 * i) / 360) * size
+		local vy = sin((_obj.angle + 120 * i) / 360) * size
 		if i == 0 then
-			local vx2 = cos((_obj.angle + 120 * i-1%3) / 360) * 4
-			local vy2 = sin((_obj.angle + 120 * i-1%3) / 360) * 4
+			local vx2 = cos((_obj.angle + 120 * i-1%3) / 360) * size
+			local vy2 = sin((_obj.angle + 120 * i-1%3) / 360) * size
 			line(x + vx, y + vy, x + vx2, y + vy2, col)
 		else
 			line(x + vx, y + vy, col)
+			if filled == true then
+				circfill(x + vx / 2, y + vy / 2, size / 4, col)
+			end
 		end
 	end
 end
@@ -897,6 +1140,20 @@ function getAngle2D(_obj, _target)
 	local a = atan2(dx, dy)
 	return a * 360
 end
+
+function printShadow(_string, _x, _y, _mainColor, _shadowColor)
+	-- Print text with shadow 1px below
+	print(_string, _x, _y, _shadowColor)
+	return print(_string, _x, _y-1, _mainColor)
+end
+
+rainbow = {8, 24, 25, 9, 10, 26, 11, 27, 17, 12, 28, 29, 23, 14, 30} 
+function showSelector(_x, _y) 
+	-- Show cursor for selecting options in GUI 
+	local selectorX = (sin(t() / 3) * 4) + _x 
+	local selectorY = (cos(t() / 2) * 3) + _y 
+	circfill(selectorX, selectorY, 2, rainbow[flr(t() * 10) % #rainbow + 1]) 
+end 
 
 function sortTableBy(_table, _dir, _key)
 	-- Sort table in "ascending" or "descending" corner, with optional _key to sort list of objects by
@@ -976,23 +1233,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-13 00:54:30",runtime=26,workspaces={{location="main.lua#95,3",workspace_index=1},{location="boid.lua#69,19",workspace_index=1},{location="movement.lua#8,52",workspace_index=1},{location="utilities.lua#31,51",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49",runtime=26,workspaces={{location="main.lua#136,17",workspace_index=1},{location="boid.lua#110,2",workspace_index=1},{location="movement.lua#4,2",workspace_index=1},{location="utilities.lua#47,7",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-13 00:54:30"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-13 00:54:30"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-13 00:54:30"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO

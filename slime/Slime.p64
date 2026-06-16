@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: beauty.lua
---[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-06-05 00:19:07",revision=6,xstickers={}]]
+--[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-06-15 20:24:45",revision=7,xstickers={}]]
 ShadeTable = {
 	[0] = {},
 	[1] = {},
@@ -410,9 +410,9 @@ function saveSettings()
 	spawnFrequency = slimeVariables["Spawn Frequency"]
 end
 :: .info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08",runtime=26,workspaces={{location="main.lua#15,8",workspace_index=1},{location="slimes.lua#11,1",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#1,11",workspace_index=1},{location="gfx/0.gfx#128",workspace_index=2}}]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45",runtime=26,workspaces={{location="slimes.lua#11,1",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#1,11",workspace_index=1},{location="gfx/0.gfx#128",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Ni0wNSAwMDoxOTowOCIscmV2aXNpb249NTFdXWx6NABMDAAAVkMAAPMhe1swXT17Ym1wPXB4dQBD
@@ -472,14 +472,14 @@ GhBDAGUPHw8PByALAJIgDxUFDxYGBzAIABIABwAiJxAIABIXBwAVN18AICcACwASGN0iFhAMAAJQ
 AFUZCQoXAAsAEwcIABAnpgBjGwsPGicAlAAkFxATACIHEMoAIhcACAAkJxDAACQHAAoAAVMAAmcA
 JRcQigAVB8MAJScACwAfF4kBHw8yAP-------------------------------75QPTEwfX0=
 :: map/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-05 00:19:08"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO

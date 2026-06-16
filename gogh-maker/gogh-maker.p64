@@ -569,7 +569,7 @@ function saveApp()
 	end
 end
 :: main.lua
---[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-05-04 21:01:35",revision=1149,xstickers={}]]
+--[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-06-15 20:56:36",revision=1152,xstickers={}]]
 include("./settings.lua")
 include("./generate.lua")
 
@@ -662,14 +662,10 @@ end
 
 function showSelector(_x, _y)
 	-- Show cursor for selecting options in GUI
-	_selectorX = (sin(timer / 3) * 12) + _x + selectorXMod
-	_selectorY = (cos(timer / 2) * 8) + _y
+	local selectorX = (sin(t() / 3) * 12) + _x
+	local selectorY = (cos(t() / 2) * 8) + _y
 	
-	circfill(_selectorX, _selectorY, 2, rainbow[flr(timer * 10) % #rainbow + 1])
-
-	if selectorXMod != 0 then
-		selectorXMod -= selectorXMod / 10
-	end
+	circfill(selectorX, selectorY, 2, rainbow[flr(t() * 10) % #rainbow + 1])
 end
 
 -- TODO: Beautify GUI
@@ -1123,16 +1119,16 @@ ERROR: Could not find 'tLength' variable for General Options
 --[[pod_format="raw",created="2025-09-25 18:35:09",modified="2025-09-26 21:10:00",revision=1]]
 
 :: .info.pod
---[[pod,author="@DorkOrca",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-05-04 21:01:35",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=26,sandbox=false,title="Gogh Maker",version="1.0.0",workspaces={{location="settings.lua#59,15",workspace_index=1},{location="generate.lua#135,1",workspace_index=1},{location="main.lua#282,7",workspace_index=1}}]]
+--[[pod,author="@DorkOrca",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-06-15 20:56:36",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=26,sandbox=false,title="Gogh Maker",version="1.0.0",workspaces={{location="settings.lua#59,15",workspace_index=1},{location="generate.lua#135,1",workspace_index=1},{location="main.lua#96,51",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2025-09-22 22:46:25",modified="2026-05-04 21:01:35"]]
+--[[pod,created="2025-09-22 22:46:25",modified="2026-06-15 20:56:36"]]
 :: gfx/0.lua
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA5LTIzIDE4OjI2OjE0Iixtb2RpZmllZD0iMjAyNS0w
 OS0yNSAyMjoyNzo1MyIscmV2aXNpb249MzFdXWx6NAB_AAAAEjEAAPMhe1swXT17Ym1wPXB4dQBD
 IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADLeT0wLHpvb209OH0sPgAf8DEA----
 ------------------------------------------------------------11BtPTh9fQ==
 :: sfx/.info.pod
---[[pod,created="2025-09-25 18:18:30",modified="2026-05-04 21:01:35"]]
+--[[pod,created="2025-09-25 18:18:30",modified="2026-06-15 20:56:36"]]
 :: snd/.info.pod
---[[pod,created="2025-09-25 18:18:26",modified="2026-05-04 21:01:35"]]
+--[[pod,created="2025-09-25 18:18:26",modified="2026-06-15 20:56:36"]]
 :: [eoc]

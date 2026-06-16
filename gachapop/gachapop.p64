@@ -77,7 +77,7 @@ function drawClicker(_button)
 	rrectfill(_button:get(0,1,6))
 end
 :: gacha.lua
---[[pod_format="raw",created="2025-10-26 20:44:35",modified="2025-10-27 06:59:39",revision=4,xstickers={}]]
+--[[pod_format="raw",created="2025-10-26 20:44:35",modified="2026-06-15 20:27:10",revision=6,xstickers={}]]
 function initGacha()
 	gachaTypes =
 	{
@@ -87,7 +87,6 @@ end
 
 function spawnGacha()
 	_type = flr(rnd(4)+1)
-	
 	_gacha = userdata("i16",3)
 	
 end
@@ -114,9 +113,9 @@ function _draw()
 	end
 end
 :: .info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 01:16:49",runtime=21,workspaces={{location="main.lua#19,5",workspace_index=1},{location="gacha.lua#9,23",workspace_index=1},{location="clicker.lua#42,49",workspace_index=1},{location="gfx/0.gfx",workspace_index=2},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-06-15 20:27:11",runtime=26,workspaces={{location="main.lua#19,5",workspace_index=1},{location="gacha.lua#9,23",workspace_index=1},{location="clicker.lua#42,49",workspace_index=1},{location="gfx/0.gfx",workspace_index=2},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 01:16:49"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-06-15 20:27:11"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yNiAyMDo0OToxOCIscmV2aXNpb249NV1dbHo0AIgBAABQMwAA8yF7WzBdPXtibXA9cHh1AEMg
@@ -128,14 +127,14 @@ CQ8KDwsPGzMHDwsfDz8KHw8fGj8LHxoADxk-Dw8ZEAM-GgOiAN9XIA8ZHwkPGTADFwMQUAE1-gQG
 DjYOFg42DiY_Nj4WEDYwNvAUPgEPKQADHxImAR4f8DIA--------------------------------
 ---------------------------------0FQPTEyfX0=
 :: map/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 01:16:49"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-06-15 20:27:11"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2025-10-12 14:49:30",modified="2026-02-10 01:16:49"]]
+--[[pod,created="2025-10-12 14:49:30",modified="2026-06-15 20:27:11"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0x
 MC0yNyAwNToxNjo0NyIscmV2aXNpb249MTJdXWx6NACnAQAAegsAAP8wcHh1AAMoAAAEAAQPQBAC
