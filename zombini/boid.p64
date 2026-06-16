@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: boid.lua
---[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-16 00:01:23",revision=1241,xstickers={}]]
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-16 02:03:42",revision=1281,xstickers={}]]
 -- boid.lua
 include("utilities.lua")
 
@@ -96,7 +96,7 @@ boidGraphics = {
 		func = function(boid) drawPointer(boid, 8, true) end,
 	},
 	[7] = {
-		name = "Filled Pointer = L",
+		name = "Filled Pointer - L",
 		func = function(boid) drawPointer(boid, 16, true) end,
 	},
 	[8] = {
@@ -129,11 +129,17 @@ function initBoidControls()
 			selected = 1,
 			btnpAction = {
 				-- Up
-				[2] = function() boidControls.mainmenu.selected = (boidControls.mainmenu.selected - 2) % 2 + 1 end,
+				[2] = function()
+					boidControls.mainmenu.selected = (boidControls.mainmenu.selected - 2) % 2 + 1
+				end,
 				-- Down
-				[3] = function() boidControls.mainmenu.selected = boidControls.mainmenu.selected % 2 + 1 end,
+				[3] = function()
+					boidControls.mainmenu.selected = boidControls.mainmenu.selected % 2 + 1
+				end,
 				-- O button / Z key
-				[4] = function() boidControlMenu = boidControls.mainmenu.menus[boidControls.mainmenu.selected] end,
+				[4] = function()
+					boidControlMenu = boidControls.mainmenu.menus[boidControls.mainmenu.selected]
+				end,
 			}
 		},
 		submenu1 = {
@@ -145,7 +151,10 @@ function initBoidControls()
 			orderedList = {
 				"separation",
 				"alignment",
-				"cohesion"
+				"cohesion",
+				"contained",
+				"gridSize",
+				"maxNeighbors"
 			},
 			gridSize = boidPresets[boidPresetChoice].gridSize,
 			maxNeighbors = boidPresets[boidPresetChoice].maxNeighbors,
@@ -153,25 +162,64 @@ function initBoidControls()
 			presetChoice = boidPresetChoice,
 			btnpAction = {
 				-- Left
-				[0] = function() boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = max(boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] - 0.01, 0) end,
+				[0] = function()
+					local val = boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]]
+					
+					if boidControls.submenu1.selected <= 3 then
+						val = max(val - 0.01, 0)
+					elseif boidControls.submenu1.selected >= 5 then
+						val -= 1
+					else
+						if val == true then
+							val = false
+						else
+							val = true
+						end
+					end
+					
+					boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = val
+				end,
 				-- Right
-				[1] = function() boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = min(boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] + 0.01, 1) end,
+				[1] = function()
+					local val = boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]]
+					
+					if boidControls.submenu1.selected <= 3 then
+						val = min(val + 0.01, 1)
+					elseif boidControls.submenu1.selected >= 5 then
+						val += 1
+					else
+						if val == true then
+							val = false
+						else
+							val = true
+						end
+					end
+					
+					boidControls.submenu1[boidControls.submenu1.orderedList[boidControls.submenu1.selected]] = val
+					
+				end,
 				-- Up
-				[2] = function() boidControls.submenu1.selected = (boidControls.submenu1.selected - 2) % 3 + 1 end,
+				[2] = function()
+					boidControls.submenu1.selected = (boidControls.submenu1.selected - 2) % 6 + 1
+				end,
 				-- Down
-				[3] = function() boidControls.submenu1.selected = boidControls.submenu1.selected % 3 + 1 end,
+				[3] = function()
+					boidControls.submenu1.selected = boidControls.submenu1.selected % 6 + 1
+				end,
 				-- X
-				[4] = function() boidControlMenu = "mainmenu" end,
+				[4] = function()
+					boidControlMenu = "mainmenu"
+				end,
 			}
 		},
 		submenu2 = {
 			-- Presets
 			orderedList = {
-				[1] = {
+				{
 					name = Parameters,
 					value = boidPresetChoice
 				},
-				[2] = {
+				{
 					name = Graphics,
 					value = 1
 				}
@@ -205,9 +253,13 @@ function initBoidControls()
 					end
 				end,
 				-- Up
-				[2] = function() boidControls.submenu2.selected = (boidControls.submenu2.selected - 2) % 2 + 1 end,
+				[2] = function()
+					boidControls.submenu2.selected = (boidControls.submenu2.selected - 2) % 2 + 1
+				end,
 				-- Down
-				[3] = function() boidControls.submenu2.selected = boidControls.submenu2.selected % 2 + 1 end,
+				[3] = function()
+					boidControls.submenu2.selected = boidControls.submenu2.selected % 2 + 1
+				end,
 				-- X
 				[4] = function() boidControlMenu = "mainmenu" end,
 			}
@@ -320,20 +372,22 @@ end
 function drawBoidControls()
 	if (boidControls[boidControlMenu] ~= nil) and (boidControls.visible == true) then
 		local selectorOffset = (boidControls[boidControlMenu].selected - 1) * 10
-		rrect(-2, -2, 98, 37, 2, 5)
-		rrect(-2, -2, 98, 36, 2, 6)
-		rrectfill(-2, -2, 97, 35, 1, 6)
 		
 		if boidControlMenu == "submenu2" then
+			rrect(-2, -2, 98, 37, 2, 5)
+			rrect(-2, -2, 98, 36, 2, 6)
+			rrectfill(-2, -2, 97, 35, 1, 6)
 			rrectfill(2, 2, 92, 10, 3, 7)
 			showSelector(88, 7)
 			
-			local presetLabel = boidControls.submenu2.orderedList[boidControls.submenu2.selected].name
+			local presetLabel =
+				boidControls.submenu2.selected == 1 and "Parameters" or
+				boidControls.submenu2.selected == 2 and "Graphics"
 			local presetValue =
 				boidControls.submenu2.selected == 1 and boidPresetChoice or
 				boidControls.submenu2.selected == 2 and boidGraphicsChoice
 			
-			printShadow(presetLabel, 4, 04, 0, 22)
+			printShadow(presetLabel, 4, 4, 0, 22)
 			printShadow("Preset: " .. presetValue, 4, 14, 0, 22)
 			
 			if boidControls.submenu2.selected == 1 then
@@ -345,16 +399,31 @@ function drawBoidControls()
 			return
 		end
 		
-		rrectfill(2, 2 + selectorOffset, 92, 10, 3, 7)
-		showSelector(88, 7 + selectorOffset)
-		
 		if boidControlMenu == "mainmenu" then
+			rrect(-2, -2, 98, 37, 2, 5)
+			rrect(-2, -2, 98, 36, 2, 6)
+			rrectfill(-2, -2, 97, 35, 1, 6)
+			rrectfill(2, 2 + selectorOffset, 92, 10, 3, 7)
+			showSelector(88, 7 + selectorOffset)
 			printShadow("Main Parameters", 4, 4, 0, 22)
-			printShadow("Presets", 42, 14, 0, 22)
-		elseif boidControlMenu == "submenu1" then
+			printShadow("Presets", 45, 14, 0, 22)
+			return
+		end
+		
+		if boidControlMenu == "submenu1" then
+			rrect(-2, -2, 108, 67, 2, 5)
+			rrect(-2, -2, 108, 66, 2, 6)
+			rrectfill(-2, -2, 107, 65, 1, 6)
+			rrectfill(2, 2 + selectorOffset, 102, 10, 3, 7)
+			showSelector(98, 7 + selectorOffset)
+			
 			printShadow("Separation: " .. boidControls.submenu1.separation, 4, 4, 0, 22)
 			printShadow("Alignment: " .. boidControls.submenu1.alignment, 9, 14, 0, 22)
 			printShadow("Cohesion: " .. boidControls.submenu1.cohesion, 14, 24, 0, 22)
+			local contained = boidControls.submenu1.contained == true and "Yes" or "No"
+			printShadow("Contained: " .. contained, 9, 34, 0, 22)
+			printShadow("Grid Size: " .. boidControls.submenu1.gridSize, 10, 44, 0, 22)
+			printShadow("Neighbors: " .. boidControls.submenu1.maxNeighbors, 9, 54, 0, 22)
 		end
 	end
 end
@@ -1233,23 +1302,23 @@ function tableAverage(_table)
 	return average / #_table
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49",runtime=26,workspaces={{location="main.lua#136,17",workspace_index=1},{location="boid.lua#110,2",workspace_index=1},{location="movement.lua#4,2",workspace_index=1},{location="utilities.lua#47,7",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 02:03:42",runtime=26,workspaces={{location="main.lua#137",workspace_index=1},{location="boid.lua#406,24",workspace_index=1},{location="movement.lua#4,2",workspace_index=1},{location="utilities.lua#47,7",workspace_index=1},{location="quadtree.lua#140,4",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 02:03:42"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 02:03:42"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 00:02:49"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 02:03:42"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
