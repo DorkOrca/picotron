@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: beauty.lua
---[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-06-15 20:24:45",revision=7,xstickers={}]]
+--[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-09-01 23:20:50",revision=111,xstickers={}]]
 ShadeTable = {
 	[0] = {},
 	[1] = {},
@@ -41,24 +41,55 @@ ShadeTable = {
 	[31] = {}
 }
 
-function grass(_color, _density)
-	local color = _color == nil and 27 or _color
-	local density = _density == nil and 0.7 or _density
+greens = {3, 11, 17, 19, 26, 27}
+lightgreens = {11, 26, 27}
+darkgreens = {3, 17, 19}
+warms = {10, 25, 31}
+earths = {4, 20, 31, 5, 20, 22}
+browns = {4, 20, 31}
+grays = {5, 20, 22}
+cools = {5, 20, 22, 1, 21}
+blues = {5, 1, 21}
+
+function generateField(x, y, width, height, density, bladeLength, bladeColors)
 	
+	density = density == nil and 0.5 or density
+	bladeLength = bladeLength == nil and 4 or bladeLength
+	bladeColors = bladeColors == nil and grays or bladeColors
+	
+	local totalSpace = width * height
+	local totalBlades = flr(totalSpace * density)
+	local field = userdata("f64", 5, totalBlades)
+	
+	for i = 0, totalBlades - 1 do
+		local bladeX, bladeY = flr(rnd(width) + x), flr(rnd(height) + y)
+		local bladeColor = bladeColors[flr(rnd(#bladeColors) + 1)]
+		field:set(0, i, bladeX, bladeY, bladeX, bladeY - bladeLength, bladeColor)
+		
+	end
+	
+	return field
+end
+
+function animateField(field, time, mode)
 	
 end
 :: main.lua
---[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-06-02 23:20:17",revision=103,xstickers={}]]
+--[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-09-02 00:05:27",revision=204,xstickers={}]]
 include("slimes.lua")
+include("beauty.lua")
 
 --		Variables
 t = 0
 
--- 	World functions
-
-
 -- 	Loops
 function _init()
+	backfieldA = generateField(0, 153, 480, 12, 0.5, 4, warms)
+	backfieldB = generateField(0, 160, 480, 15, 0.5, 4, browns)
+	backfieldC = generateField(0, 175, 480, 25, 0.5, 4, earths)
+	forefieldA = generateField(0, 200, 480, 20, 0.5, 4, grays)
+	forefieldB = generateField(0, 220, 480, 30, 0.5, 4, cools)
+	forefieldC = generateField(0, 250, 480, 20, 0.5, 4, blues)
 	generateSlime()
 end
 
@@ -70,11 +101,19 @@ function _update()
 end
 
 function _draw()
-	if t%2==0 then 
-		cls(0)
-		rectfill(0,0,480,160,1)
+	if t%2==0 then
+		cls(21)
+		rectfill(0,100,480,160,9)
+		rectfill(0,50,480,100,31)
+		rectfill(0,0,480,50,14)
 		-- rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
+		line(backfieldA)
+		line(backfieldB)
+		line(backfieldC)
 		drawSlimes()
+		line(forefieldA)
+		line(forefieldB)
+		line(forefieldC)
 	end
 end
 :: slimeAnimations.lua
@@ -104,7 +143,7 @@ function drawSlimeFlop(_slime)
 	end
 end
 :: slimes.lua
---[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-06-04 18:51:45",revision=280,xstickers={}]]
+--[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-09-01 23:32:11",revision=286,xstickers={}]]
 include("slimeAnimations.lua")
 
 slimes = {}
@@ -125,7 +164,7 @@ dampening = 0.6
 
 dt = 1/60
 
-spawnFrequency = 180
+spawnFrequency = 20
 startingColor = 0
 spawnTimer = spawnFrequency
 
@@ -258,7 +297,7 @@ function generateSlime()
 	{
 		name = generateName(),
 		x = flr(rnd(400)) + 40,
-		y = -10,
+		y = -100,
 		xLast = x,
 		yLast = y,
 		sprite = 1,
@@ -393,8 +432,9 @@ function drawSlimes()
 		sspr(_slime.sprite + sprSize, 0, 0, sprHeight, sprWidth, (flr(_slime.x/2)*2 - sprWidth) - 2 * scale, (flr(slimeY/2)*2) - sprHeight + 2 * scale, sprWidth * scale, sprHeight * scale)
 		-- print(string.sub(tostring(_slime.size),1,3), _slime.x - 14, _slime.y + 24, 7)
 		-- print(_slime.name, (_slime.x - 52) - print(_slime.name, -100, -100)/2, _slime.y + 36, 7)
-		
 	end
+	
+	pal()
 end
 :: ui.lua
 --[[pod_format="raw",created="2026-06-03 17:44:37",modified="2026-06-03 17:56:08",revision=8,xstickers={}]]
@@ -410,12 +450,12 @@ function saveSettings()
 	spawnFrequency = slimeVariables["Spawn Frequency"]
 end
 :: .info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45",runtime=26,workspaces={{location="slimes.lua#11,1",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#1,11",workspace_index=1},{location="gfx/0.gfx#128",workspace_index=2}}]]
+--[[pod,created="2025-07-19 13:32:35",lowcol_icon=false,modified="2026-09-02 00:03:36",runtime=27,workspaces={{location="slimes.lua#154,11",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#67,2",workspace_index=1},{location="gfx/0.gfx#192",workspace_index=2}}]]
 :: gfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
-Ni0wNSAwMDoxOTowOCIscmV2aXNpb249NTFdXWx6NABMDAAAVkMAAPMhe1swXT17Ym1wPXB4dQBD
+OS0wMiAwMDowMzozNiIscmV2aXNpb249NTRdXWx6NAD0DAAA8kQAAPMhe1swXT17Ym1wPXB4dQBD
 IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADbeT0wLHpvb209MTJ9LD8A8wxmSJAI
 TghwCB4fFxcOCGAIDk0HCFAIHl0OCEAGAO8NLi0eCFAIDg1OCHBoMGEAHv8RlkiAGE4YUAguHxcX
 HggwCD5NBw4IIAgODQ4NbggwqBBRAB7wDSkosAgOFwiQCA4vFwcIgAgOPQiACB4dDgiACD4PAP8A
@@ -470,16 +510,19 @@ AP--vJFmR5AHQAdwB2ACAFNQB4AHQAQAf1AHYAdwZzCEAB8PMgD---------------9F8gBADxUP
 FAQgAQ8QDA8cBzAIAPAAEAEPEw8RDxwXIA8VAg8eeByQIA8VDxINDx0GHABgAwsPGgcgCQBRDxsP
 GhBDAGUPHw8PByALAJIgDxUFDxYGBzAIABIABwAiJxAIABIXBwAVN18AICcACwASGN0iFhAMAAJQ
 AFUZCQoXAAsAEwcIABAnpgBjGwsPGicAlAAkFxATACIHEMoAIhcACAAkJxDAACQHAAoAAVMAAmcA
-JRcQigAVB8MAJScACwAfF4kBHw8yAP-------------------------------75QPTEwfX0=
+JRcQigAVB8MAJScACwAfF4kBHw8yAP---------------0L0LCAwBPA3JvAMBhUW8AsGFSbwCmYV
+ZvABZhV28ABWFYbwADYlluAFFiW20EXGwBYV9gCw9gSw9gSg9gaQAwBEQPUHgAMAOHD1CAMASeD2
+B4ADACcIcAMABCYADwMABg-KAAsdNckA-w2eFVbwBkVm8ANVdvABBlWG4BZVltAWRabANhXWuACK
+-wV28Aa28APW8AH2AOD2AtD2AsD2BLEAhQ_WAhIPMgD--------------61QPTEwfX0=
 :: map/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2025-07-19 13:32:35",modified="2026-06-15 20:24:45"]]
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO

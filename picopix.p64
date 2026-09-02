@@ -775,7 +775,7 @@ end
 
 
 :: storage.lua
---[[pod_format="raw",created="2026-05-03 19:32:51",modified="2026-05-06 03:27:13",revision=362,xstickers={}]]
+--[[pod_format="raw",created="2026-05-03 19:32:51",modified="2026-08-31 20:08:28",revision=364,xstickers={}]]
 function storage_init()
 	fileName = {
 		["text"] = "",
@@ -848,13 +848,13 @@ end
 
 function makeDirectory(_name)
 	local name = _name == nil and "/appdata/picopix" or _name
-	_storageExists = ls(name)
+	local storageExists = ls(name)
 	
-	if not _storageExists then
+	if not storageExists then
 		mkdir(name)
 	end
 	
-	local presetDir = _name .. "/presets"
+	local presetDir = name .. "/presets"
 	local presetExists = ls(presetDir)
 	if not presetExists then
 		mkdir(presetDir)
@@ -1067,9 +1067,9 @@ end
 
 
 :: .info.pod
---[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev262",created="2026-04-16 19:10:37",file_item={},icon=userdata("u8",16,16,"0000000000000000000000000001010100000000000000000000000101090a0100000000000000000000010707190901000000000000000000010707060d01000000000000000000010704060d0601000000000000000001070814191501000000000000000001070418150d01000000000000000001070c14020d01000000000000000001070410150d01000000000000000001070a14010d01000000000000000001070409150d01000000000000000001070814190d01000000000000000001071418150d01000000000000000000010615020d010000000000000000000000010d0d01000000000000000000000000000101000000000000000000000000"),modified="2026-05-06 03:37:29",notes="A utility for generating multicolored\none-off P8SCII characters.",runtime=26,sandbox=false,title="picopix",version="0.5",workspaces={{location="main.lua#92,20",workspace_index=1},{location="canvas.lua#298,13",workspace_index=1},{location="storage.lua#193,12",workspace_index=1},{location="gfx/0.gfx#54",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
+--[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev262",created="2026-04-16 19:10:37",file_item={},icon=userdata("u8",16,16,"0000000000000000000000000001010100000000000000000000000101090a0100000000000000000000010707190901000000000000000000010707060d01000000000000000000010704060d0601000000000000000001070814191501000000000000000001070418150d01000000000000000001070c14020d01000000000000000001070410150d01000000000000000001070a14010d01000000000000000001070409150d01000000000000000001070814190d01000000000000000001071418150d01000000000000000000010615020d010000000000000000000000010d0d01000000000000000000000000000101000000000000000000000000"),modified="2026-08-31 20:08:28",notes="A utility for generating multicolored\none-off P8SCII characters.",runtime=27,sandbox=false,title="picopix",version="0.5",workspaces={{location="main.lua#92,20",workspace_index=1},{location="canvas.lua#298,13",workspace_index=1},{location="storage.lua#75,9",workspace_index=1},{location="gfx/0.gfx#54",workspace_index=2},{location="map/0.map",workspace_index=3},{location="sfx/0.sfx",workspace_index=4}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-06 03:27:13"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-08-31 20:08:28"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NS0wMSAyMToyMDowNyIscmV2aXNpb249MTVdXWx6NACAAAAAEjIAAPMhe1swXT17Ym1wPXB4dQBD
@@ -1328,14 +1328,14 @@ wCjANfQoNc4oNf3cKDX9xSjCNdMoNeQowjXTKDX2KDXUKME16yjCNdQoNfYoNc4oNf3cKDX9xig1
 -f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
 -f3NAAAAAAAAAAE=
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-06 03:27:13"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-08-31 20:08:28"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 NC0zMCAxNzo0MDowNSIscmV2aXNpb249Ml1dbHo0AEwAAABQAAAA8Rx7e2JtcD1weHUATIAgIAD-
 AAD---8DLGhpZGRlbj1mYWxzZSxwYW5feD0wCADSeT0wLHRpbGVfaD0xNgoAEHcKAIB6b29tPTF9
 fQ==
 :: presets/.info.pod
---[[pod,created="2026-05-04 06:20:50",file_item={},modified="2026-05-06 03:27:13"]]
+--[[pod,created="2026-05-04 06:20:50",file_item={},modified="2026-08-31 20:08:28"]]
 :: presets/anxious.pix
 b64$LS1bW3BvZF9mb3JtYXQ9InJhdyIsY3JlYXRlZD0iMjAyNi0wNS0wNCAwMjoyNjoyOSIsbW9k
 aWZpZWQ9IjIwMjYtMDUtMDQgMDY6MjE6MTciLHJldmlzaW9uPTRdXQotLVtbcG9kLGNhcnQ9InBp
@@ -1407,7 +1407,7 @@ OSwwfSx7OSwxMCwxLDEsMTAsMjUsMTAsOX0sezksMTAsMSwxMCwxMCwxMCwyNSw5fSx7OSwxMCwx
 LDEwLDEwLDEwLDI1LDl9LHs5LDEwLDEsMSwxMCwyNSwxMCw5fSx7MCw5LDEsMSwxMCwxMCw5LDB9
 LHswLDAsMSw1LDksOSwwLDB9fQ==
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-05-06 03:27:13"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-08-31 20:08:28"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO

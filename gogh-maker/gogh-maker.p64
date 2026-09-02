@@ -2,6 +2,7 @@ picotron cartridge // www.picotron.net
 version 2
 
 :: gfx/
+:: presets/
 :: sfx/
 :: snd/
 :: draw-buffer.lua
@@ -20,7 +21,7 @@ function checkDrawBuffer(_i)
 	
 end
 :: generate.lua
---[[pod_format="raw",created="2025-09-25 18:44:02",modified="2026-05-04 20:59:28",revision=425,xstickers={}]]
+--[[pod_format="raw",created="2025-09-25 18:44:02",modified="2026-08-31 20:28:41",revision=505,xstickers={}]]
 alphabet =
 {
 	"a",
@@ -121,6 +122,7 @@ function saveSetup()
 end
 
 function makeDirectory(_name)
+	initializePresets()
 	_storageExists = ls(_name)
 	
 	if not _storageExists then
@@ -132,16 +134,24 @@ end
 
 function textInput()
 	if fileName.done == false then
+		local mx, my, mb = mouse()
+		if mb == 0x1 or mb == 0x2 then
+			generating = false
+		end
 		for k, v in pairs(getKeyPressed()) do
 			if v then
 				if k == "backspace" then
 					fileName.text = sub(fileName.text, 1, #fileName.text - 1)
 				elseif k == "space" then
-					if fileName.text == "" then
-						fileName.text = tostring(date("%Y_%m_%d_%H_%M_%S"))
-					end
+					if key("ctrl") then
+						generating = false
+					else
+						if fileName.text == "" then
+							fileName.text = tostring(date("%Y_%m_%d_%H_%M_%S"))
+						end
 					
-					fileName.done = true
+						fileName.done = true
+					end
 				else
 					if #k == 1 and k:match("[a-z0-9]") and #fileName.text < 20 then
 						fileName.text = fileName.text .. k
@@ -160,6 +170,15 @@ function textInput()
 		yPromptOffset = 11
 		generateStep += 1
 	end
+	
+	if yPromptOffset > 0 then
+		yPromptOffset -= 1
+	end	
+
+	rectfill(0, 249 + yPromptOffset, 480, 270, 6)
+	print("File name: " .. fileName.text, 5, 251 + yPromptOffset, 1)
+	print("Press Spacebar to save.  Tap, click, or press Ctrl + Spacebar to exit.", 5, 261 + yPromptOffset, 16)
+	
 end
 
 function getKeyPressed()
@@ -183,7 +202,7 @@ end
 function finalizeSave(_format)
 	_formats =
 	{
-		"/appdata/gogh/" .. fileName.text .. ".pod",
+		"/appdata/goghmaker/" .. fileName.text .. ".pod",
 		"gogh.p64/theme.pod",
 		"gogh.p64/theme.pod",
 		"gogh.p64/theme.pod",
@@ -224,7 +243,7 @@ function finalizeSave(_format)
 	
 	print(_message, 5, 261 + yPromptOffset, 1)
 	
-	if keyp() then
+	if keyp() or btnp() then
 		generating = false
 	end
 end
@@ -234,7 +253,7 @@ function saveCart(_path)
 	{
 		"/appdata/system/wallpapers/" .. fileName.text .. ".p64",
 		"/appdata/system/screensavers/" .. fileName.text .. ".p64",
-		"/appdata/gogh/" .. fileName.text .. ".p64",
+		"/appdata/goghmaker/" .. fileName.text .. ".p64",
 	}
 	
 	local cart = "gogh.p64"
@@ -251,7 +270,7 @@ function saveCart(_path)
 end
 
 function loadSetup()
-	cd("/appdata/gogh")
+	cd("/appdata/goghmaker")
 	loaded = false
 	currentFile = 0
 	startDirectory = pwd()
@@ -268,7 +287,7 @@ function fetchFile()
 	_yStart = 270 / 3
 	_width = _xStart * 2
 	_height = _yStart
-
+	
 	rrectfill(_xStart, _yStart, _width, _height, 8, 1)
 	rrect(_xStart, _yStart, _width, _height, 8, 7)
 
@@ -368,6 +387,22 @@ function finalizeLoad()
 	end
 end
 
+function initializePresets(_name)
+	local name = _name == nil and "/appdata/goghmaker" or _name
+	local storageExists = ls(name)
+	
+	if not storageExists then
+		mkdir(name)
+	end
+	
+	local presetDir = name .. "/presets"
+	local presetExists = ls(presetDir)
+	if not presetExists then
+		mkdir(presetDir)
+	end
+	cp("./presets", presetDir)
+end
+
 
 --[[GROUP:Errors]]
 function genLoadError()
@@ -422,7 +457,7 @@ function saveConfig()
 	_v_tbl =
 	{
 		nil,
-		"/appdata/gogh",
+		"/appdata/goghmaker",
 		nil,
 		1,
 	}
@@ -452,7 +487,7 @@ function loadConfig()
 	
 	_v_tbl =
 	{
-		"/appdata/gogh",
+		"/appdata/goghmaker",
 		nil,
 		nil,
 		nil,
@@ -549,7 +584,7 @@ function saveApp()
 	
 	_v_tbl =
 	{
-		"/appdata/gogh/",
+		"/appdata/goghmaker/",
 		nil,
 		nil,
 		4,
@@ -568,8 +603,11 @@ function saveApp()
 		generating = false
 	end
 end
+:: gfx/0.lua
+--[[pod_format="raw",created="2025-09-23 18:26:14",modified="2026-08-29 00:35:12",revision=32,xstickers={}]]
+
 :: main.lua
---[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-06-15 20:56:36",revision=1152,xstickers={}]]
+--[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-08-31 20:05:44",revision=1216,xstickers={}]]
 include("./settings.lua")
 include("./generate.lua")
 
@@ -665,53 +703,63 @@ function showSelector(_x, _y)
 	local selectorX = (sin(t() / 3) * 12) + _x
 	local selectorY = (cos(t() / 2) * 8) + _y
 	
-	circfill(selectorX, selectorY, 2, rainbow[flr(t() * 10) % #rainbow + 1])
+	for i = 0, 2 do
+			circfill(selectorX, selectorY, 3 - i, rainbow[flr(t() * 5 - i) % #rainbow + 1])
+	end
+	circ(selectorX, selectorY, 4, 7)
 end
 
 -- TODO: Beautify GUI
 function showMenu()
 	-- Display GUI
-	_right = 480 - 36
-	_bottom = 270 - 3
-	_colors = custColors.enabled == 0 and palettes[palette] or custColors
+	local right = 480 - 36
+	local bottom = 270 - 3
+	local colors = custColors.enabled == 0 and palettes[palette] or custColors
 	
 	for i = 1, #options.choices do
 		-- Set frame of reference for drawn elements based on sequence in list
-		if not options.choices[i].tLength then
-			_log = "ERROR: Could not find 'tLength' variable for " .. tostring(options.choices[i].text)
-			store("showMenu_log.txt", _log)
-			return
-		end
-		_x = _right - options.choices[i].tLength
-		_y = _bottom - i * 16
-		_x2 = options.choices[i].tLength
-		_y2 = 12
+		local textLength = print(options.choices[i].text, 0, -1000) + 5
+		local x = right - textLength
+		local y = bottom - i * 16
+		local x2 = textLength
+		local y2 = 12
 		
-		_valX = _right - 5
-		_valWidth = 20
-		_textX = _right - 2 + (8 - 2.5 * #tostring(options.choices[i].value))
-		_textY = _y + 2
+		local valX = right - 5
+		local valWidth = 20
+		local textX = right - 2 + (8 - 2.5 * #tostring(options.choices[i].value))
+		local textY = y + 2
+		
+		local foreColor, foreText
 		
 		-- Set color values for text boxes - current selection has different color
-		foreColor = selection == i and custColors.enabled == 0 and _colors[1] or custColors.enabled == 0 and _colors[4] or  options.choices[i].type == 4 and _colors[4] or custColors.enabled == 1 and selection == i and 6 or 1
-		foreText = selection == i and custColors.enabled == 0 and _colors[4] or custColors.enabled == 0 and _colors[1] or 7
+		if options.choices[i].type == 3 or options.choices[i].type == 4 then
+			foreColor, foreText = 7, 1
+		elseif options.choices[i].type == 5 then
+			foreColor = options.choices[i].value
+			foreText = 7
+		else
+			foreColor = selection == i and custColors.enabled == 0 and colors[1] or custColors.enabled == 0 and colors[4] or options.choices[i].type == 4 and colors[4] or custColors.enabled == 1 and selection == i and 6 or 1
+			foreText = selection == i and custColors.enabled == 0 and colors[4] or custColors.enabled == 0 and colors[1] or 7
+		end
 		
-		backColor = custColors.enabled == 0 and options.choices[i].type != 5 and palettes[palette][4] or 1
+		local backColor = custColors.enabled == 0 and options.choices[i].type != 5 and palettes[palette][4] or 1
 	
 		-- Draw text boxes
-		rrectfill(_x - 20, _y + 1, _x2 + 1, _y2 + 1, 2, backColor)
-		rrectfill(_x - 20, _y, _x2, _y2, 2, 7)
-		print(options.choices[i].text, _x - 17, _y + 2, 1)
+		rrectfill(x - 20, y + 1, x2 + 1, y2 + 1, 2, backColor)
+		rrectfill(x - 20, y, x2, y2, 2, 7)
+		print(options.choices[i].text, x - 17, y + 2, 1)
 		
 		-- Draw value boxes
-		rrectfill(_valX, _y + 1, _valWidth, _y2 + 1, 2, backColor)
-		rrectfill(_valX, _y, _valWidth, _y2, 2, foreColor)
+		rrect(valX - 1, y - 1, valWidth + 1, y2 + 1, 3, 7)
+		rrect(valX, y + 1, valWidth + 1, y2 + 1, 3, 1)
+		rrectfill(valX, y + 1, valWidth, y2 + 1, 2, backColor)
+		rrectfill(valX, y, valWidth, y2, 2, foreColor)
 		if options.choices[i].value != nil then
-			print(options.choices[i].value, _textX, _textY, foreText)
+			print(options.choices[i].value, textX, textY, foreText)
 		end
 		
 		if selection == i then
-			showSelector(_valX + _valWidth / 2, _y + _y2 / 2)
+			showSelector(valX + valWidth / 2, y + y2 / 2)
 		end
 	end
 end
@@ -832,7 +880,6 @@ function _init()
 	
 	mouseClicked = trackMouseClicks()
 	
-	settings = setTextLength(settings)
 	setOptions()
 	firstLoad = true
 end
@@ -852,10 +899,6 @@ function _update()
 			if menu == true then
 				menuNav()
 			end
-		end
-		
-		if generating == true then
-			generateFunction()
 		end
 	end
 end
@@ -878,11 +921,14 @@ function _draw()
 		
 		blit(buf)
 		
-		if menu == true then
-			showMenu()
-			drawInstructions(20, 5)
+		if generating == true then
+			generateFunction()
 		end
 		
+		if menu == true then
+			drawInstructions(20, 5)
+			showMenu()
+		end
 		
 	else
 		cls(1)
@@ -894,7 +940,7 @@ end
 
 
 :: settings.lua
---[[pod_format="raw",created="2025-09-24 00:54:47",modified="2026-02-10 02:54:48",revision=196,xstickers={}]]
+--[[pod_format="raw",created="2025-09-24 00:54:47",modified="2026-08-31 19:10:22",revision=212,xstickers={}]]
 --[[BOOKMARK:Colors]]
 palettes = 
 {
@@ -951,9 +997,9 @@ instructions =
 		"X: Hide overlay",
 		"Z: Return to main menu",
 		"Up/Down: Scroll",
+		"   SHIFT: Change by 10",
+		"   CTRL: Change by 5",
 		"Left/Right: Change value",
-		"- CTRL: ",
-		"- SHIFT: ",
 	},
 	{
 		"X: Hide overlay",
@@ -993,88 +1039,88 @@ settings =
 {
 	countOptions =
 	{
-		text = "Point Count", tLength = 12 * 5 - 1, desc = "Number of points displayed on the screen", type = 2,
+		text = "Point Count", desc = "Number of points displayed on the screen", type = 2,
 		choices =
 		{
-			{text = "Vertical Count:", desc = "Number of points displayed vertically", tLength = 75, value = 3, increment = 1, minVal = 1, maxVal = 999, type = 3,},
-			{text = "Horizontal Count:", desc = "Number of points displayed horizontally", tLength = 85, value = 5, increment = 1, minVal = 1, maxVal = 999, type = 3,},
+			{text = "Vertical Count:", desc = "Number of points displayed vertically", value = 3, increment = 1, minVal = 1, maxVal = 999, type = 3,},
+			{text = "Horizontal Count:", desc = "Number of points displayed horizontally", value = 5, increment = 1, minVal = 1, maxVal = 999, type = 3,},
 		},
 	},
 	colorOptions = 
 	{
-		text = "Draw and Color", desc = "Color options and alternative options for point drawing", tLength = 15 * 5, type = 2,
+		text = "Draw and Color", desc = "Color options and alternative options for point drawing", type = 2,
 		choices =
 		{
-			{text = "Palette:", desc = "Pre-made color palette", tLength = 41, value = 5, increment = 1, minVal = 1, maxVal = #palettes, type = 3,},
-			{text = "Color Variation:", desc = "Repeat colors from color palette this many times", tLength = 79, value = 6, increment = 1, minVal = 0, maxVal = 999, type = 3,},
-			{text = "Filled Points:", desc = "When enabled, points will be solid. When disabled, points will be outlined", tLength = 14 * 5 - 2, value = 1, increment = 1, minVal = 0, maxVal = 1, type = 4,},
-			{text = "Redraw:", desc = "For outlined points, draw the point this many times in succession", tLength = 8 * 5 - 2, value = 0, increment = 1, minVal = 0, maxVal = 10, type = 3,},
-			{text = "Redraw Factor:", desc = "For redrawn points, draw subsequent points this much smaller", tLength = 15 * 5 - 2, value = 1, increment = 1, minVal = 1, maxVal = 999, type = 3,},
+			{text = "Palette:", desc = "Pre-made color palette", value = 5, increment = 1, minVal = 1, maxVal = #palettes, type = 3,},
+			{text = "Color Variation:", desc = "Repeat colors from color palette this many times", value = 6, increment = 1, minVal = 0, maxVal = 999, type = 3,},
+			{text = "Filled Points:", desc = "When enabled, points will be solid. When disabled, points will be outlined", value = 1, increment = 1, minVal = 0, maxVal = 1, type = 4,},
+			{text = "Redraw:", desc = "For outlined points, draw the point this many times in succession", value = 0, increment = 1, minVal = 0, maxVal = 10, type = 3,},
+			{text = "Redraw Factor:", desc = "For redrawn points, draw subsequent points this much smaller", value = 1, increment = 1, minVal = 1, maxVal = 999, type = 3,},
 		},
 	},
 	sizeOptions =
 	{
-		text = "Size and Position", desc = "Display offset, zoom, point size and growth rate", tLength = 17 * 5 + 2, type = 2,
+		text = "Size and Position", desc = "Display offset, zoom, point size and growth rate", type = 2,
 		choices =
 		{
-			{text = "Dot Size:", desc = "", tLength = 46, value = 24, increment = 1, minVal = 4, maxVal = 999, type = 3,},
-			{text = "Size Variation:", desc = "", tLength = 74, value = 20, increment = 1, minVal = 0, maxVal = 999, type = 3,},
-			{text = "Size Change Speed:", desc = "", tLength = 91, value = 10, increment = 1, minVal = 0, maxVal = 999, type = 3,},
-			{text = "Overall Y Offset:", desc = "", tLength = 85, value = 0, increment = 1, minVal = -999, maxVal = 999, type = 3,},
-			{text = "Overall X Offset:", desc = "", tLength = 85, value = 0, increment = 1, minVal = -999, maxVal = 999, type = 3,},
-			{text = "Zoom:", desc = "", tLength = 6 * 5 - 2, value = 100, increment = 1,  minVal = 1, maxVal = 999, type = 3,},
+			{text = "Dot Size:", desc = "", value = 24, increment = 1, minVal = 4, maxVal = 999, type = 3,},
+			{text = "Size Variation:", desc = "",  value = 20, increment = 1, minVal = 0, maxVal = 999, type = 3,},
+			{text = "Size Change Speed:", desc = "", value = 10, increment = 1, minVal = 0, maxVal = 999, type = 3,},
+			{text = "Overall Y Offset:", desc = "", value = 0, increment = 1, minVal = -999, maxVal = 999, type = 3,},
+			{text = "Overall X Offset:", desc = "", value = 0, increment = 1, minVal = -999, maxVal = 999, type = 3,},
+			{text = "Zoom:", desc = "", value = 100, increment = 1,  minVal = 1, maxVal = 999, type = 3,},
 		},
 	},
 	oscillationOptions =
 	{
-		text = "Oscillation Options", desc = "Speed at which points oscillate on sine wave", tLength = 19 * 5, type = 2,
+		text = "Oscillation Options", desc = "Speed at which points oscillate on sine wave", type = 2,
 		choices =
 		{
-			{text = "X Speed:", desc = "X sine oscillation speed", tLength = 42, value = 15, increment = 1, minVal = 1, maxVal = 999, type = 3,},
-			{text = "Y Speed:", desc = "Y sine oscillation speed", tLength = 42, value = 20, increment = 1, minVal = 1, maxVal = 999, type = 3,},
-			{text = "X Offset:", desc = "Starting position for X sine oscillation", tLength = 47, value = 0, increment = 1, minVal = 0, maxVal = 100, type = 3,},
-			{text = "Y Offset:", desc = "Starting position for Y sine oscillation", tLength = 47, value = 0, increment = 1, minVal = 0, maxVal = 100, type = 3,},
+			{text = "X Speed:", desc = "X sine oscillation speed", value = 15, increment = 1, minVal = 1, maxVal = 999, type = 3,},
+			{text = "Y Speed:", desc = "Y sine oscillation speed", value = 20, increment = 1, minVal = 1, maxVal = 999, type = 3,},
+			{text = "X Offset:", desc = "Starting position for X sine oscillation", value = 0, increment = 1, minVal = 0, maxVal = 100, type = 3,},
+			{text = "Y Offset:", desc = "Starting position for Y sine oscillation", value = 0, increment = 1, minVal = 0, maxVal = 100, type = 3,},
 		},
 	},
 	customColors =
 	{
-		text = "Custom Colors", desc = "Enable and specify custom colors", tLength = 14 * 5, type = 2,
+		text = "Custom Colors", desc = "Enable and specify custom colors", type = 2,
 		choices =
 		{
-			{text = "Color 4:", desc = "Fourth custom color; also initial background color", tLength = 8 * 5 + 1, value = 1, increment = 1, minVal = 0, maxVal = 31, type = 5,},
-			{text = "Color 3:", desc = "Third custom color", tLength = 8 * 5 + 1, value = 16, increment = 1, minVal = 0, maxVal = 31, type = 5,},
-			{text = "Color 2:", desc = "Second custom color", tLength = 8 * 5 + 1, value = 12, increment = 1, minVal = 0, maxVal = 31, type = 5,},
-			{text = "Color 1:", desc = "First custom color", tLength = 8 * 5 + 1, value = 28, increment = 1, minVal = 0, maxVal = 31, type = 5,},
-			{text = "Enabled:", desc = "Enable custom colors (overrides Palette setting)", tLength = 8 * 5 + 1, value = 0, increment = 1, minVal = 0, maxVal = 1, type = 4,},
+			{text = "Color 4:", desc = "Fourth custom color; also initial background color", value = 1, increment = 1, minVal = 0, maxVal = 31, type = 5,},
+			{text = "Color 3:", desc = "Third custom color", value = 16, increment = 1, minVal = 0, maxVal = 31, type = 5,},
+			{text = "Color 2:", desc = "Second custom color", value = 12, increment = 1, minVal = 0, maxVal = 31, type = 5,},
+			{text = "Color 1:", desc = "First custom color", value = 28, increment = 1, minVal = 0, maxVal = 31, type = 5,},
+			{text = "Enabled:", desc = "Enable custom colors (overrides Palette setting)", value = 0, increment = 1, minVal = 0, maxVal = 1, type = 4,},
 		}
 	},
 	generalOptions =
 	{
-		text = "General Options", desc = "Editor options and other general options", tLength = 15 * 5 + 3, type = 2,
+		text = "General Options", desc = "Editor options and other general options", type = 2,
 		choices =
 		{
-			{text = "Reset animation on setting change", desc = "Reset the animation when values are changed (this only affects the editor)", tLength = 33 * 5 + 3, value = 1, increment = 1, minVal = 0, maxVal = 1, type = 4,},
-			{text = "Clear screen after drawing points", desc = "Don't use paint-like effect, instead clearing screen before drawing points again", tLength = 31 * 5 + 4, value = 0, increment = 1, minVal = 0, maxVal = 1, type = 4,},
+			{text = "Reset animation on setting change", desc = "Reset the animation when values are changed (this only affects the editor)", value = 1, increment = 1, minVal = 0, maxVal = 1, type = 4,},
+			{text = "Clear screen after drawing points", desc = "Don't use paint-like effect, instead clearing screen before drawing points again", value = 0, increment = 1, minVal = 0, maxVal = 1, type = 4,},
 		}
 	},
 	generateOptions =
 	{
-		text = "Generate", desc = "", tLength = 9 * 5, type = 2,
+		text = "Generate", desc = "", type = 2,
 		choices =
 		{
-			{text = "Go back", desc = "", tLength = 8 * 5, type = 7,},
-			{text = "Save config file", desc = "", tLength = 16 * 5 + 2, type = 6,},
-			{text = "Load config file", desc = "", tLength = 16 * 5 + 2, type = 6,},
-			{text = "Save as background", desc = "", tLength = 19 * 5, type = 6,},
-			{text = "Save as screensaver", desc = "", tLength = 20 * 5, type = 6,},
-			{text = "Save to appdata", desc = "", tLength = 16 * 5 + 2, type = 6,},
+			{text = "Go back", desc = "", type = 7,},
+			{text = "Save config file", desc = "", type = 6,},
+			{text = "Load config file", desc = "", type = 6,},
+			--{text = "Save as background", desc = "", type = 6,},
+			--{text = "Save as screensaver", desc = "", type = 6,},
+			--{text = "Save to appdata", desc = "", type = 6,},
 		}
 	}
 }
 
 settings.mainOptions =
 {
-	text = "Options", tlength = 0, desc = "Options to configure the pattern, as well as save and load data", tlength = 7 * 4, type = 1,
+	text = "Options", desc = "Options to configure the pattern, as well as save and load data", tlength = 7 * 4, type = 1,
 	choices =
 	{
 		settings.generateOptions,
@@ -1101,17 +1147,6 @@ z =
 menu = false
 selection = #options
 selectorXMod = 0
-
-function setTextLength(_settings)
-	for _k, _v in pairs(_settings) do
-		for _i = 1, #_settings[_k].choices do
-			_choice = _settings[_k].choices[_i]
-			_settings[_k].choices[_i].tlength = print(_choice.text)
-		end
-	end
-	
-	return _settings
-end
 :: showMenu_log.txt
 --[[pod_format="raw",created="2026-02-10 00:11:36",modified="2026-02-10 00:12:02",revision=123]]
 ERROR: Could not find 'tLength' variable for General Options
@@ -1119,16 +1154,178 @@ ERROR: Could not find 'tLength' variable for General Options
 --[[pod_format="raw",created="2025-09-25 18:35:09",modified="2025-09-26 21:10:00",revision=1]]
 
 :: .info.pod
---[[pod,author="@DorkOrca",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-06-15 20:56:36",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=26,sandbox=false,title="Gogh Maker",version="1.0.0",workspaces={{location="settings.lua#59,15",workspace_index=1},{location="generate.lua#135,1",workspace_index=1},{location="main.lua#96,51",workspace_index=1}}]]
+--[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-08-31 20:28:41",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=27,sandbox=false,title="Gogh Maker",version="0.1",workspaces={{location="settings.lua#206,17",workspace_index=1},{location="generate.lua#93,2",workspace_index=1},{location="main.lua#99,29",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2025-09-22 22:46:25",modified="2026-06-15 20:56:36"]]
-:: gfx/0.lua
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA5LTIzIDE4OjI2OjE0Iixtb2RpZmllZD0iMjAyNS0w
-OS0yNSAyMjoyNzo1MyIscmV2aXNpb249MzFdXWx6NAB_AAAAEjEAAPMhe1swXT17Ym1wPXB4dQBD
-IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADLeT0wLHpvb209OH0sPgAf8DEA----
-------------------------------------------------------------11BtPTh9fQ==
+--[[pod,created="2025-09-22 22:46:25",modified="2026-08-31 20:28:41"]]
+:: label.qoi
+b64$cW9pZgAAAeAAAAEOBAH_HStT7-4kY7Dt-imt-8cg5Ar90v5k3-bJCsc2yQr90SDkCscg7Sj9
+3SDxCscg4wr91TbICsc2yAr91CDjCscg8Sj90yD2CsYg4Qr92DbICsc2yAr91yDhCsYg9ij9zCD3
+Cscg4Ar92TbICsc2xwr92SDgCscg9yj9xyD5Cscg4Ar92zbHCsc2xgr92yDgCscg_Sj9wCD9CsYg
+3wr93jbGCsc2xgr93SDfCsYg-Sj1IP3DCscg3Ar94TbFCsk2xAr94SDcCscg-cMo7SD9xQrHINwK
+-eQ2wwrJNsMK-eMg3ArHIP3FKOkg-cYKxiDcCv3mNsIKyTbCCv3lINwKxiD9xijlIP3ICscgzCjN
+CvAg0wreNsIKyTbACt8g0wrwKM0gzArHIP3IKN8g-coKxyjaCuUozyDZCtY2wArJNsAK1SDZKM8K
+5SjaCscg-coo1yD9wSjAIMoKxijZCuEo6yDOCss2wArJNgrLIM4o6wrhKNkKxiDKKMAg-cEozyD3
+KMsgygrGKNcK3Sj8IMgK3CDIKPwK3SjXCsYgyijLIPcoySD0KNEgygrFKNcK2yj90SDCCskgwSj9
+0QrbKNcKxSDKKNEg9CjEIOso3CDJCsYo1QrYKP3aCsko-dkK2CjVCsYgySjcIOsowCDoKOAgygrF
+KNUK1ij93QrJKP3cCtYo1QrFIMoo4CD9yyjoIMsKxCjVCtMo-eAKyyj93wrTKNUKxCDLKOgg_yjt
+IMsKxCjUCtEo-eAgwQrLIMAo-eAK0SjUCsQgyyjtIO0o9iDLCsQo0wrOKP3UIMgK3CDIKP3UCs4o
+0wrEIMso9iDhKPkgywrDKNIKzij9yyDOCss2Ctggzij9ywrOKNIKwyDLKPkg2Sj9wCDLCsIo0grN
+KP3CINMK0TYKyzYK0CDTKP3CCs0o0grCIMso-cAg0Sj9wyDLCsIo0ArNKPcg2QrUNsEKyzYK1SDZ
+KPcKzSjQCsIgyyj9wyDHKCDBKP3FIMwKwijOCs0o8yDcCtc2wQrLNsEK1iDcKPMKzSjOCsIgzCj9
+xSDBKCAo-cogzArCKM0KyyjxIN4K2TbCCss2wgrYIN4o8QrLKM0KwiDMKP391iDMCsIozArKKOkg
+5ArbNsQKyzbCCtwg5CjpCsoozArCIMwo-f3WIMwKwSjMCsoo3yDpCuI2wwrLNsMK4SDpKN8KyijM
+CsEgzCj9-dUgzQrBKMsKySjeIOkK5DbDCs02wwrjIOko3grJKMsKwSDNKP391CDNCsEoygrJKNgg
+7grlNsQKzTbDCuUg7ijYCskoygrBIM0o-f3UIM0KwCjKCsko0iDyCuc2xQrNNsQK5yDyKNIKySjK
+CsAgzSj9-dQgzQrAKMgKySjOIPUK6jbFCs02xQrpIPUozgrJKMgKwCDNKP391CDNCsAoxwrJKMUg
+_grvNsUKzTbFCu4g_ijFCskoxwrAIM0o-f3UIM0KKMcKySjEIPoK8DbGCs02xQrwIPooxArJKMcK
+IM0o-f3UIM0KKMYKySD8CvU2xgrNNsYK9CD8CskoxgogzSj9-dQgzQooxQrIIPwK9jbHCs02xgr2
+IPwKyCjFCiDNKP391CDNCijBIMEKyCD5Cvo2xwrNNsYK_iD5CsggwSjBCiDNKP390yDPKCDCCsgg
+_Ar8NsYKzzbFCvwg_ArIIMIoIM8o-f3SINQKxyD2Cv3ANscKzzbFCv3BIPYKxyDUKP390iDTCscg
+9Qr9wjbHCs82xgr9wiD1Cscg0yj9-dIg0grHIPQK-cQ2xwrPNsYK-cQg9ArHINIo-f3OINUKxyDz
+Cv3GNscKzzbGCv3GIPMKxyDVKP39xCDaCscg8Qr9yTbHCs82xgr9ySDxCscg2ij99SDgCscg7gr9
+zTbHCs82xgr9zSDuCscg4Cj97CDjCsUg7Qr9zzbGCtE2xQr9zyDtCsUg4yj94yDqCsUg6wr90TbG
+CtE2xQr90SDrCsUg6ij91SDxCsQg6Ar91TbGCtE2xAr91iDoCsQg8Sj9zCDzCsMg6Ar91zbFCtE2
+xAr91yDoCsMg8yj9xSD4CsIg5wr92TbFCtE2xAr92SDnCsIg_Cj3IP3BCsIg4wr93jbECtE2xAr9
+3SDjCsIg-cEo7SD9xArBIOMK-d82xArRNsQK-d4g4wrBIP3EKOcg-cgKIOMK-eE2wgrTNsIK-eAg
+4wog-cgo4CD9zAog4Qr94zbCCtM2wgr94iDhCiD9zCjVIP3TCiDdCv3oNsEK0zbBCv3nIN0KIP3T
+KMog-dcKINsK-es2wArTNsAK-eog2wog-dcoxCD99Qr97jYK0zYK-e0g-fUowCD99gr97jbACv39
+xiD9-fkowSDVKNcK7SDRCv30INEK7SjXINUowSD98ijCIMMoySDVKNQK4ijJIOQK-dIg5CjJCuIo
+1CDVKMkgwyjCIP3UKMAgwyjZINUo0grcKNsg3gr9yiDeKNsK3CjSINUo2SDDKMAg9iggxCjnINUo
+0ArXKPgg0wryINMo_ArXKNAg1SjnIMQoIOMo8yDVKM0K1Cj9yyDOCuYgzij9ywrUKM0g1SjzINgo
+_SDWKMoK0yj92SDICtwgyCj92QrTKMog1ij5IMgowCDBKP3AINYoyQrRKP3qCtUo-ekK0SjJINYo
+-cAgwSj9xyDWKMcKzij97wrVKP3uCs4oxyDWKP39zCDXKMQKzij98ArXKP3vCs4oxCDXKP39zCDX
+KMMKzSj98grXKP3xCs0owyDXKP39zCDXKMEKzSj99ArXKP3zCs0owSDXKP39zCDXKMAKyyj96iDI
+CtwgyCj96grLKMAg1yj9-cwg2ArLKP3gIM4K5iDOKP3gCssg2Cj9-cwg2ArJKP3XINMK8iDTKP3X
+Cskg2Cj9-cwg2ArIKP3NINkK-CDZKP3NCsgg2Cj9-cwg2ArGKP3EIN4K-cog3ij9xArGINgo-f3M
+INkKwyj6IOQK-dIg5Cj6CsMg2Sj9-cwg2QrCKPAg6Qr93iDpKPAKwiDZKP39zCDZCsEo7iDpCv3k
+IOko7grBINko-f3MINkKKOkg7gr96CDuKOkKINko-f3MINko3SD1Cv30IPUo3SDZKP39zCDZKNMg
+_grvNgr9zCD6KNMg2Sj9-cwg2SjRIPoK8TYK2TYK8CD6KNEg2Sj9-cwKINcoxyD9wgr2NsAK1zbA
+CvUg-cIoxyDXCij9-cwKIP3eCvs2wQrXNsEK_iD93goo-f3MCiD93Ar9NsEK1zbBCvwg-dwKKP39
+zArAINUKIP0K-cI2wwrVNsIK-cIg-Qog1QrAKP39zArBINMKwCD6Cv3FNsQK0zbDCv3FIPoKwCDT
+CsEo-f3LIArCINEKwiD3Cv3GNsYK0TbECv3HIPcKwiDRCsIgKP37IMwKwyDPCsMg8Ar9zTbHCs82
+xgr9zSDwCsMgzwrDIMwo-ewgzgrEIM0KxCDuCv3PNsgKzTbHCv3PIO4KxCDNCsQgzij93CDcCsUg
+ywrFIOgK-dU2yQrLNsgK-dUg6ArFIMsKxSDcKP3MIN4KyCDFCsgg5wr91jbMCsU2ywr91iDnCsgg
+xQrIIN4o-CDqCtkg4Qr93DbgCv3cIOEK2SDqKO0g7QrZIOAK-d024Ar93SDgCtkg7SjjIPQK2CDe
+Cv3gNuAK-eAg3grYIPQo0SD9wQrYINgK-eY23wr95yDYCtgg-cEoxCD9wwrYINYK-ek23gr96SDW
+Ctgg-cMowCD9xQrYINMK-ew23gr97CDTCtgg-f3MCtggzwr98TbdCv3wIM8K2CD9-cwK2SDJCv32
+Nt0K-fUgyQrZIP39zArZIMYK-fo22wr9_SDGCtkg-f3MCtkgwgr9-cA22wr9-SDCCtkg-f3MCtkg
+Cv39wzbaCv39wyAK2SD91SjEIMQoxyDDKMkgwyjIIAr6IArDIMAKwyDBCsMgwQr9yjbZCv3JIMEK
+wyDBCsMgwArDIAr6ICjIIMMoySDDKMcgxCjEIM4owCDBKP3ACu8gwArBIO0K9zbZCvYg7QrBIMAK
+7yj9wCDBKP3HCusoyyD1Cus22QrqIPUoywrrKP39zArmKN0g7grmNtcK5SDuKN0K5ij9-cwK4yj1
+IOQK2zbXCtog5Cj1CuMo-f3MCuAo-cQg3grXNtcK1iDeKP3ECuAo-f3MCt0o-dIg2QrRNtcK0CDZ
+KP3SCt0o-f3MCtoo-eAg0wrMNtcKyyDTKP3gCtoo-f3MCtko-ewgzgrFNtkKxCDOKP3sCtko-f3M
+Ctko-fcgyArANtkKIMgo-fcK2Sj9-cwK2Sj9-cU22Sj9-cQK2Sj9-cwK2Sj9-cU22Sj9-cQK2Sj9
+-cwK2Sj9-cU22Sj9-cQK2Sj9-cwK2Sj9-cU22Sj9-cQK2Sj9-cwK2Sj9-cU22Sj9-cQK2Sj9-c0K
+1yj9_CDICsE21wrAIMgo-fgK1yj9-c4K1yj97SDOCsY21wrFIM4o-e0K1yj9-c0K2Cj94iDTCsw2
+1wrLINMo-eIK2Cj9-cwK2Cj91yDZCtE21wrQINko-dcK2Cj9-cwK2Cj9zCDeCtc21wrWIN4o-cwK
+2Cj9-cwK2Sj9wSDkCto22QrZIOQo-cEK2Sj9-cwK2Sj0IOkK4DbZCt8g6Sj0Ctko-f3MCtko6iDu
+CuU22QrkIO4o6grZKP39zArZKN0g9QrrNtkK6iD1KN0K2Sj9-cwK2SjTIPoK8DbZCu8g_ijTCtko
+-f3MCtkoxiD9wgr2NtoK9iD9wijGCtko-f3MCtkg-cQK-DbbCvsg-cQK2Sj9-c0K1yD9Cv3ENtsK
+-cMg-QrXKP39zCDACtcg_Ar9yDbdCv3HIPgK1yDAKP35IM8K1yDwCv3QNt0K-c8g8ArXIM8o-dog
+3wrXIOgK-dc23gr91yDoCtcg3yj5IO4K1yDhCv3eNt4K-d4g4QrXIO4o1iD9xArXINcK-ec23wr9
+6CDXCtcg-cQowCD9xQr9-dw24Ar9-dwg-f3MCv393DbgCv393CD9-cwK-f3cNuAK-f3cIP39zAr9
+-dw24Ar9-dwg-f3MCv393DbgCv393CD9-cwK-f3cNuAK-f3cIP39zAr9-dw24Ar9-dwg-cUowCD9
+xArXINcK-ec23wr96CDXCtcg-cQo1iDuCtcg4Qr93jbeCv3eIOEK1yDuKPkg3wrXIOgK-dc23gr9
+1yDoCtcg3yj92iDPCtcg8Ar90DbdCv3PIPAK1yDPKP35IMAK1yD4Cv3INt0K-ccg_ArXIMAo-f3L
+Ctkg-Ar9xDbbCv3DIPwK2Sj9-cwK2SD9xAr8NtsK_yD9xArZKP39zArZKMYg-cIK9jbaCvYg-cIo
+xgrZKP39zArZKNMg_grwNtkK7yD6KNMK2Sj9-cwK2SjdIPUK6zbZCuog9SjdCtko-f3MCtko6iDu
+CuU22QrkIO4o6grZKP39zArZKPQg6QrgNtkK3yDpKPQK2Sj9-cwK2Cj9wiDkCts21wraIOQo-cIK
+2Cj9-cwK2Cj9zCDeCtc21wrWIN4o-cwK2Cj9-cwK2Cj91yDZCtE21wrQINko-dcK2Cj9-c0K1yj9
+4iDTCsw21wrLINMo-eIK1yj9-c4K1yj97SDOCsY21wrFIM4o-e0K1yj9-c0K2Sj99yDICsA22Qog
+yCj99wrZKP39zArZKP39xTbZKP39xArZKP39zArZKP39xTbZKP39xArZKP39zArZKP39xTbZKP39
+xArZKP39zArZKP39xTbZKP39xArZKP39zArZKP33IMgKwDbZCiDIKP33Ctko-f3MCtko-ewgzgrF
+NtkKxCDOKP3sCtko-f3MCtoo-eAg0wrMNtcKyyDTKP3gCtoo-f3MCt0o-dIg2QrRNtcK0CDZKP3S
+Ct0o-f3MCuAo-cQg3grXNtcK1iDeKP3ECuAo-f3MCuMo9SDkCts21wraIOQo9QrjKP39zArmKN0g
+7grmNtcK5SDuKN0K5ij9-cwK6yjLIPUK6zbZCuog9SjLCuso-ccgwSj9wArvIMAKwSDtCvc22Qr2
+IO0KwSDACu8o-cAgwSjAIM4oxCDEKMcgwyjJIMMoyCAK_iAKwyDACsMgwQrDIMEK-co22Qr9ySDB
+CsMgwQrDIMAKwyAK_iAoyCDDKMkgwyjHIMQoxCD91QrZIAr9-cM22gr9-cMgCtkg-f3MCtkgwgr9
+-cA22wr9-SDCCtkg-f3MCtkgxgr9_jbbCv35IMYK2SD9-cwK2SDJCv32Nt0K-fUgyQrZIP39zArY
+IM8K-fE23Qr98CDPCtgg-f3MCtgg0wr97DbeCv3sINMK2CD9xSjAIP3DCtgg1gr96TbeCv3pINYK
+2CD9wyjEIP3BCtgg2Ar95jbfCv3nINgK2CD9wSjRIPQK2CDeCv3gNuAK-eAg3grYIPQo4yDtCtkg
+4Ar93TbgCv3dIOAK2SDtKO0g6grZIOEK-dw24Ar93CDhCtkg6ij8IN4KyCDFCsgg5wr91jbMCsU2
+ywr91iDnCsggxQrIIN4o-cwg3ArFIMsKxSDoCv3VNskKyzbICv3VIOgKxSDLCsUg3Cj93CDOCsQg
+zQrEIO4K-c82yArNNscK-c8g7grEIM0KxCDOKP3sIMwKwyDPCsMg8Ar9zTbHCs82xgr9zSDwCsMg
+zwrDIMwo-fsgCsIg0QrCIPcK-cY2xgrRNsQK-ccg9wrCINEKwiAo-f3LCsEg0wrAIPoK-cU2xArT
+NsMK-cUg_grAINMKwSj9-cwKwCDVCiD9Cv3CNsMK1TbCCv3CIP0KINUKwCj9-cwKIP3cCv02wQrX
+NsEK-CD93Aoo-f3MCiD93gr7NsEK1zbBCvog-d4KKP39zAog1yjHIP3CCvY2wArXNsAK9SD9wijH
+INcKKP39zCDZKNEg_grxNgrZNgrwIPoo0SDZKP39zCDZKNMg_grvNgr9zCD6KNMg2Sj9-cwg2Sjd
+IPUK-fQg9SjdINko-f3MINkKKOkg7gr96CDuKOkKINko-f3MINkKwSjuIOkK-eQg6SjuCsEg2Sj9
+-cwg2QrCKPAg6Qr93iDpKPAKwiDZKP39zCDZCsMo_iDkCv3SIOQo_grDINko-f3MINgKxij9xCDe
+Cv3KIN4o-cQKxiDYKP39zCDYCsgo-c0g2Qr8INko-c0KyCDYKP39zCDYCsko-dcg0wryINMo-dcK
+ySDYKP39zCDYCsso-eAgzgrmIM4o-eAKyyDYKP39zCDXKMAKyyj96iDICtwgyCj96grLKMAg1yj9
+-cwg1yjBCs0o-fQK1yj98wrNKMEg1yj9-cwg1yjDCs0o-fIK1yj98QrNKMMg1yj9-cwg1yjECs4o
+-fAK1yj97wrOKMQg1yj9-cwg1ijHCs4o-e8K1Sj97grOKMcg1ij9xyDBKP3AINYoyQrRKP3qCtUo
+-ekK0SjJINYo-cAgwSjAIMgo_SDWKMoK0yj92SDICtwgyCj92QrTKMog1ij5INgo8yDVKM0K1Cj9
+yyDOCuYgzij9ywrUKM0g1SjzIOMoIMQo5yDVKNAK1yj4INMK8iDTKPgK1yjQINUo5yDEKCD2KMAg
+wyjZINUo0grcKNsg3gr9yiDeKNsK3CjSINUo2SDDKMAg-dQowiDDKMkg1SjUCuIoySDkCv3SIOQo
+yQriKNQg1SjJIMMowiD98ijBINUo1wrtINEK-fQg0QrtKNcg1SjBIP39_Qr97jbACv39xiD99ijA
+IP31Cv3uNgrTNgr97SD99SjEIP3XCiDbCv3rNsAK0zbACv3qINsKIP3XKMog-dMKIN0K-eg2wQrT
+NsEK-ecg3Qog-dMo1SD9zAog4Qr94zbCCtM2wgr94iDhCiD9zCjgIP3ICiDjCv3hNsIK0zbCCv3g
+IOMKIP3IKOcg-cQKwSDjCv3fNsQK0TbECv3eIOMKwSD9xCjtIP3BCsIg4wr93jbECtE2xAr93SDj
+CsIg-cEo9yD4CsIg5wr92TbFCtE2xAr92SDnCsIg_Cj9xSDzCsMg6Ar91zbFCtE2xAr91yDoCsMg
+8yj9zCDxCsQg6Ar91TbGCtE2xAr91iDoCsQg8Sj91SDqCsUg6wr90TbGCtE2xQr90SDrCsUg6ij9
+4yDjCsUg7Qr9zzbGCtE2xQr9zyDtCsUg4yj97CDgCscg7gr9zTbHCs82xgr9zSDuCscg4Cj99SDa
+Cscg8Qr9yTbHCs82xgr9ySDxCscg2ij9-cQg1QrHIPMK-cY2xwrPNsYK-cYg8wrHINUo-f3OINIK
+xyD0Cv3ENscKzzbGCv3EIPQKxyDSKP390iDTCscg9Qr9wjbHCs82xgr9wiD1Cscg0yj9-dIg1ArH
+IPYK-cA2xwrPNsUK-cEg9grHINQo-f3SIM8oIMIKyCD4Cvw2xgrPNsUK-CD4Csggwiggzyj9-dMg
+zQoowSDBCsgg_Qr6NscKzTbGCvog_QrIIMEowQogzSj9-dQgzQooxQrIIPwK9jbHCs02xgr2IPwK
+yCjFCiDNKP391CDNCijGCskg-Ar1NsYKzTbGCvQg-ArJKMYKIM0o-f3UIM0KKMcKySjEIPoK8DbG
+Cs02xQrwIPooxArJKMcKIM0o-f3UIM0KwCjHCskoxSD6Cu82xQrNNsUK7iD6KMUKySjHCsAgzSj9
+-dQgzQrAKMgKySjOIPUK6jbFCs02xQrpIPUozgrJKMgKwCDNKP391CDNCsAoygrJKNIg8grnNsUK
+zTbECucg8ijSCskoygrAIM0o-f3UIM0KwSjKCsko2CDuCuU2xArNNsMK5SDuKNgKySjKCsEgzSj9
+-dQgzQrBKMsKySjeIOkK5DbDCs02wwrjIOko3grJKMsKwSDNKP391SDMCsEozArKKN8g6QriNsMK
+yzbDCuEg6SjfCsoozArBIMwo-f3WIMwKwijMCsoo6SDkCts2xArLNsIK3CDkKOkKyijMCsIgzCj9
+-dYgzArCKM0KyyjxIN4K2TbCCss2wgrYIN4o8QrLKM0KwiDMKP3KICggwSj9xSDMCsIozgrNKPMg
+3ArXNsEKyzbBCtYg3CjzCs0ozgrCIMwo-cUgwSggxyj9wyDLCsIo0ArNKPcg2QrUNsEKyzYK1SDZ
+KPcKzSjQCsIgyyj9wyDRKP3AIMsKwijSCs0o-cIg0wrRNgrLNgrQINMo-cIKzSjSCsIgyyj9wCDZ
+KPkgywrDKNIKzij9yyDOCss2Ctggzij9ywrOKNIKwyDLKPkg4Sj2IMsKxCjTCs4o-dQgyArcIMgo
+-dQKzijTCsQgyyj2IO0o7SDLCsQo1ArRKP3gIMEKyyDAKP3gCtEo1ArEIMso7SD7KOggywrEKNUK
+0yj94ArLKP3fCtMo1QrEIMso6CD9yyjgIMoKxSjVCtYo-d0KySj93ArWKNUKxSDKKOAg6CjAIOso
+3CDJCsYo1QrYKP3aCsko-dkK2CjVCsYgySjcIOsoxCD0KNEgygrFKNcK2yj90SDCCskgwSj90Qrb
+KNcKxSDKKNEg9CjJIPcoyyDKCsYo1wrdKPwgyArcIMgo-ArdKNcKxiDKKMsg9yjPIP3BKMAgygrG
+KNkK4SjrIM4KyzbACsk2CssgzijrCuEo2QrGIMoowCD9wSjXIP3KCsco2grlKM8g2QrWNsAKyTbA
+CtUg2SjPCuUo2grHIP3KKN8g-cgKxyDMKM0K8CDTCt42wgrJNsAK3yDTCvAozSDMCscg-cgo5SD9
+xgrGINwK-eY2wgrJNsIK-eUg3ArGIP3GKOkg-cUKxyDcCv3kNsMKyTbDCv3jINwKxyD9xSjtIP3D
+Cscg3Ar94TbFCsk2xAr94SDcCscg-cMo9SD9CsYg3wr93jbGCsc2xgr93SDfCsYg-Sj9wCD5Cscg
+4Ar92zbHCsc2xgr92yDgCscg_Sj9xyD3Cscg4Ar92TbICsc2xwr92SDgCscg9yj9zCD2CsYg4Qr9
+2DbICsc2yAr91yDhCsYg9ij90yDxCscg4wr91TbICsc2yAr91CDjCscg8Sj93SDtCscg5Ar90jbJ
+Csc2yQr90SDkCscg7SjvAAAAAAAAAAE=
+:: presets/.info.pod
+--[[pod,created="2026-08-29 00:38:45",file_item={},modified="2026-08-31 20:28:41"]]
+:: presets/bisex.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTEyIDE5OjExOjA3Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMiAxOToxMTowNyIscmV2aXNpb249MF1dbHo0AEUAAABIAAAA8A97WzBdPSJnb2doIiw0LDgs
+MjIsMywxLDIsMjAsMzAEACAsMAwAgDYwLDM4LDEwDwBBMCwxNgYAsDcsMTIsNywwLDB9
+:: presets/candycotton.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTEyIDE5OjI5OjA3Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMiAxOToyOTowNyIscmV2aXNpb249MF1dbHo0AEkAAABJAAAA8BJ7WzBdPSJnb2doIiwzLDgs
+MTcsMywwLDQsMiwxMCw2MCwCACAzMA0A8AIxMDAsLTg3LC0xNzIsOTcsMC0AkDEyLDcsMCwwfQ==
+:: presets/fluid.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTAxIDIyOjMwOjI0Iixtb2RpZmllZD0iMjAyNS0x
+MC0wMSAyMjozMDoyNCIscmV2aXNpb249MF1dbHo0AD8AAABEAAAA8BF7WzBdPSJnb2doIiwzLDUs
+NSw2LDEsMCwxLDE1LDIwLAIAIDI0CgASMQ0AITEwHQDANiwxMiwyOCwwLDB9
+:: presets/kaleido.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTAyIDAxOjI5OjA4Iixtb2RpZmllZD0iMjAyNS0x
+MC0wMiAwMToyOTowOCIscmV2aXNpb249MF1dbHo0AEkAAABMAAAA8Rx7WzBdPSJnb2doIiwyLDIs
+NywxLDAsMyw1MCw5OTksMTAwLDAsMjAsMjU0DQABBABwODksMCwxNhsAwDE3LDEyLDcsMCwwfQ==
+:: presets/puzzled.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTEyIDE5OjE5OjM1Iixtb2RpZmllZD0iMjAyNi0w
+Mi0xMiAxOToxOTozNSIscmV2aXNpb249MF1dbHo0AEkAAABKAAAA8SF7WzBdPSJnb2doIiw0LDgs
+MTUsMywxLDQsMTYsNTAsMTUwLDAsMjAsNjAsMzgsMTAPAFA5MCwxNgoAwDE3LDEyLDcsMCwwfQ==
+:: presets/seafoam.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTEyIDE5OjAzOjQzIixtb2RpZmllZD0iMjAyNi0w
+Mi0xMiAxOTowMzo0MyIscmV2aXNpb249MF1dbHo0AEUAAABFAAAA8AN7WzBdPSJnb2doIiwzLDMs
+MTgFAPAFLDAsNTcsMTIwLDEyLDAsMjAsODQGAHA5LDAsMCw3BQDAMTcsMTIsNywwLDB9
+:: presets/silkspun.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTExIDAxOjU2OjIzIixtb2RpZmllZD0iMjAyNi0w
+Mi0xMSAwMTo1NjoyMyIscmV2aXNpb249MF1dbHo0AD0AAABBAAAA8RB7WzBdPSJnb2doIiwzLDUs
+MTQsNiwwLDAsMSwxMiw1CwAQNA8AETALACA1NRkAwDYsMTIsMjgsMCwwfQ==
+:: presets/starsign.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTAxIDIyOjMwOjA4Iixtb2RpZmllZD0iMjAyNS0x
+MC0wMSAyMjozMDowOCIscmV2aXNpb249MF1dbHo0AEEAAABGAAAA8AZ7WzBdPSJnb2doIiwzLDIs
+NSw1LDAIAGE3LDI1LDMNAFAwLDI1NAcAMDEwLAIAITEwBgCwNywxMiw3LDEsMX0=
 :: sfx/.info.pod
---[[pod,created="2025-09-25 18:18:30",modified="2026-06-15 20:56:36"]]
+--[[pod,created="2025-09-25 18:18:30",modified="2026-08-31 20:28:41"]]
 :: snd/.info.pod
---[[pod,created="2025-09-25 18:18:26",modified="2026-06-15 20:56:36"]]
+--[[pod,created="2025-09-25 18:18:26",modified="2026-08-31 20:28:41"]]
 :: [eoc]
