@@ -1,0 +1,116 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: gfx/
+:: map/
+:: sfx/
+:: interpreter.lua
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-06 09:48:59",revision=8,xstickers={}]]
+local Word = {
+	val = "",
+	mode = 0, -- 0 = unknown 1 = text, 2 = number
+	func = function() end
+}
+
+function Word.new(val, mode, func)
+	local word = {}
+	setmetatable(word, Word)
+	
+	word.val =
+		val == nil	and	"<nil>" or
+								val
+	
+	word.mode =
+		type(val) == "string"		and 	1 or
+		type(val) == "number" 	and 	2 or
+												0
+	
+	word.func =
+		type(func) == "function"	and	func or
+												word.func
+	
+	return word
+end
+
+function Word:interpret()
+	
+end
+
+
+local Sentence = {
+	words = {}
+}
+
+function Sentence.splitString(string)
+	local splitString = split(string, " ", true)
+end
+
+function Sentence:new(string)
+	self.words = self.splitString(string)
+end
+
+function Sentence:interpret()
+	
+end
+:: main.lua
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-06 09:04:11",revision=7,xstickers={}]]
+--[[--[[--[[--[[--[[--[[--[[--[[--[[--[[
+
+
+       **** **** **** **** *  *
+       ***  *  * ***   **  ****  
+       *    **** *  *  **  *  *
+
+         ** * **** **** ****
+    ***  ** *  **   **  **    ***
+         * ** ****  **  ****
+
+   A Forth interpreter for zoomers
+      by Taro Garza / DorkOrca
+
+            Version 0.01
+
+ -----------------------------------
+
+Based on the Forth 2012 Standard
+  courtesy of forth-standard.org
+
+Logo design by Gerald Wodni
+  https://github.com/GeraldWodni/forth-logo
+
+
+--]]--]]--]]--]]--]]--]]--]]--]]--]]--]]
+
+
+function _init()
+
+end
+
+while true do
+	
+end
+:: .info.pod
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-06 09:49:00",runtime=26,workspaces={{location="main.lua#34,2",workspace_index=1},{location="interpreter.lua#40,23",workspace_index=1}}]]
+:: gfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+-----------------------------------------------------------XUG09OH19
+:: map/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: [eoc]
