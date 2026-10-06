@@ -607,7 +607,7 @@ end
 --[[pod_format="raw",created="2025-09-23 18:26:14",modified="2026-08-29 00:35:12",revision=32,xstickers={}]]
 
 :: main.lua
---[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-08-31 20:05:44",revision=1216,xstickers={}]]
+--[[pod_format="raw",created="2025-09-16 20:22:11",modified="2026-10-03 00:32:05",revision=1298,xstickers={}]]
 include("./settings.lua")
 include("./generate.lua")
 
@@ -662,7 +662,69 @@ function setOptions()
 	return true
 end
 
-function paint()
+function makePaintParams()
+	-- Returns a table to be supplied to paint()
+	local colors = custColors.enabled == 0 and palettes[palette] or custColors
+	local points = userdata("f64", 5, (width + 1) * (height + 1) * max(redraw, 1))
+	local timer = t() - startTime
+	local tick = sin(timer / sizeChangeSpeed) * sizeVar
+	
+	local xPhase = sin(timer / xTick + xOffset / 100)
+	local yPhase = cos(timer / yTick + yOffset / 100)
+	
+	for i = 0, width do
+		for j = 0, height do
+			for k = 0, redraw do
+				local kx = dotSize - ((k + 1) * redrawFactor)
+				
+				local x = i * ((240 / width) * 2) * xPhase
+				local y = j * ((120 / height) * 2) * yPhase
+				local r = (kx + tick) * zoom
+				local col = colors[flr(i/colorMod)%4+1]
+				
+				points:set(0, k + j + i * height, x, y, r, col, kx)
+			end
+		end
+	end
+	
+	return points
+end
+
+function updatePaintParams(params)
+	local timer = t() - startTime
+	local tick = sin(timer / sizeChangeSpeed) * sizeVar
+	local userdataSize = width * height * (redraw + 1)
+	
+	local paramsWithRadius0 = params:sub(params, 2, 2, 1, 5, 5, userdataSize)
+	local paramsWithRadiusKX = paramsWithRadius0:add(params, 2, 4, 1, 5, 5, userdataSize)
+	local paramsWithRadiusKXPlusTick = paramsWithRadiusKX:add(tick, 2, 0, 1, 5, 0, userdataSize)
+	local finalParams = paramsWithRadiusKXPlusTick:mul(zoom, 2, 0, 1, 5, 0, userdataSize)
+	
+	return finalParams
+end
+
+function exportPaintParams(params, path)
+	path = path == nil and "debug.pod" or path
+	local data = {}
+	
+	for i = 0, width do
+		for j = 0, height do
+			local index = (j + i * height) * 5
+			for i = 0, 4 do
+				data[index + i] = params:get(i, j + i * height)
+			end
+		end
+	end
+	
+	store("debug.pod", data)
+end
+
+function drawPaintParams(params)
+	local func = dotsFilled == 1 and circfill or circ
+	func(params)
+end
+
+function paint(params)
 	-- Draw the background
 	_colors = custColors.enabled == 0 and palettes[palette] or custColors
 	myTable = {}
@@ -881,11 +943,15 @@ function _init()
 	mouseClicked = trackMouseClicks()
 	
 	setOptions()
+	params = makePaintParams()
+	
 	firstLoad = true
 end
 
 function _update()
 	if firstLoad == true then
+		updatePaintParams(params)
+		
 		if generating == false then
 			local mx, my, mb = mouse()
 			if btnp(5) then
@@ -916,7 +982,7 @@ function _draw()
 		if h > 0 then
 			cls(colors[4])
 		end
-		paint()
+		drawPaintParams(params)
 		set_draw_target()
 		
 		blit(buf)
@@ -940,7 +1006,7 @@ end
 
 
 :: settings.lua
---[[pod_format="raw",created="2025-09-24 00:54:47",modified="2026-08-31 19:10:22",revision=212,xstickers={}]]
+--[[pod_format="raw",created="2025-09-24 00:54:47",modified="2026-09-02 23:34:38",revision=215,xstickers={}]]
 --[[BOOKMARK:Colors]]
 palettes = 
 {
@@ -1154,9 +1220,13 @@ ERROR: Could not find 'tLength' variable for General Options
 --[[pod_format="raw",created="2025-09-25 18:35:09",modified="2025-09-26 21:10:00",revision=1]]
 
 :: .info.pod
---[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-08-31 20:28:41",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=27,sandbox=false,title="Gogh Maker",version="0.1",workspaces={{location="settings.lua#206,17",workspace_index=1},{location="generate.lua#93,2",workspace_index=1},{location="main.lua#99,29",workspace_index=1}}]]
+--[[pod,author="DorkOrca / gachapon.party",bbs_id="_dev2675",created="2025-09-16 20:22:07",icon=userdata("u8",16,16,"0000000000000000000000000000000000010101010101010101010101010100010707070707070707070707070707010107180408190a090a1a0a0b1c01070101070408190a090a1a0a0b1c03100701010708190a090a1a0a0b1c030c0207010107190a090a1a0a0b1c030c1213070101070a090a1a0a0b1c030c121001070101070419031913100110021301150701010707070707070707070707070707010107071d1d1d1d1d1d1d1d1d070707010107071d1d1d1d1d1d1d1d1d07071d01010707070707070707070707071d0100011d1d1d1d1d1d1d1d1d1d1d1d0100000001010101010101010101010100000000000000000000000000000000000000"),modified="2026-10-03 00:32:05",notes="Create trippy backgrounds and screen-\nsavers with this easy-to-use generator!",runtime=27,sandbox=false,title="Gogh Maker",version="0.1",workspaces={{location="settings.lua#1,17",workspace_index=1},{location="generate.lua#93,2",workspace_index=1},{location="main.lua#162,4",workspace_index=1}}]]
+:: debug.pod
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTEwLTAyIDIyOjI4OjUzIixtb2RpZmllZD0iMjAyNi0x
+MC0wMiAyMzo1NDowMiIscmV2aXNpb249MTEzXV1sejQARgAAAFkBAADge1swXT0wLDAsMjMsMjgG
+APMELTIwLjQxODg0NDMxMTQxOCw0OB0AZzAsMCw5Ng0AODE0NA4AJzkyDgAPUgDoUDI4LDB9
 :: gfx/.info.pod
---[[pod,created="2025-09-22 22:46:25",modified="2026-08-31 20:28:41"]]
+--[[pod,created="2025-09-22 22:46:25",modified="2026-10-03 00:32:05"]]
 :: label.qoi
 b64$cW9pZgAAAeAAAAEOBAH_HStT7-4kY7Dt-imt-8cg5Ar90v5k3-bJCsc2yQr90SDkCscg7Sj9
 3SDxCscg4wr91TbICsc2yAr91CDjCscg8Sj90yD2CsYg4Qr92DbICsc2yAr91yDhCsYg9ij9zCD3
@@ -1291,7 +1361,7 @@ Cscg3Ar94TbFCsk2xAr94SDcCscg-cMo9SD9CsYg3wr93jbGCsc2xgr93SDfCsYg-Sj9wCD5Cscg
 2DbICsc2yAr91yDhCsYg9ij90yDxCscg4wr91TbICsc2yAr91CDjCscg8Sj93SDtCscg5Ar90jbJ
 Csc2yQr90SDkCscg7SjvAAAAAAAAAAE=
 :: presets/.info.pod
---[[pod,created="2026-08-29 00:38:45",file_item={},modified="2026-08-31 20:28:41"]]
+--[[pod,created="2026-08-29 00:38:45",file_item={},modified="2026-10-03 00:32:05"]]
 :: presets/bisex.pod
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI2LTAyLTEyIDE5OjExOjA3Iixtb2RpZmllZD0iMjAyNi0w
 Mi0xMiAxOToxMTowNyIscmV2aXNpb249MF1dbHo0AEUAAABIAAAA8A97WzBdPSJnb2doIiw0LDgs
@@ -1325,7 +1395,7 @@ b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTEwLTAxIDIyOjMwOjA4Iixtb2RpZmllZD0iMjAyNS0x
 MC0wMSAyMjozMDowOCIscmV2aXNpb249MF1dbHo0AEEAAABGAAAA8AZ7WzBdPSJnb2doIiwzLDIs
 NSw1LDAIAGE3LDI1LDMNAFAwLDI1NAcAMDEwLAIAITEwBgCwNywxMiw3LDEsMX0=
 :: sfx/.info.pod
---[[pod,created="2025-09-25 18:18:30",modified="2026-08-31 20:28:41"]]
+--[[pod,created="2025-09-25 18:18:30",modified="2026-10-03 00:32:05"]]
 :: snd/.info.pod
---[[pod,created="2025-09-25 18:18:26",modified="2026-08-31 20:28:41"]]
+--[[pod,created="2025-09-25 18:18:26",modified="2026-10-03 00:32:05"]]
 :: [eoc]
