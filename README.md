@@ -1,6 +1,18 @@
 # picotron
 **Current Projects**
 
+Fish Person Shooter:
+- FPS dungeon crawler
+- Progress:
+  - Procedural maze gen for dungeon layout
+  - Maze can be explored w/ collision
+  - Ray tracing
+  - Intro and start screens
+- To-Dos:
+  - Fix intro (broken after port)
+  - Optimize ray tracing with batch gfx processing
+  - Add the actual game to the maze
+
 Zombini:
 - Top-down zombie survival game
 - Progress:
