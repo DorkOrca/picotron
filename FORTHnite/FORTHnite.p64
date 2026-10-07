@@ -5,30 +5,27 @@ version 2
 :: map/
 :: sfx/
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-07 00:32:14",revision=43,xstickers={}]]
-function try(func, ...)
-	if type(func) != "function" then
-		--TODO:Error handling
-		return false, 
-			"Error in try: func is not a function. func is a " .. type(func) .. " with a value of " .. tostr(func)
-	end
-	
-	local args = {...}
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-07 08:20:13",revision=44,xstickers={}]]
+function try(...)
+	-- Try a function, evaluating results for errors
 	
 	-- result is a table containing return
 	-- values from the executed function
-	local result = {func(table.unpack(args))}
+	local result = {...}
 	
+	-- To be flagged, a function must return two arguments:
+	-- false, and a string containing the error
 	if result[1] == false and #result > 1 then
 		local getinfo = debug.getinfo(func, "S")
-		print("Error in " .. tostr(getinfo.short_src) .. ":" .. getinfo.linedefined .. " - " .. result[2])
+		print("Error in " .. tostr(getinfo.short_src) .. ":" .. getinfo.linedefined .. " - " .. tostr(result[2]))
 		return nil
 	end
 	
+	-- If not flagged, then the results are returned as they were received
 	return unpack(result)
 end
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-07 07:04:28",revision=142,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-07 08:59:01",revision=177,xstickers={}]]
 include("errorhandler.lua")
 
 --[[
@@ -51,7 +48,7 @@ local Word = {
 	mode = 0 -- 0 = unknown, 1 = func, 2 = number, 3 = forth string
 }
 
-function Word.new(name, val, mode)
+function Word.new(name, val)
 	local word = {}
 	setmetatable(word, {__index = Word})
 	
@@ -91,8 +88,15 @@ function Word:validate()
 	return nameIsValid and modeIsValid and valIsValid
 end
 
-function Word:interpret()
+function Word:interpret(interpreter)
+	local pile = interpreter.stack.pile
 	
+	if self.mode == 1 then
+		self.val(pile)
+		return true
+	else
+		return false, "Word had mode " .. self.mode
+	end
 end
 
 --[[
@@ -155,10 +159,31 @@ function Dictionary:addWord(word)
 	end
 end
 
-function Dictionary:initialize()
+function Dictionary:generateWords(wordList)
+	if #wordList <= 0 then
+		return false, "wordList had 0 entries."
+	end
+	
+	for k, v in ipairs(wordList) do
+		local word = Word.new(v.name, v.val)
+		self:addWord(word)
+	end
+	
+	return true
+end
+
+function Dictionary:initialize(interpreter)
+	local stack = interpreter.stack
+
 	local defaultWords = {
-		{},
+		{name = ".", val = function() stack:pop() end},
+		{name = "DROP", val = function() stack:drop() end},
+		{name = "2DROP", val = function() stack:drop(2) end},
 	}
+	
+	try(self:generateWords(defaultWords))
+	
+	return true
 end
 
 function Dictionary.new(name)
@@ -193,7 +218,7 @@ function Sentence:splitString(string)
 	local splitStr = split(string, " ", true)
 	
 	if splitStr == nil then
-		return false, "split function returned nil."
+		return false, "split() function returned nil."
 	end
 	
 	if #splitStr <= 0 then
@@ -209,7 +234,7 @@ function Sentence.new(string, dictionary, mode)
 	local sentence = {}
 	setmetatable(sentence, {__index = Sentence})
 	
-	try(sentence.splitString, sentence, string)
+	try(sentence:splitString(string))
 	
 	sentence.dictionary =
 		dictionary == nil	and	Dictionary.new()
@@ -221,7 +246,7 @@ end
 
 function Sentence:interpret(interpreter)
 	local tokens = self.tokens
-	local index = self.dictionary.index
+	local index = interpreter.dictionary.index
 	local stack = interpreter.stack
 	
 	local compiledName = ""
@@ -238,9 +263,9 @@ function Sentence:interpret(interpreter)
 					print(token .. "?")
 					break
 				end
-				word.func(stack)
+				try(word:interpret(interpreter))
 			elseif type(token) == "number" then -- If word represents a number
-				stack:push(token)
+				try(stack:push(token))
 			else -- If the word is some other forbidden thing
 				print("Error in Sentence:interpret: word.name wasn't a string or number.  Val: " .. tostr(word.name));
 			end
@@ -281,7 +306,14 @@ function Stack.new(pile, pointer)
 end
 
 function Stack:pop()
-
+	local pile = self.pile
+	
+	if #pile <= 0 then
+		return false, "Stack pile is empty: " .. #pile
+	end
+	
+	print(deli(pile))
+	return true
 end
 
 function Stack:push(num)
@@ -289,7 +321,25 @@ function Stack:push(num)
 		return false, "num isn't a number."
 	end
 	
+	add(self.pile, num)
+	return true
+end
+
+function Stack:drop(i)
+	local i =
+		(type(i) != "number" or i == nil)	and	1
+														or 	i
+	local pile = self.pile
 	
+	if #pile <= 0 then
+		return false, "Stack pile is empty: " .. #pile
+	end
+	
+	for i = 1, i do
+		deli(pile)
+	end
+	
+	return true
 end
 
 --[[
@@ -312,6 +362,11 @@ function Interpreter.new(dictionary, stack)
 		dictionary == nil	and	Dictionary.new()
 								or		dictionary
 	
+	interpreter.dictionary:initialize(interpreter)
+	interpreter.dictionary:buildIndex()
+	
+	print(#interpreter.dictionary.index)
+	
 	interpreter.stack =
 		stack == nil			and	Stack.new()
 								or		stack
@@ -323,7 +378,7 @@ function Interpreter:run(string)
 	-- Generate a sentence using the given string
 	local sentence = Sentence.new(string)
 	-- Interpret the sentence
-	sentence:interpret(self)
+	try(sentence:interpret(self))
 	
 end
 :: main.lua
@@ -367,23 +422,23 @@ while true do
 	forth:run(string)
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a090e08000000000000121c07070707070707090800000000120707070707070707070707080000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800001207070707070707011306070800000000121c0707070707060609080000000000000d1d1c1a1a0a090e080000000000000000000000000000000000000000"),modified="2026-10-07 07:04:28",runtime=27,workspaces={{location="main.lua#12,9",workspace_index=1},{location="interpreter.lua#23,19",workspace_index=1},{location="errorhandler.lua#12",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-07 08:59:01",runtime=26,workspaces={{location="main.lua#12,9",workspace_index=1},{location="interpreter.lua#63,1",workspace_index=1},{location="errorhandler.lua#16,72",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 08:59:01"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 08:59:01"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 08:59:01"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
