@@ -4,58 +4,327 @@ version 2
 :: gfx/
 :: map/
 :: sfx/
+:: errorhandler.lua
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-07 00:32:14",revision=43,xstickers={}]]
+function try(func, ...)
+	if type(func) != "function" then
+		--TODO:Error handling
+		return false, 
+			"Error in try: func is not a function. func is a " .. type(func) .. " with a value of " .. tostr(func)
+	end
+	
+	local args = {...}
+	
+	-- result is a table containing return
+	-- values from the executed function
+	local result = {func(table.unpack(args))}
+	
+	if result[1] == false and #result > 1 then
+		local getinfo = debug.getinfo(func, "S")
+		print("Error in " .. tostr(getinfo.short_src) .. ":" .. getinfo.linedefined .. " - " .. result[2])
+		return nil
+	end
+	
+	return unpack(result)
+end
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-06 09:48:59",revision=8,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-07 01:00:03",revision=138,xstickers={}]]
+include("errorhandler.lua")
+
+--[[
+Class: Word
+
+Elements:
+ - name: String containing full word
+ - mode: Number representing val's type
+ - val: Value of some kind (func, number, or forth string)
+ 
+Functions:
+ - new: Return a new Word
+ - validate: Validate all of a word's fields
+ - interpret: Either executes a word
+   or puts a number on the stack
+]]
 local Word = {
-	val = "",
-	mode = 0, -- 0 = unknown 1 = text, 2 = number
-	func = function() end
+	name = "<nil>",
+	val = function() return end,
+	mode = 0 -- 0 = unknown, 1 = func, 2 = number, 3 = forth string
 }
 
-function Word.new(val, mode, func)
+function Word.new(name, val, mode)
 	local word = {}
-	setmetatable(word, Word)
+	setmetatable(word, {__index = Word})
+	
+	word.name =
+		name == nil	and	Word.name or
+								name
 	
 	word.val =
-		val == nil	and	"<nil>" or
-								val
+		(type(val) == "function"	or
+		type(val) == "number" or
+		type(val) == "string")	and	val or
+												Word.func
 	
 	word.mode =
-		type(val) == "string"		and 	1 or
-		type(val) == "number" 	and 	2 or
-												0
-	
-	word.func =
-		type(func) == "function"	and	func or
-												word.func
+		type(word.val) == "function"	and 	1 or
+		type(word.val) == "number" 	and 	2 or
+		type(word.val) == "string"		and	3 or
+												Word.mode
 	
 	return word
+end
+
+function Word:validate()
+	
+	local nameIsValid =
+		type(self.name) == "string" or
+		type(self.name) == "number"
+		
+	local modeIsValid =
+		self.mode >= 0 and self.mode <= 3
+	
+	local valIsValid =
+		type(self.val) == "function" or
+		type(self.val) == "number" or
+		type(self.val) == "string"
+		
+	return nameIsValid and modeIsValid and valIsValid
 end
 
 function Word:interpret()
 	
 end
 
+--[[
+Class: Dictionary
 
-local Sentence = {
-	words = {}
+Elements:
+ - name: String label for the Dictionary
+ - words: Table of Words
+ - index: k/v pairs for word lookup
+ 
+Functions:
+ - new: Return a new Dictionary
+ - addWord: Add a new Word to the
+ 	Dictionary
+ - export: Export Dictionary table
+ - import: Overwrite Dictionary with
+ 	another Dictionary's contents
+ - buildIndex: Convert words to k/v pairs
+ 	where k = val and v = word
+]]
+local Dictionary = {
+	name = "default",
+	words = {},
+	index = {}
 }
 
-function Sentence.splitString(string)
-	local splitString = split(string, " ", true)
+function Dictionary:import(source)
+
 end
 
-function Sentence:new(string)
-	self.words = self.splitString(string)
+function Dictionary:export(fileName)
+	
 end
 
-function Sentence:interpret()
+function Dictionary:buildIndex()
+	local words = self.words
+	
+	if #words <= 0 then
+		--TODO:Error handling
+		return false, "Dictionary has no words."
+	end
+	
+	local index = {}
+	
+	for k, word in pairs(words) do
+		index[word.name] = word
+	end
+	
+	self.index = index
+	
+	return true
+end
+
+function Dictionary:addWord(word)
+	if word:validate() == true then
+		self.words[#self.words + 1] = word
+		return self:buildIndex()
+	else
+		return false, "Word could not be validated."
+	end
+end
+
+function Dictionary:initialize()
+	local defaultWords = {
+		{},
+	}
+end
+
+function Dictionary.new(name)
+	local dictionary = {}
+	setmetatable(dictionary, {__index = Dictionary})
+	
+	dictionary.name = name == nil and Dictionary.name or name
+	
+	return dictionary
+end
+
+--[[
+Class: Sentence
+
+Elements:
+ - tokens: String split() into a table by spaces
+ - dictionary: A Dictionary with words in it
+ - mode: Whether sentence is being interpreted or compiled
+ 
+Functions:
+ - new: Return a new Sentence
+ - splitString: Split string into table by spaces
+ - interpret: Iterate through tokens, executing or compiling depending on mode
+]]
+local Sentence = {
+	tokens = {},
+	dictionary = Dictionary.new(),
+	mode = 0 -- 0: interpret, 1: compile
+}
+
+function Sentence:splitString(string)
+	local splitStr = split(string, " ", true)
+	
+	if splitStr == nil then
+		return false, "split function returned nil."
+	end
+	
+	if #splitStr <= 0 then
+		return false, "Split string is shorter than 0 elements."
+	end
+	
+	self.tokens = splitStr
+	
+	return true
+end
+
+function Sentence.new(string, dictionary, mode)
+	local sentence = {}
+	setmetatable(sentence, {__index = Sentence})
+	
+	try(sentence.splitString, sentence, string)
+	
+	sentence.dictionary =
+		dictionary == nil	and	Dictionary.new()
+								or		dictionary
+	sentence.mode =
+		mode == nil			and	Sentence.mode
+	return sentence
+end
+
+function Sentence:interpret(interpreter)
+	local tokens = self.tokens
+	local index = self.dictionary.index
+	local stack = interpreter.stack
+	
+	local compiledName = ""
+	local compiledString = ""
+	
+	for counter, token in ipairs(tokens) do
+		
+		if self.mode == 0 then -- If sentence is in interpret mode
+			if token == ":" then
+				sentence.mode = 1
+			elseif type(token) == "string" then
+				local word = index[token]
+				word.func(stack)
+			elseif type(token) == "number" then -- If word represents a number
+				stack:push(token)
+			else -- If the word is some other forbidden thing
+				print("Error in Sentence:interpret: word.name wasn't a string or number.  Val: " .. tostr(word.name));
+			end
+		elseif sentence.mode == 1 then -- If sentence is in compile mode
+			if token == ";" then
+				sentence.mode = 0
+				local newWord = word.new()
+			else
+			
+			end
+		end
+		
+	end
+end
+
+--[[
+Class: Stack
+
+]]
+Stack = {
+	pile = {},
+	pointer = 0
+}
+
+function Stack.new(pile, pointer)
+	local stack = {}
+	setmetatable(stack, {__index = Stack})
+	
+	stack.pile =
+		pile == nil	and	{}
+						or		pile
+	stack.pointer =
+		(pointer == nil or
+		 type(pointer) != "number")	and	Stack.pointer
+												or		pointer
+												
+	return stack
+end
+
+function Stack:pop()
+
+end
+
+function Stack:push(num)
+	if type(num) != "number" then
+		return false, "num isn't a number."
+	end
+	
+	
+end
+
+--[[
+Class: Interpreter
+
+Elements:
+ - dictionary: A Dictionary with words in it
+
+
+]]
+Interpreter = {
+	dictionary = Dictionary.new(),
+	stack = Stack.new()
+}
+
+function Interpreter.new(dictionary, stack)
+	local interpreter = {}
+	setmetatable(interpreter, {__index = Interpreter})
+	interpreter.dictionary =
+		dictionary == nil	and	Dictionary.new()
+								or		dictionary
+	
+	interpreter.stack =
+		stack == nil			and	Stack.new()
+								or		stack
+								
+	return interpreter
+end
+
+function Interpreter:run(string)
+	-- Generate a sentence using the given string
+	local sentence = Sentence.new(string)
+	-- Interpret the sentence
+	sentence:interpret(self)
 	
 end
 :: main.lua
---[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-06 09:04:11",revision=7,xstickers={}]]
---[[--[[--[[--[[--[[--[[--[[--[[--[[--[[
-
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-07 00:29:38",revision=25,xstickers={}]]
+--[[--[[--[[--[[--[[--[[--[[--[[--[[
 
        **** **** **** **** *  *
        ***  *  * ***   **  ****  
@@ -70,43 +339,46 @@ end
 
             Version 0.01
 
- -----------------------------------
+------------------------------------
 
 Based on the Forth 2012 Standard
   courtesy of forth-standard.org
 
 Logo design by Gerald Wodni
-  https://github.com/GeraldWodni/forth-logo
+  github.com/GeraldWodni/forth-logo
 
+--]]--]]--]]--]]--]]--]]--]]--]]--]]
 
---]]--]]--]]--]]--]]--]]--]]--]]--]]--]]
+include("interpreter.lua")
 
+forth = Interpreter.new()
 
 function _init()
-
+	
 end
 
 while true do
-	
+	local string = input(" > ")
+	forth:run(string)
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-06 09:49:00",runtime=26,workspaces={{location="main.lua#34,2",workspace_index=1},{location="interpreter.lua#40,23",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a090e08000000000000121c07070707070707090800000000120707070707070707070707080000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800001207070707070707011306070800000000121c0707070707060609080000000000000d1d1c1a1a0a090e080000000000000000000000000000000000000000"),modified="2026-10-07 01:00:03",runtime=27,workspaces={{location="main.lua#36,7",workspace_index=1},{location="interpreter.lua#206,21",workspace_index=1},{location="errorhandler.lua#12",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-06 09:49:00"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
