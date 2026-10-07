@@ -28,7 +28,7 @@ function try(func, ...)
 	return unpack(result)
 end
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-07 01:00:03",revision=138,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-07 07:04:28",revision=142,xstickers={}]]
 include("errorhandler.lua")
 
 --[[
@@ -234,6 +234,10 @@ function Sentence:interpret(interpreter)
 				sentence.mode = 1
 			elseif type(token) == "string" then
 				local word = index[token]
+				if word == nil then
+					print(token .. "?")
+					break
+				end
 				word.func(stack)
 			elseif type(token) == "number" then -- If word represents a number
 				stack:push(token)
@@ -323,7 +327,7 @@ function Interpreter:run(string)
 	
 end
 :: main.lua
---[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-07 00:29:38",revision=25,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-07 07:03:55",revision=27,xstickers={}]]
 --[[--[[--[[--[[--[[--[[--[[--[[--[[
 
        **** **** **** **** *  *
@@ -335,7 +339,8 @@ end
          * ** ****  **  ****
 
    A Forth interpreter for zoomers
-      by Taro Garza / DorkOrca
+      		by DorkOrca
+			  gachapon.party
 
             Version 0.01
 
@@ -362,23 +367,23 @@ while true do
 	forth:run(string)
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a090e08000000000000121c07070707070707090800000000120707070707070707070707080000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800001207070707070707011306070800000000121c0707070707060609080000000000000d1d1c1a1a0a090e080000000000000000000000000000000000000000"),modified="2026-10-07 01:00:03",runtime=27,workspaces={{location="main.lua#36,7",workspace_index=1},{location="interpreter.lua#206,21",workspace_index=1},{location="errorhandler.lua#12",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a090e08000000000000121c07070707070707090800000000120707070707070707070707080000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800001207070707070707011306070800000000121c0707070707060609080000000000000d1d1c1a1a0a090e080000000000000000000000000000000000000000"),modified="2026-10-07 07:04:28",runtime=27,workspaces={{location="main.lua#12,9",workspace_index=1},{location="interpreter.lua#23,19",workspace_index=1},{location="errorhandler.lua#12",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 01:00:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-07 07:04:28"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
