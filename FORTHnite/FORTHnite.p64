@@ -319,7 +319,7 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-08 01:00:14",revision=82,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-08 05:23:38",revision=85,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -397,7 +397,7 @@ function Sentence:interpret(interpreter, stack)
 						or		stack
 	
 	local parseWord = "" -- The word that initiated the parse
-	local parsedString = {} -- The table containing values to be concatenated in the parsed string
+	local parsedTokens = {} -- The table containing values to be concatenated in the parsed string
 	local compiledName = "" -- The first word interpreted after entering compilation mode
 	local compiledTokens = {} -- All subsequent words interpreted after entering compilation mode
 	
@@ -447,7 +447,7 @@ function Sentence:interpret(interpreter, stack)
 				compiledName = "" -- Initialize name string
 				compiledTokens = {} -- Initialize table of compiled tokens
 			elseif token == ":" then -- If the token is a colon...
-				return false, "Colon detected while in compile mode, aborting."
+				return false, "Colon detected while in compile mode, aborting." -- ...Then error out
 			elseif compiledName == "" then -- If name hasn't been set yet...
 				compiledName = token -- ...Then set the name to the token
 			else -- If any other kind of token has been provided...
@@ -457,34 +457,35 @@ function Sentence:interpret(interpreter, stack)
 		elseif self.mode == 2 then -- If sentence is in parse mode...
 			if token == ")" and parseWord == "(" then -- If parsing from open parenthesis, and encountering close parenthesis...
 				self.mode = 0 -- ...Then switch back to interpret mode
-			else
-				add(parsedString, token)
-				add(parsedString, " ")
+			else -- Otherwise, shovel it all into a table called parsedTokens
+				add(parsedTokens, token)
+				add(parsedTokens, " ")
 			end
 		elseif self.mode == 3 then -- If sentence is in test mode...
-			if #testTokens <= 0 then
-				return false, "No tokens found, can't run the first test."
-			elseif token == "->" then -- Token "->" executes the current test
-				if #savedTestStack > 0 then
-					return false, "Found two '->' tokens in test."
+			if token == "->" then -- Token "->" executes the first test
+				if #testTokens <= 0 then -- If there are no tokens to test...
+					return false, "No tokens found, can't run the first test." -- ...Then error out
+				elseif #savedTestStack > 0 then -- If a first test has already been performed...
+					return false, "Found two '->' tokens in test." -- ...Then error out
+				end -- Otherwise, proceed
+				local result = try(self.test, self:test(testStack)) -- Execute the first test
+				if result == false then -- If test fails then...
+					return false, "First test failed." -- ... Error out
+				end -- Otherwise, proceed
+				savedTestStack = testStack -- Save the results of the first test
+			elseif token == "}t" then -- Token '}t' executes the final test
+				if #testTokens <= 0 then -- If there are no tokens to test...
+					return false, "No tokens found, can't run the final test." -- ...Then error out
+				end -- Otherwise, proceed
+				local result = try(self.test, self:test(testStack)) -- Execute the final test
+				if result == false then -- If final test fails...
+					return false, "Second test failed." -- ...Then error out
+				elseif #savedTestStack != #testStack then -- If test stacks are different sizes...
+					return false, -- ...Then error out
+						"Stacks are different sizes.\n" ..
+						"First test's stack: " .. #savedTestStack .. "\n" ..
+						"Second test's stack: " .. #testStack
 				end
-				local result = try(self.test, self:test(testStack))
-				if result == false then -- If test fails then
-					return false, "First test failed."
-				end
-				savedTestStack = testStack
-			elseif token == "}t" then
-				if #testTokens <= 0 then
-					return false, "No tokens found, can't run the final test."
-				end
-				local result = try(self.test, self:test(testStack))
-				if result == false then
-					return false, "Second test failed."
-				end
-				if #savedTestStack != #testStack then
-					return false, [[testStack doesn't match savedTestStack.]]
-				end
-				--TODO:TBD
 			else
 				add(testTokens, token)
 			end
@@ -654,23 +655,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-08 01:00:14",runtime=27,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#42,25",workspace_index=1},{location="dictionary.lua#125,44",workspace_index=1},{location="word.lua#69,36",workspace_index=1},{location="stack.lua#62,80",workspace_index=1},{location="sentence.lua#165,15",workspace_index=1},{location="errorhandler.lua#14,120",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-08 05:23:38",runtime=27,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#42,25",workspace_index=1},{location="dictionary.lua#125,44",workspace_index=1},{location="word.lua#69,36",workspace_index=1},{location="stack.lua#62,80",workspace_index=1},{location="sentence.lua#134,7",workspace_index=1},{location="errorhandler.lua#14,120",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 01:00:14"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 01:00:14"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 01:00:14"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
