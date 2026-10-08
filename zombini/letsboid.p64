@@ -1,0 +1,1598 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: gfx/
+:: map/
+:: sfx/
+:: boid.lua
+--[[pod_format="raw",created="2026-06-08 20:12:29",modified="2026-06-16 20:29:43",revision=1458,xstickers={}]]
+-- boid.lua
+include("utilities.lua")
+
+--[[BOOKMARK:Variables]]
+-- 
+boidPresetChoice = 2
+boidGraphicsChoice = 5
+
+boidControlMenu = "mainmenu"
+boidPresetChanged = false
+
+boidPresets = {
+	[1] = {
+		name = "Disabled",
+		separation = 0.0,
+		alignment = 0.0,
+		cohesion = 0.0,
+		contained = 0,
+		gridSize = 1,
+		maxNeighbors = 0,
+	},
+	[2] = {
+		name = "Free",
+		separation = 0.8,
+		alignment = 0.5,
+		cohesion = 0.3,
+		contained = 0,
+		gridSize = 24,
+		maxNeighbors = 10,
+	},	
+	[3] = {
+		name = "Contained",
+		separation = 1.0,
+		alignment = 0.7,
+		cohesion = 0.3,
+		contained = 1,
+		gridSize = 24,
+		maxNeighbors = 10,
+	},
+	[4] = {
+		name = "Independent",
+		separation = 1.0,
+		alignment = 0.3,
+		cohesion = 0.15,
+		contained = 0,
+		gridSize = 24,
+		maxNeighbors = 10,
+	},
+	[5] = {
+		name = "Downstream",
+		separation = 1.0,
+		alignment = 0.5,
+		cohesion = 0.2,
+		contained = 0,
+		gridSize = 48,
+		maxNeighbors = 10,
+	},
+	[6] = {
+		name = "Amoeba",
+		separation = 0.5,
+		alignment = 0.2,
+		cohesion = 0.1,
+		contained = 1,
+		gridSize = 32,
+		maxNeighbors = 2
+	}
+}
+
+boidGraphics = {
+	[1] = {
+		name = "Pixel",
+		func = function(boid) pset(boid.x, boid.y, boid.color) end,
+	},
+	[2] = {
+		name = "Pointer",
+		func = function(boid) drawPointer(boid) end,
+	},
+	[3] = {
+		name = "Big Pointer",
+		func = function(boid) drawPointer(boid, 8) end,
+	},
+	[4] = {
+		name = "Huge Pointer",
+		func = function(boid) drawPointer(boid, 16) end,
+	},
+	[5] = {
+		name = "Filled Pointer - S",
+		func = function(boid) drawPointer(boid, 4, true) end,
+	},
+	[6] = {
+		name = "Filled Pointer - M",
+		func = function(boid) drawPointer(boid, 8, true) end,
+	},
+	[7] = {
+		name = "Filled Pointer - L",
+		func = function(boid) drawPointer(boid, 16, true) end,
+	},
+	[8] = {
+		name = "Circle",
+		func = function(boid) circfill(boid.x, boid.y, 2, boid.color) end,
+	},
+	[9] = {
+		name = "Big Circle",
+		func = function(boid) circfill(boid.x, boid.y, 7, boid.color) end,
+	},
+	[10] = {
+		name = "Huge Circle",
+		func = function(boid) circfill(boid.x, boid.y, 15, boid.color) end,
+	},
+	[11] = {
+		name = "Why...",
+		func = function(boid) circfill(boid.x, boid.y, 30, boid.color) end,
+	}
+}
+
+--[[GROUP:Initialization]]
+function initBoidControls()
+	local boidControls = {
+		visible = true,
+		mainmenu = {
+			menus = {
+				"submenu1",
+				"submenu2",
+				"submenu3"
+			},
+			selected = 1,
+			btnpAction = {
+				-- Up
+				[2] = function()
+					boidControls.mainmenu.selected = (boidControls.mainmenu.selected - 2) % #boidControls.mainmenu.menus + 1
+				end,
+				-- Down
+				[3] = function()
+					boidControls.mainmenu.selected = boidControls.mainmenu.selected % #boidControls.mainmenu.menus + 1
+				end,
+				-- O button / Z key
+				[4] = function()
+					boidControlMenu = boidControls.mainmenu.menus[boidControls.mainmenu.selected]
+				end,
+			}
+		},
+		submenu1 = {
+			-- Main parameters
+			orderedList = {
+				[1] = {
+					name = "Separation",
+					value = boidPresets[boidPresetChoice].separation,
+					min = 0,
+					max = 1,
+					inc = 0.01
+				},
+				[2] = {
+					name = "Alignment",
+					value = boidPresets[boidPresetChoice].alignment,
+					min = 0,
+					max = 1,
+					inc = 0.01
+				},
+				[3] = {
+					name = "Cohesion",
+					value = boidPresets[boidPresetChoice].cohesion,
+					min = 0,
+					max = 1,
+					inc = 0.01
+				},
+				[4] = {
+					name = "Contained",
+					value = boidPresets[boidPresetChoice].contained,
+					min = 0,
+					max = 1,
+					inc = 1
+				},
+				[5] = {
+					name = "Grid Size",
+					value = boidPresets[boidPresetChoice].gridSize,
+					min = 0,
+					max = 480,
+					inc = 1
+				},
+				[6] = {
+					name = "Neighbors",
+					value = boidPresets[boidPresetChoice].maxNeighbors,
+					min = 0,
+					max = 999,
+					inc = 1
+				}
+			},
+			selected = 1,
+			presetChoice = boidPresetChoice,
+			btnpAction = {
+				-- Left
+				[0] = function()
+					local list = boidControls[boidControlMenu]
+					local selected = list.selected
+					local val = list.orderedList[selected].value
+					local minVal = list.orderedList[selected].min
+					local inc = list.orderedList[selected].inc
+					
+					val = max(minVal, val - inc)
+					
+					list.orderedList[selected].value = val
+				end,
+				-- Right
+				[1] = function()
+					local list = boidControls[boidControlMenu]
+					local selected = list.selected
+					local val = list.orderedList[selected].value
+					local maxVal = list.orderedList[selected].max
+					local inc = list.orderedList[selected].inc
+					
+					val = min(maxVal, val + inc)
+					
+					list.orderedList[selected].value = val
+				end,
+				-- Up
+				[2] = function()
+					local list = boidControls[boidControlMenu]
+					local maxLength = #list.orderedList
+					list.selected = (list.selected - 2) % maxLength + 1
+				end,
+				-- Down
+				[3] = function()
+					local list = boidControls[boidControlMenu]
+					local maxLength = #list.orderedList
+					list.selected = list.selected % maxLength + 1
+				end,
+				-- O Button / Z Key
+				[4] = function() boidControlMenu = "mainmenu" end
+			}
+		},
+		submenu2 = {
+			-- Presets
+			orderedList = {
+				[1] = {
+					name = "Parameters",
+					value = boidPresetChoice,
+					min = 1,
+					max = #boidPresets
+				},
+				[2] = {
+					name = "Graphics",
+					value = boidGraphicsChoice,
+					min = 1,
+					max = #boidGraphics
+				}
+			},
+			selected = 1,
+			btnpAction = {
+				-- Left
+				[0] = function()
+					local referenceList = {}
+					if boidControls.submenu2.selected == 1 then
+						boidPresetChanged = true
+						referenceList = boidPresets
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = (boidControls.submenu2.orderedList[boidControls.submenu2.selected].value - 2) % #referenceList + 1
+						boidPresetChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					elseif boidControls.submenu2.selected == 2 then
+						referenceList = boidGraphics
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = (boidControls.submenu2.orderedList[boidControls.submenu2.selected].value - 2) % #referenceList + 1
+						boidGraphicsChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					end
+				end,
+				-- Right
+				[1] = function()
+					local referenceList = {}
+					if boidControls.submenu2.selected == 1 then
+						boidPresetChanged = true
+						referenceList = boidPresets
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value % #referenceList + 1
+						boidPresetChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					elseif boidControls.submenu2.selected == 2 then
+						referenceList = boidGraphics
+						boidControls.submenu2.orderedList[boidControls.submenu2.selected].value = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value % #referenceList + 1
+						boidGraphicsChoice = boidControls.submenu2.orderedList[boidControls.submenu2.selected].value
+					end
+				end,
+				-- Up
+				[2] = function()
+					boidControls.submenu2.selected = (boidControls.submenu2.selected - 2) % 2 + 1
+				end,
+				-- Down
+				[3] = function()
+					boidControls.submenu2.selected = boidControls.submenu2.selected % 2 + 1
+				end,
+				-- O button / Z Key
+				[4] = function() boidControlMenu = "mainmenu" end,
+			}
+		},
+		submenu3 = {
+			-- Other Settings
+			orderedList = {
+				[1] = {
+					name = "Boid Count",
+					value = 50,
+					max = 999,
+					min = 0
+				},
+				[2] = {
+					name = "Background Color",
+					value = 7,
+					max = 32,
+					min = 0
+				},
+				[3] = {
+					name = "Draw Links",
+					value = 0,
+					max = 1,
+					min = 0
+				},
+				[4] = {
+					name = "Draw Trails",
+					value = 0,
+					max = 1,
+					min = 0	
+				},
+				[5] = {
+					name = "Trail Size",
+					value = 1,
+					max = 999,
+					min = 0
+				},
+				[6] = {
+					name = "CPU Meter",
+					value = 0,
+					max = 1,
+					min = 0
+				}
+			},
+			selected = 1,
+			btnpAction = {
+				-- Left
+				[0] = function()
+					local list = boidControls[boidControlMenu]
+					local selected = list.selected
+					local val = list.orderedList[selected].value
+					local minVal = list.orderedList[selected].min
+					
+					val = max(minVal, val - 1)
+					
+					list.orderedList[selected].value = val
+				end,
+				-- Right
+				[1] = function()
+					local list = boidControls[boidControlMenu]
+					local selected = list.selected
+					local val = list.orderedList[selected].value
+					local maxVal = list.orderedList[selected].max
+					
+					val = min(maxVal, val + 1)
+					
+					list.orderedList[selected].value = val
+				end,
+				-- Up
+				[2] = function()
+					local list = boidControls[boidControlMenu]
+					local maxLength = #list.orderedList
+					list.selected = (list.selected - 2) % maxLength + 1
+				end,
+				-- Down
+				[3] = function()
+					local list = boidControls[boidControlMenu]
+					local maxLength = #list.orderedList
+					list.selected = list.selected % maxLength + 1
+				end,
+				-- O Button / Z Key
+				[4] = function() boidControlMenu = "mainmenu" end
+			}
+		}
+	}
+	
+	return boidControls
+end
+
+--[[GROUP:General]]
+function newBoid(_obj)
+	-- Add a table to the provided object containing 3 boid parameters.
+	if _obj.angle == nil then
+		error("Error in newBoid(): object does not have an angle :(  -  " .. _obj)
+	end
+	_obj.boid = {
+		angle = _obj.angle,
+		diff = 0,
+		separationStrength = boidControls.submenu1.orderedList[1].value,
+		alignmentStrength = boidControls.submenu1.orderedList[2].value,
+		cohesionStrength = boidControls.submenu1.orderedList[3].value,
+		contained = boidControls.submenu1.orderedList[4].value,
+		borderStrength = 0.15,
+		borderDist = 50,
+		targetStrength = 0.5,
+		neighborDist = boidControls.submenu1.orderedList[5].value * 2,
+		personalDist = boidControls.submenu1.orderedList[5].value,
+		personalNeighbors = {},
+		longNeighbors = {},
+		target = nil,
+	}
+	
+	return _obj
+end
+
+function updateBoids(_boids)
+	if boidControlMenu == "submenu2" and boidPresetChanged == true then
+		boidControls.submenu1.orderedList[1].value = boidPresets[boidPresetChoice].separation
+		boidControls.submenu1.orderedList[2].value = boidPresets[boidPresetChoice].alignment
+		boidControls.submenu1.orderedList[3].value = boidPresets[boidPresetChoice].cohesion
+		boidControls.submenu1.orderedList[4].value = boidPresets[boidPresetChoice].contained
+		boidControls.submenu1.orderedList[5].value = boidPresets[boidPresetChoice].gridSize
+		boidControls.submenu1.orderedList[6].value = boidPresets[boidPresetChoice].maxNeighbors
+		boidPresetChanged = false
+	end
+	
+	for key, obj in ipairs(_boids) do
+		if obj.boid ~= nil then
+			obj.boid.separationStrength = boidControls.submenu1.orderedList[1].value
+			obj.boid.alignmentStrength = boidControls.submenu1.orderedList[2].value
+			obj.boid.cohesionStrength = boidControls.submenu1.orderedList[3].value
+			obj.boid.contained = boidControls.submenu1.orderedList[4].value
+			obj.boid.neighborDist = boidControls.submenu1.orderedList[5].value * 2
+			obj.boid.personalDist = boidControls.submenu1.orderedList[5].value
+		end
+	end
+end
+
+function drawBoid(_boid)
+	boidGraphics[boidGraphicsChoice].func(_boid)
+end
+
+function drawBoids(_boids)
+	local boids = _boids
+	
+	for key = #boids, 1, -1 do
+		local boid = boids[key]
+		
+		drawBoid(boid)
+		--[[
+		if key == 1 then
+			circ(boid.x, boid.y, boid.boid.neighborDist, boid.color)
+			circ(boid.x, boid.y, boid.boid.personalDist, boid.color)
+		end
+		]]
+		
+		
+	end
+end
+
+
+
+--[[GROUP:Controls]]
+
+function toggleBoidControls()
+	if (btnp(5) or keyp("space")) and (boidControls[boidControlMenu] ~= nil) then
+		if boidControls.visible == true then
+			boidControls.visible = false
+		else
+			boidControls.visible = true
+		end
+	end
+	return _boidControls
+end
+
+function navigateBoidControls(_boidControls)
+	if boidControls.visible == true then
+		local boidControlsChanged = false
+		
+		for button, func in pairs(boidControls[boidControlMenu].btnpAction) do
+			if btnp(button) then
+				boidControls[boidControlMenu].btnpAction[button]()
+				boidControlsChanged = true
+			end
+		end
+		
+		if boidControlsChanged == true then
+			updateBoids(boids)
+		end
+	end
+end
+
+function drawBoidControls()
+	if (boidControls[boidControlMenu] ~= nil) and (boidControls.visible == true) then
+		local selectorOffset = (boidControls[boidControlMenu].selected - 1) * 10
+		
+		if boidControlMenu == "mainmenu" then
+			rrect(-2, -2, 98, 37, 2, 5)
+			rrect(-2, -2, 98, 36, 2, 6)
+			rrectfill(-2, -2, 97, 35, 1, 6)
+			rrectfill(2, 2 + selectorOffset, 92, 10, 3, 7)
+			showSelector(88, 7 + selectorOffset)
+			printShadow("Main Parameters", 4, 4, 0, 22)
+			printShadow("Presets", 45, 14, 0, 22)
+			printShadow("Settings", 41, 24, 0, 22)
+			return
+		end
+		
+		if boidControlMenu == "submenu1" then
+			rrect(-2, -2, 98, 67, 2, 5)
+			rrect(-2, -2, 98, 66, 2, 6)
+			rrectfill(-2, -2, 97, 65, 1, 6)
+			rrectfill(2, 2 + selectorOffset, 92, 10, 3, 7)
+			showSelector(88, 7 + selectorOffset)
+			
+			for i = 1, #boidControls[boidControlMenu].orderedList do
+				local list = boidControls[boidControlMenu].orderedList[i]
+				local name = list.name
+				local val = list.value
+				
+				local printLength = print(name, -100, -100, 0)
+				printShadow(name .. ": " .. val, -47 - printLength, 4 + 10 * (i - 1), 0, 22)
+			end
+		end
+		
+		if boidControlMenu == "submenu2" then
+			rrect(-2, -2, 98, 37, 2, 5)
+			rrect(-2, -2, 98, 36, 2, 6)
+			rrectfill(-2, -2, 97, 35, 1, 6)
+			rrectfill(2, 2, 92, 10, 3, 7)
+			showSelector(88, 7)
+			
+			local presetLabel =
+				boidControls.submenu2.selected == 1 and "Parameters" or
+				boidControls.submenu2.selected == 2 and "Graphics"
+			local presetValue =
+				boidControls.submenu2.selected == 1 and boidPresetChoice or
+				boidControls.submenu2.selected == 2 and boidGraphicsChoice
+			
+			printShadow(presetLabel, 4, 4, 0, 22)
+			printShadow("Preset: " .. presetValue, 4, 14, 0, 22)
+			
+			if boidControls.submenu2.selected == 1 then
+				printShadow(boidPresets[boidPresetChoice].name, 4, 24, 0, 22)
+			elseif boidControls.submenu2.selected == 2 then
+				printShadow(boidGraphics[boidGraphicsChoice].name, 4, 24, 0, 22)
+			end
+			
+			return
+		end
+		
+		if boidControlMenu == "submenu3" then
+			rrect(-2, -2, 120, 67, 2, 5)
+			rrect(-2, -2, 120, 66, 2, 6)
+			rrectfill(-2, -2, 119, 65, 1, 6)
+			rrectfill(2, 2 + selectorOffset, 114, 10, 3, 7)
+			showSelector(110, 7 + selectorOffset)
+			
+			for i = 1, #boidControls[boidControlMenu].orderedList do
+				local list = boidControls[boidControlMenu].orderedList[i]
+				local name = list.name
+				local val = list.value
+				
+				local printLength = print(name, -100, -100, 0)
+				printShadow(name .. ": " .. val, -17 - printLength, 4 + 10 * (i - 1), 0, 22)
+			end
+		end
+	end
+end
+
+
+
+--[[GROUP:Grid]]
+function buildGrid(_boids, _cellSize)
+	local grid = {}
+	for _, boid in ipairs(_boids) do
+		local cx, cy = flr(boid.x / _cellSize), flr(boid.y / _cellSize)
+		local key = cx + cy * 480
+		grid[key] = grid[key] or {}
+		add(grid[key], boid)
+	end
+	return grid
+end
+
+function gridNeighbors(_obj, _grid, _cellSize, _dist)
+	local cx, cy = flr(_obj.x / _cellSize), flr(_obj.y / _cellSize)
+	local dist = _dist == nil and _obj.boid.neighborDist or _dist
+	local r2 = dist * dist
+	local out = {}
+	for dy = -1, 1 do
+		for dx = -1, 1 do
+			if #out >= boidControls.submenu1.orderedList[6].value then break end
+			
+			local cell = _grid[(cx+dx) + (cy+dy) * 480]
+			
+			if cell == nil then
+				goto gridNeighborsContinue1
+			end
+			
+			for _, t in ipairs(cell) do
+				if t == _obj then
+					goto gridNeighborsContinue2
+				end
+				
+				local d = euclidDistSq(_obj.x, _obj.y, t.x, t.y)
+				if d < r2 then
+					t.dist = d
+					add(out, t)
+				end
+				
+				
+				::gridNeighborsContinue2::
+			end
+			
+			::gridNeighborsContinue1::
+		end
+	end
+	
+	return out
+end
+
+
+
+--[[GROUP:Separation]]
+function boidGetNeighbors(_obj, _targets, _sorted, _dist)
+	-- Return a table of objects within neighborDist range of _obj (NO GRID, COMPARES AGAINST ALL NEIGHBORS)
+	if _obj == nil then
+		error("boidGetNeighbors(): _obj provided was nil.")
+	end
+	
+	if _targets == nil then
+		error("boidGetNeighbors(): _targets provided was nil.")
+	end
+	
+	local maxDistFromObjToNeighbors = _dist == nil and _obj.boid.neighborDist or _dist
+	local listShouldBeSorted = _sorted == nil and false or _sorted
+	
+	local neighbors = {}
+	local foundSelf = false
+	
+	for index, target in ipairs(_targets) do
+		local neighborDist = euclidDistSq(_obj.x, _obj.y, target.x, target.y)
+		if neighborDist == 0 and foundSelf == false then
+			foundSelf = true
+			goto BGNcontinue
+		end
+		
+		if neighborDist < maxDistFromObjToNeighbors * maxDistFromObjToNeighbors then
+			if listShouldBeSorted == true then
+				target.dist = neighborDist
+			end
+			
+			add(neighbors, target)
+		end
+		
+		::BGNcontinue::
+	end
+	
+	if listShouldBeSorted == true and #neighbors > 0 then
+		neighbors = sortTableBy(neighbors, "ascending", "dist")
+	end 
+	
+	return neighbors
+end
+
+function boidSeparation(_obj, _neighbors)
+	-- Update boid angle, turning away from neighbors that are too close
+	local obj = _obj
+	local separationDiff = 0
+	local personalNeighbors = {}
+	
+	if #_neighbors > 0 then
+		local neighbors = _neighbors
+		local intersectRange = max(1, obj.boid.personalDist)
+		intersectRange = intersectRange * intersectRange
+		
+		local neighborInfluence = {x = 0, y = 0}
+	
+		for key, neighbor in ipairs(neighbors) do
+			
+			local neighborDist = neighbor.dist
+			if neighborDist < intersectRange then
+				add(personalNeighbors, neighbor)
+				--obj.color = (obj.color + 1) % 31 + 1
+				local targetAngle = getAngle2D(neighbor, obj)
+				local influenceFactor = (intersectRange - neighborDist) / intersectRange
+				local vx, vy = cos(targetAngle / 360) * influenceFactor, sin(targetAngle / 360) * influenceFactor
+				neighborInfluence.x += vx
+				neighborInfluence.y += vy
+			end
+		end
+		
+		local diff = 0
+		
+		if neighborInfluence.x ~= 0 and neighborInfluence.y ~= 0 then
+			local objAngle = (obj.boid.angle % 360) / 360
+			
+			local desiredAngle = atan2(neighborInfluence.x, neighborInfluence.y) * 360
+			local diff = angleDiff(objAngle * 360, desiredAngle)
+			obj.boid.diff = diff
+			
+			if diff ~= 0 then
+				local separationInfluence = obj.boid.separationStrength
+				separationDiff = diff * separationInfluence * 0.02
+			end
+		end
+	end
+	
+	return separationDiff, personalNeighbors
+end
+
+
+
+--[[GROUP:Alignment]]
+function boidGetNeighborAverageAngle(_obj, _neighbors)
+	-- Returns value equal to average angle of _obj and _neighbors
+	local angleTable = {}
+	
+	for index, neighbor in ipairs(_neighbors) do
+		add(angleTable, neighbor.angle%360)
+	end
+	
+	local sx, sy = 0, 0
+	
+	for _, a in ipairs(angleTable) do
+		sx += cos(a/360)
+		sy += sin(a/360)
+	end
+	
+	if sx == 0 and sy == 0 then
+		return _obj.angle
+	end
+	
+	return atan2(sx, sy) * 360
+end
+
+function boidAlignment(_obj, _neighbors)
+	-- Update boid angle, pointing toward average angle of neighbors
+	local alignmentDiff = 0
+	local neighborAvgAngle = nil
+	
+	if #_neighbors > 0 then
+		neighborAvgAngle = boidGetNeighborAverageAngle(_obj, _neighbors)
+		local alignmentInfluence = _obj.boid.alignmentStrength
+		
+		alignmentDiff = angleDiff(_obj.angle, neighborAvgAngle) * alignmentInfluence * 0.05
+	end
+	return alignmentDiff, neighborAvgAngle
+end
+
+
+
+--[[GROUP:Cohesion]]
+function boidGetNeighborAveragePosition(_obj, _neighbors)
+	-- Returns table with "x" and "y" values equal to average position of _obj and _neighbors
+	local avgXTable = {}
+	local avgYTable = {}
+	
+	add(avgXTable, _obj.x)
+	add(avgYTable, _obj.y)
+	
+	for index, neighbor in ipairs(_neighbors) do
+		add(avgXTable, neighbor.x)
+		add(avgYTable, neighbor.y)
+	end
+	
+	local avgX = tableAverage(avgXTable)
+	local avgY = tableAverage(avgYTable)
+	
+	return {
+		x = avgX,
+		y = avgY
+	}
+end
+
+function boidCohesion(_obj, _neighbors)
+	-- Update boid angle, pointing toward center mass of neighbors
+	local cohesionDiff = 0
+	local neighborAvgPos = nil
+	
+	if #_neighbors > 0 then
+		neighborAvgPos = boidGetNeighborAveragePosition(_obj, _neighbors)
+		local targetAngle = getAngle2D(_obj, neighborAvgPos)
+		local cohesionInfluence = _obj.boid.cohesionStrength
+		
+		cohesionDiff = angleDiff(_obj.angle, targetAngle) * cohesionInfluence * 0.05
+	end
+	
+	return cohesionDiff, neighborAvgPos
+end
+
+
+
+--[[GROUP:Targeting]]
+function boidTargeting(_obj)
+	-- Update boid angle, pointing toward _obj.boid.target
+	local targetingDiff = 0
+	
+	if not (_obj.boid.target == nil) then
+		local targetAngle = getAngle2D(_obj, _obj.boid.target)
+		local targetInfluence = clamp(_obj.boid.targetStrength)
+		targetingDiff = angleDiff(_obj.angle, targetAngle) * targetInfluence * 0.05
+	end
+	
+	return targetingDiff
+end
+
+
+
+--[[GROUP:]]
+function boidDiffAngles(_obj, _neighbors)
+	local separationDiff = 0
+	local alignmentDiff = 0
+	local cohesionDiff = 0
+	
+end
+
+
+
+--[[GROUP:Extras]]
+function containBoid(_obj)
+	local x = _obj.x
+	local y = _obj.y
+	
+	local borderDist = _obj.boid.borderDist
+	local borderStrength = _obj.boid.borderStrength
+	
+	local angleX, angleY = 0, 0
+	local xInfluence, yInfluence = 0, 0
+	
+	if x < borderDist then
+		angleX = 180
+		xInfluence = min(borderDist, max(0, borderDist - x)) / borderDist * borderStrength
+	elseif x > 480 - borderDist then
+		angleX = 0
+		xInfluence = min(borderDist, max(0, borderDist - (x - 430))) / borderDist * borderStrength
+	end
+	
+	if y < borderDist then
+		angleY = 90
+		yInfluence = min(borderDist, max(0, borderDist - y)) / borderDist * borderStrength
+	elseif y > 270 - borderDist then
+		angleY = 270
+		yInfluence = min(borderDist, max(0, borderDist - (y - 220))) / borderDist * borderStrength
+	end
+	
+	local xDiff = angleDiff(angleX, _obj.angle) * xInfluence
+	local yDiff = angleDiff(angleY, _obj.angle) * yInfluence
+	
+	return xDiff, yDiff
+end
+
+function initTrail()
+	trailBuffer = userdata("u8", 480, 270)
+	set_draw_target(trailBuffer)
+	cls(7)
+	for i = 1, 2000 do
+		for j = 0, 2 do
+			pset(rnd(480), rnd(270), 15 + j * 8)
+		end
+	end
+	set_draw_target()
+end
+
+function updateTrail(group)
+	local trailEnabled = boidControls.submenu3.orderedList[4].value
+	local trailSize = boidControls.submenu3.orderedList[5].value
+	
+	if trailEnabled == 1 and #group > 0 then
+		set_draw_target(trailBuffer)
+		local trailRadius = boidControls.submenu3.orderedList[5].value
+		
+		for key, obj in ipairs(group) do
+			circfill(obj.x, obj.y, trailSize, obj.color)
+		end
+	end
+	
+	set_draw_target()
+end
+
+function drawTrail()
+	blit(trailBuffer, get_draw_target(), 0, 0, 0, 0, 480, 270)
+end
+
+
+
+--[[GROUP:Main Loop]]
+function updateBoid(_obj, _allies, _grid)
+	-- Update boid's angle of influence
+	if _obj.boid == nil then
+		_obj = newBoid(_obj)
+	else
+		_obj.boid.angle = _obj.angle
+	end
+	
+	--local neighbors = boidGetNeighbors(_obj, _allies)
+	local neighbors = gridNeighbors(_obj, _grid, boidControls.submenu1.orderedList[5].value)
+	_obj.boid.longNeighbors = neighbors
+	local diffs = {}
+	
+	if #neighbors > 0 then
+		local separationDiff, personalNeighborList = boidSeparation(_obj, neighbors)
+		_obj.boid.personalNeighbors = personalNeighborList
+		if separationDiff ~= 0 then
+			add(diffs, separationDiff)
+		else
+			_obj.boid.personalNeighbors = {}
+		end
+		
+		local alignmentDiff, neighborAvgAngle = boidAlignment(_obj, neighbors)
+		_obj.boid.neighborAvgAngle = neighborAvgAngle
+		if alignmentDiff ~= 0 then
+			add(diffs, alignmentDiff)
+		end
+		
+		local cohesionDiff, neighborAvgPos = boidCohesion(_obj, neighbors)
+		_obj.boid.neighborAvgPos = neighborAvgPos
+		if cohesionDiff ~= 0 then
+			add(diffs, cohesionDiff)
+		end
+		
+		local targetingDiff = boidTargeting(_obj)
+		if targetingDiff ~= 0 then
+			add(diffs, targetingDiff)
+		end
+		
+		if _obj.boid.contained == 1 then
+			local xDiff, yDiff = containBoid(_obj)
+			if xDiff ~= 0 then
+				add(diffs, xDiff)
+			end
+			if yDiff ~= 0 then
+				add(diffs, yDiff)
+			end
+		end
+		
+		local totalDiff = 0
+		
+		if #diffs > 0 then
+			
+			for key, value in ipairs(diffs) do
+				totalDiff += value
+			end
+			
+			_obj.boid.angle = angleDiff(_obj.angle, _obj.angle + totalDiff) % 360
+			_obj.angle = (_obj.angle + totalDiff) % 360
+		else
+			_obj.boid.angle = _obj.angle
+		end
+	else
+		if _obj.boid.contained == 1 then
+			local xDiff, yDiff = containBoid(_obj)
+			if xDiff ~= 0 then
+				add(diffs, xDiff)
+			end
+			if yDiff ~= 0 then
+				add(diffs, yDiff)
+			end
+		end
+		
+		local totalDiff = 0
+		
+		if #diffs > 0 then
+			
+			for key, value in ipairs(diffs) do
+				totalDiff += value
+			end
+			
+			_obj.boid.angle = angleDiff(_obj.angle, _obj.angle + totalDiff) % 360
+			_obj.angle = (_obj.angle + totalDiff) % 360
+		else
+			_obj.boid.angle = _obj.angle
+		end
+	end
+	
+	return _obj
+end
+:: main.lua
+--[[pod_format="raw",created="2026-06-08 20:12:47",modified="2026-06-16 19:28:34",revision=405,xstickers={}]]
+include("boid.lua")
+include("movement.lua")
+
+function _init()
+	boidControls = initBoidControls()
+	boids = {}
+	startingBoidCount = 50
+	
+	for i = 1, startingBoidCount do
+		spawnBoid()
+	end
+	
+	initTrail()
+end
+
+function spawnBoid(_color)
+	local color = _color == nil and rainbow[flr(rnd(#rainbow)) + 1] or _color
+	
+	local newBoid = {
+		x = rnd(480),
+		y = rnd(270),
+		angle = rnd(360),
+		speed = 0,
+		acceleration = 0.5,
+		color = color,
+	}
+	
+	while newBoid.color == 7 do
+		newBoid.color = rainbow[flr(rnd(#rainbow)) + 1]
+	end
+	
+	add(boids, newBoid)
+end
+
+function moveBoids()
+	local grid = buildGrid(boids, boidControls.submenu1.orderedList[5].value)
+	
+	for key, boid in ipairs(boids) do
+		boid = updateBoid(boid, boids, grid)
+		boid = moveForward(boid)
+		boid = infiniteScreen(boid)
+	end
+end
+
+function regulateBoids()
+	local maxBoids = boidControls.submenu3.orderedList[1].value
+	if #boids > maxBoids then
+		for i = #boids, maxBoids + 1, -1 do
+			deli(boids)
+		end
+	elseif #boids < maxBoids then
+		for i = #boids, maxBoids do
+			spawnBoid()
+		end
+	end
+end
+
+function drawNeighborConnections(_obj, _full)
+	local drawLinks = boidControls.submenu3.orderedList[3].value
+	if drawLinks ~= 1 then
+		return
+	end
+	
+	-- Draw line between object and neighbors. _full = true: draw affecting forces
+	local neighborSpace = _obj.boid.neighborDist * _obj.boid.neighborDist
+	
+	for key, neighbor in ipairs(_obj.boid.longNeighbors) do
+		local distanceBetween = euclidDistSq(_obj.x, _obj.y, neighbor.x, neighbor.y)
+		if distanceBetween <= neighborSpace then
+			line(_obj.x, _obj.y, neighbor.x, neighbor.y, 6)
+		end
+	end
+	
+	
+	if _full == nil or _full ~= 1 then
+		return
+	end
+	
+	-- Draw affecting forces
+	if _obj.boid.separationStrength > 0 then
+		local personalSpace = _obj.boid.personalDist * _obj.boid.personalDist
+		for key, neighbor in ipairs(_obj.boid.personalNeighbors) do
+			local distanceBetween = euclidDistSq(_obj.x, _obj.y, neighbor.x, neighbor.y)
+			if distanceBetween <= personalSpace then
+				line(_obj.x, _obj.y, neighbor.x, neighbor.y, 0)
+			end
+		end
+	end
+	
+	if _obj.boid.cohesionStrength > 0 and _obj.neighborAvgPos ~= nil then
+		local nPos = _obj.boid.neighborAvgPos
+		circ(nPos.x, nPos.y, 4, _obj.color)
+		pset(nPos.x, nPos.y, _obj.color)		
+	end
+	
+	if _obj.boid.alignmentStrength > 0 and _obj.boid.neighborAvgAngle ~= nil then
+		local nAng = _obj.boid.neighborAvgAngle / 360
+		local nX = _obj.x + cos(nAng) * 20
+		local nY = _obj.y + sin(nAng) * 20
+		line(_obj.x, _obj.y, nX, nY, 6)
+	end
+	
+	local nAng = _obj.angle / 360
+	local nX = _obj.x + cos(nAng) * 10
+	local nY = _obj.y + sin(nAng) * 10
+	line(_obj.x, _obj.y, nX, nY, _obj.color)
+end
+
+function attractBoids(_boidList)
+	local boids = _boidList
+	local mx, my, mb = mouse()
+	if mb == 0x1 and boids[1].boid.target == nil then
+		for key, obj in ipairs(boids) do
+			obj.boid.target = {x = mx, y = my}
+		end
+	elseif mb == 0 and boids[1].boid.target ~= nil then
+		for key, obj in ipairs(boids) do
+			obj.boid.target = nil
+		end
+	end
+	
+	return boids
+end
+
+function _update()
+	regulateBoids()
+	
+	if (1 - stat(1) > 0.1) and (#boids < flr(t()) + startingBoidCount) then
+		--spawnBoid()
+	end
+	
+	navigateBoidControls()
+	moveBoids()
+	updateTrail(boids)
+	
+	if #boids > 0 then
+		boids = attractBoids(boids)
+	end
+	
+	toggleBoidControls()
+end
+
+function _draw()
+	local bgColor = boidControls.submenu3.orderedList[2].value
+	cls(bgColor)
+	
+	local trailActive = boidControls.submenu3.orderedList[4].value
+	if trailActive == 1 then
+		drawTrail()
+	end
+	
+	for key = #boids, 1, -1 do
+		local boid = boids[key]
+		--local full = (key == 1) and 1 or 0
+		drawNeighborConnections(boid, full)
+	end
+	drawBoids(boids)
+	drawBoidControls()
+	
+	local cpuActive = boidControls.submenu3.orderedList[6].value
+	if cpuActive == 1 then
+		print(stat(1), 461, 3, 0)
+	end
+end
+:: movement.lua
+--[[pod_format="raw",created="2026-06-08 20:28:37",modified="2026-06-15 18:59:13",revision=93,xstickers={}]]
+-- movement.lua
+function moveForward(_obj, _style)
+	_obj.speed = min(_obj.speed + _obj.acceleration / 10, _obj.acceleration)
+	
+	local wobbleVariance = 0
+	
+	if style == 1 then
+		wobbleVariance = sin(time()*_obj.acceleration)/12
+	end
+	
+	
+	_obj.collisionAngle = _obj.angle + wobbleVariance
+	_vx = cos((_obj.angle + wobbleVariance) / 360) * _obj.speed
+	_vy = sin((_obj.angle + wobbleVariance) / 360) * _obj.speed
+	
+	_obj.x += _vx
+	_obj.y += _vy
+	
+	return _obj
+end
+
+function infiniteScreen(_obj)
+	_obj.x = _obj.x%480
+	_obj.y = _obj.y%270
+	
+	return _obj
+end
+:: quadtree.lua
+--[[pod_format="raw",created="2026-06-09 23:25:56",modified="2026-06-16 09:20:51",revision=64,xstickers={}]]
+-- !!! Currently unused
+points = {}
+
+function newPoint(_x, _y)
+	-- Return a 2d vector where x = _x, y = _y
+	local x = _x == nil and rnd(480) or _x
+	local y = _y == nil and rnd(270) or _y
+	
+	-- Class "point"
+	local point = {
+		-- Variables
+		x = x,
+		y = y,
+		-- Functions
+		add = function(this, diff)
+				return newPoint(this.x + diff.x, this.y + diff.y)
+			end,
+		div = function(this, d)
+			return newPoint(this.x / d, this.y / d)
+			end,
+		mult = function(this, d)
+			return newPoint(this.x * d, this.y * d)
+			end,
+		diff = function(this, other)
+				return newPoint(abs(other.x - this.x), abs(other.y - this.y))
+			end,
+		new = function()
+			local point = newPoint() add(points, point) 
+			end,
+		midpoint = function(this, other)
+			return this.func.add(this.diff(other).div(2))
+			end,
+		distance = function(this, p)
+			local dx = p.x - this.y
+			local dy = p.y - this.y
+			return sqrt(dx * dx + dy * dy)
+			end
+	}
+	
+	return point
+end
+
+function newRect(_p1, _p2)
+	-- Return a rectangle where "p1" and "p2" are points representing opposite corners of the rect
+	local p1 = _p1 == nil and newPoint(0, 0) or _p1
+	local p2 = _p2 == nil and newPoint(480, 270) or _p2
+	-- Class "rect"
+	local rect = {
+		-- Variables
+		p1 = p1,
+		p2 = p2,
+		-- Functions
+		contains = function(this, p)
+			return this.p1.x <= p.x and this.p2.x >= p.x and
+				this.p1.y <= p.y and this.p2.y >= p.y
+			end,
+		size = function(this)
+			return this.p2.diff(this.p1)
+			end,
+		move = function(this, v)
+			return newRect(this.p1.add(v), this.p2.add(v))
+			end,
+		intersects = function(this, r2)
+			return this.p2.x >= r2.p1.x and this.p1.x <= r2.p2.x and
+				this.p2.y >= r2.p1.y and this.p1.y <= r2.p2.y
+			end,
+		distanceToPoint = function(this, point)
+			local px = point.x
+			local py = point.y
+			
+			local closestX = max(this.p1.x, min(px, this.p2.x))
+			local closestY = max(this.p1.y, min(py, this.p2.y))
+			
+			local dx = px - closestX
+			local dy = py - closestY
+			
+			return sqrt(dx * dx + dy * dy)
+			end
+	}
+	
+	return rect
+end
+
+function newQuadtree(_area, _threshold)
+	-- Return a quadtree where _area = table from newRect() and _threshold = number (4 by default)
+	local area = _area == nil and newRect() or _area
+	local threshold = _threshold == nil and 4 or _threshold
+	
+	-- Class "quadtree"
+	local quadtree = {
+		-- Variables
+		zones = {
+			find = function(this, point)
+				for key, zone in ipairs(this.zones) do
+					if zone.contains(zone, point) then
+						return key
+						end
+					end
+				return nil
+				end
+		},
+		elements = {
+			push = function(this, element)
+				add(this.elements, element)
+				end
+		},
+		-- Functions
+		insert = function(this, element)
+			if (#this.zones > 0) then
+				local intersecting = this.zones.find(this, element)
+				if intersecting ~= nil then
+					this.zones.intersecting.insert(element)
+					end
+				return
+				end
+			
+			this.elements.push(element)
+			if (#this.elements >= this.threshold and this.area.size.x > 1 and this.area.size.y > 1) then
+				local halfSize = this.area.size.div(2)
+				local rect = newRect(this.area.p1, this.aprea.p1.add(halfSize))
+				this.zones = {
+					newQuadtree(rect, this.threshold), -- NW
+					newQuadtree(rect.move(new Point(halfSize.x, 0)), this.threshold), -- NE
+					newQuadtree(rect.move(new Point(0, halfSize.y)), this.threshold), -- SW
+					newQuadtree(rect.move(halfSize), this.threshold) -- SE
+					}
+				for key, element in ipairs(this.elements) do
+					this.insert(element)
+					end
+				end
+				
+				this.elements = {
+					push = function(this, element)
+						add(this.elements, element)
+						end
+					}
+			end
+	}
+	
+	return quadtree
+end
+
+drawQuadtree(_quad)
+	
+end
+:: utilities.lua
+--[[pod_format="raw",created="2026-06-08 20:14:14",modified="2026-06-16 00:00:05",revision=99,xstickers={}]]
+function angleDiff(a1, a2)
+	local diff = (a2 - a1) % 360
+	
+	if diff > 180 then
+		diff -= 360
+	end
+	
+	return diff
+end
+
+function clamp(i, _minVal, _maxVal)
+	-- Return i clamped between _minVal and _maxVal. Clamps between 0 and 1 if _minVal and _maxVal aren't provided
+	local minVal = _minVal == nil and 0 or _minVal
+	local maxVal = _maxVal == nil and 1 or _maxVal
+	
+	return min(maxVal, max(minVal, i))
+end
+
+function euclidDistSq(x1, y1, x2, y2)
+	local dx = x2 - x1
+	local dy = y2 - y1
+	return dx * dx + dy * dy
+end
+
+function drawPointer(_obj, _size, _filled)
+	local x = _obj.x
+	local y = _obj.y
+	local col = _obj.color
+	local size = _size == nil and 4 or _size
+	local filled = _filled ~= nil and _filled or false
+	
+	if filled == true then
+		circfill(x, y, size / 2, col)
+	end
+	
+	for i = 0, 3 do
+		local vx = cos((_obj.angle + 120 * i) / 360) * size
+		local vy = sin((_obj.angle + 120 * i) / 360) * size
+		if i == 0 then
+			local vx2 = cos((_obj.angle + 120 * i-1%3) / 360) * size
+			local vy2 = sin((_obj.angle + 120 * i-1%3) / 360) * size
+			line(x + vx, y + vy, x + vx2, y + vy2, col)
+		else
+			line(x + vx, y + vy, col)
+			if filled == true then
+				circfill(x + vx / 2, y + vy / 2, size / 4, col)
+			end
+		end
+	end
+end
+
+function getAngle2D(_obj, _target)
+	-- Return 360-degree angle from _obj to _target
+	local dx = _target.x - _obj.x
+	local dy = _target.y - _obj.y
+	local a = atan2(dx, dy)
+	return a * 360
+end
+
+function printShadow(_string, _x, _y, _mainColor, _shadowColor)
+	-- Print text with shadow 1px below
+	print(_string, _x, _y, _shadowColor)
+	return print(_string, _x, _y-1, _mainColor)
+end
+
+rainbow = {8, 24, 25, 9, 10, 26, 11, 27, 17, 12, 28, 29, 23, 14, 30} 
+function showSelector(_x, _y) 
+	-- Show cursor for selecting options in GUI 
+	local selectorX = (sin(t() / 3) * 4) + _x 
+	local selectorY = (cos(t() / 2) * 3) + _y 
+	circfill(selectorX, selectorY, 2, rainbow[flr(t() * 10) % #rainbow + 1]) 
+end 
+
+function sortTableBy(_table, _dir, _key)
+	-- Sort table in "ascending" or "descending" corner, with optional _key to sort list of objects by
+	if _table == nil or #_table == 0 then
+		error("sortTableBy(): Table is nil or empty.")
+	end
+	
+	local dir = _dir == nil and "ascending" or _dir
+	local key = _key == nil and nil or _key
+	
+	local sortedTable = {}
+	
+	for i = #_table, 1, -1 do
+		if #sortedTable == 0 then
+			add(sortedTable, _table[i])
+			goto STBcontinue
+		end
+		
+		if not (_key == nil) then
+			local inserted = false
+			for j = #sortedTable, 1, -1 do
+				local tableComparison = false
+				if dir == "ascending" then
+					tableComparison = _table[i][_key] > sortedTable[j][_key]
+				else
+					tableComparison = _table[i][_key] < sortedTable[j][_key]
+				end
+				
+				if tableComparison == true then
+					add(sortedTable, _table[i], j+1)
+					inserted = true
+					break
+				end
+			end
+			if inserted == false then
+				add(sortedTable, _table[i], 1)
+			end
+		else
+			local inserted = false
+			for j = #sortedTable, 1, -1 do
+				local tableComparison = false
+				if dir == "ascending" then
+					tableComparison = _table[i] > sortedTable[j]
+				else
+					tableComparison = _table[i] < sortedTable[j]
+				end
+				
+				if tableComparison == true then
+					add(sortedTable, _table[i], j+1)
+					inserted = true
+					break
+				end
+			end
+			if inserted == false then
+				add(sortedTable, _table[i], 1)
+			end
+		end
+		
+		::STBcontinue::
+	end
+	
+	return sortedTable
+end
+
+function tableAverage(_table)
+	-- Returns average of all values in table
+	if _table == nil or #_table == 0 then
+		error("tableAverage(): _table is nil or empty.")
+	end
+	
+	local average = 0
+	
+	for index, value in ipairs(_table) do
+		average += value
+	end
+	
+	return average / #_table
+end
+:: .info.pod
+--[[pod,author="DorkOrca / gachapon.party",created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"001818181818181818181818181818001808080808080808080808080808081818080909090909090909090909090818001808090a0a0a0a0a0a0a0a09081800001808090a0707070707070a09081800000018080a0707070707070a0818000000001808090a070707070a09081800000000001808090a07070a0908180000000000001808090a07070a090818000000000000001808090a0a09081800000000000000001808090a0a090818000000000000000000180809090818000000000000000000001808090908180000000000000000000000180808180000000000000000000000001808081800000000000000000000000000181800000000000000"),modified="2026-06-16 20:29:44",notes="",runtime=26,title="Let's Boid!",version="0.1",workspaces={{location="main.lua#29,49",workspace_index=1},{location="boid.lua#323,25",workspace_index=1},{location="movement.lua#4,2",workspace_index=1},{location="utilities.lua#47,7",workspace_index=1},{location="quadtree.lua#1,24",workspace_index=1},{location="gfx/0.gfx#1",workspace_index=2}}]]
+:: gfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 20:29:44"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+Ni0xMCAyMTo1Nzo1OCIscmV2aXNpb249NF1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+-----------------------------------------------------------XUG09OH19
+:: label.qoi
+b64$cW9pZgAAAeAAAAEOBAH_Ka3--f39-f39-f39-f39-f39-f39-f39-f39-f39-f396P4AAADA
+CsU1wArBNcAK-f39-f39-ds1CsA1CsM1CsA1CjUK-f39-f39-d01CjXACsY1CjUK-f39-f39-d01
+wAo1CsQ1wArANcEK-f39-f39-ds1CsA1CsY1CjUKwDUK-f39-f39-do1CsA1CsM1CsA1CjUKwDUK
+-f39-f39-ds1wArBNQrBNcAKwTXACv39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39-f39
+-f39x-65AD4K-f39-f39-egSwgr9-f39-f395xLDCv39-f39-f3lEsUK-f31-gCloQr9-f3r-sLD
+x8IK9hLHCv399BUKFQr9-f3qOwo7xwrtEskK-f30FcEK-f396zvMCucSywr9-fMVwwr9-f3qO8sK
+6RLKCv398xXDCv39-eo7ygrrEskK-f3yFcUK-f396jvJCuwSxwr9-fMVxQr9-f3qO8gK7xLFCv39
+8hXHCv39-eo7xgrvOwrAEsMK-f3xFckK-f396DvGCu87CsISwgr9-fAVygr9-f3nOwo7xArvOwrE
+EsE7Cv397xXLCv39-eQ7wArBO8MK7jsKxxI7Cv397xXLCv39-eM7CsM7wgruOwrKOwr9-e0VzQr9
+-f3hOwrFO8AK7jsKyzsK-f3yOwr9-f3oO8AKxjsK7jsKzTsK-f3xOwr9-f3nOwr4OwrPOwr9-e87
+Cv39-ec7Cvk7Cs87Cv397zsK-f395TvACvk7CtE7Cv397TsK-f395TsK_jsK0jsK-f3tOwr9-f3g
+-nAyLsAKwDsK_jsK0f6iiHnDCv396jsK-f393gHDO8AK7-7-rMUKyDsK0hLKCv394zsK-f392gHH
+CvExwQrFOwrUEssK-f3hOwr9-f3XAcoK8THCCsM7CtUSygr9-eE7Cv39-dYBzArxMcMKwTsK1xLJ
+Cv394TsK-f391wHKCvIxxTsK2BLICv394TsK-f392QHJCvIxxgrPO8cSxwr9-eI7Cv39-doByAry
+MccKxjvGCsgSxQr9-eM7Cv39-dsBxgryMco7xArQEsUK-f3iOwr9-f3aO8AKAcUK8jHLCtUSxAr9
+-eM7Cv39-dg7wArCAcQK8jHJCtcSwwr9-eM7Cv39-dc7wArEOwHDCvIxyDvBCtYSwQr9-eQ7Cv39
+-dU7wArFOwrAAcEK8zHGCsM7wQrUEsAK-f3kOwr9-f3UOwrHOwrBAcAK8zHECsg7wQrREv7-owA7
+Cv394jsK-f3E-kUtMgrk-iRjsArT-l9XT8AKzDvACsc7CsMBCvMxwgrNO8IKzSHBCv394jsK-f3E
+A8AK4yDACtIuCi7BCsc7wArJOwr4McAK1DvBCskhwwr9-eA7Cv39xAPCCuEgwgrRLscKwTvACss7
+Cv3VO8EKxiHECv393zsK-f3EA8MK4CDDCtEuyQrFMQrEOwr92TvBCsMhxQr9-d47Cv39wwPECt8g
+xArRLssKwzHCCsE7Cv3cO8IKIcYK-f3cOwr9-cQDxgrdIMUK0C7KCsQxwwo7Cv3hIcgK-f3bOwr9
+-cQDxgrdIMYKzTvALskKxTHEOwr94SHJCv391v4SU1kKwDsK-f3EA8gK2yDICjvLCsAuyDsKxTHG
+Cv3gIcoK-f3UOQo5CjsK-f3EA8k72iDJCs4uxgrAO8MKwDHICv3dIcwK-f3TOcE7Cuj_5A2rCv3X
+A8oK2SDKCs4uxQrGO8AxyQr93CHKCv391DnDCugPwAr91gPLCtggywrNLsQKyDHLCv3bIccK-f3X
+OcMK5w-CCv3VA8wK1yDMCswuwwrJMcwK-dohwwr9-do5xQrmD8MK-dMDCgPHCtogCiDHCtEuwQrK
+McoK-dwhwAr9-d05xQrlD8QK-dMDwgrAOwreIMIK2C7ACssxyAr9-f39wDnHCuQPxQr92DsK-C4K
+zDHFCv39-f3COckK4w-GCv3XOwr9zTHCCv39-f3FOcoK4Q-ICv3WOwr9zTHACv39-f3GOcsK4Q-J
+Cv3VOwr9-f39-dc5ywrhD8kK-dU7Cv39-f391jnNCt8Pywr91DsK-f39-f39yA-MCv3TOwr9-f39
+-f3HD8oK-dY7Cv39-f39-ccPwwr93DsK-f39-f39-es7Cv39-f39-f3rOwr9-f39-f396zsK-f39
+-f39-es7Cv39-f39-f3rOwr9-f39-f396zsK-f39-f39-es7Cv39-f39-f3qOwr9-f39-f396zsK
+-f39-f39-es7Cv39-f39-f3rOwr9-f39-f396zsK-f39-f39-es7Cv39-f39-f3m-uJrEwrCOwr9
+-f39-f395jfCCjsK-f39-f39-eY3wzsK-f39-f39-eY3xQr9-f39-f395TfGCv39-f394i4K-d8u
+zQrNN8gK-f39-f3gLsAK-cP_HStTwQrXLssKzjfKCv39-f393i7CCvooxAooCtcuywrMO8A3ywr9
+-f39-d0uwwr1KMkK2S7KO8wKwDfJCv39-f393i7FCvEozArVO8IuyTsKzjfICv39-f393y7GCvEo
+ywrCO9EKwy7HCtA3xgr9-f39-eEuyArwKMk7wwrWLscK0DfECv39-f394y7JCvAoyArcLsUK0TfC
+Cv39-f395S7KCvAoxgreLsMK0TfACv39-f396C7LCu8oxgreLsM7CtA7Cv39-f396S7JCvIoxQrf
+LsEKwDsKzzsK-f39-f3oLsgKO8AK8ijDCjsK3i4KLgrAOwrOOwrh-gDkNsEK-f39-f3DLsUKxDvA
+CvEowgo7Ct8uCsI7Csw7CuIjCiPECv39-f38LgouwQo7CsY7wArwKMAKwTsK4zsKzDsK4yPJCv39
+-f34LsAKwjsKyDvACu8oCsI7CuM7Cso7CuQjzAr9-f39_zsKyjvACvI7CuQ7Csg7CuUjywr9-f39
+-TsKyzvACsMhwArqOwrjOwrHOwrnI8kK-f3V-v-sJ8IK-f3jOwrNO8AKwSEKIcIK5zsK4wEKxjsK
+5yPICv390x-FCv394zsKzzvACsAhxgrlOwriAcIKwjsK6SPGCv390B-JCv394zsK0TvAIcoK4TsK
+4gHDCsA7Cuojxgr9-c0fzAr9-eM7CtMhzArgOwrhAcU7CuojxQr9-c8fygr9-eQ7CtMhywriOwrg
+AcYK6jsjwwr9-dEfyQr9-eM7CjsK0yHJCuM7CuAByAroOyPCCv390x-ICv394zvBCtI7IcgK5TsK
+3wHKCuU7CsAjwAr9-dUfxgr9-eM7wwrOO8EKIccK5zsK3gHJCgEK5DsKwCMK-f3XH8UK-f3jO8QK
+yTvCCsMhxQrpOwrdAcoK5DsK-f3bOx-ECv394zvGCsM7wgrHIcQK6jsK3QHIOwrlOwr9-do7CsAf
+wwr9-eM7xgrAO8EKyyHDCuw7CtwBxgrBO8EK4TsK-f3bOwrBH8EK-f3kO8gKziHCCu47CtsBxArG
+O8AK3zsK-f3aOwrDH8AK-f3jO8kKzyHACvA7Ctk7AcMKyTvBCts7Cv392jsKxR8K-f3jO8oKziEK
+8TsK2DsKAcEKzjvACtk7Cv392TsK-f3sO8sK-cQ7CtY7CsABCtI7wQrR-qtSNv4prf-BOwr9-do7
+Cv397DvJCv3HOwrUOwrZO8EKzf6rUjb_Ka3--qtSNv4prf-AOwr9-dk7Cv397DvHCv3KOwrTOwrd
+O8AKy-6rUjbB-imt-zsK-f3ZOwr9-e07CjvBCsA7Cv3MOwrQO8AK4DvBCsf_q1I2wzv_Ka3--f3Z
+Owr9-e07wArEOwr9zDsKzjsK5TvACsX_q1I2w-4prf-9-db_ZN-2CsA7Cv399jsK-c07Csw7Cug7
+wQrB-qtSNsX_Ka3--f3UNsAKOwr9-fc7Cv3NOwrLOwrsO8H_q1I2xf4prf-9-dI2wjsK-f34Owr9
+zjsKyTsK7-6rUjbH-imt--390DbECv39_TsK-c47Csc7Cu-_q1I2yP4prf-9-c82xQr9-fk7Cv3O
+OwrGOwrv-qtSNsr_Ka3--f3NNsYK-f35Owr9zzsKxDsK8P6rUjbK-imt--39yzbICv39_TsK-f3L
+-qtSNsv_Ka3--f3JNskK-f36Owr9-cn_q1I2zP4prf-9-cg2ygr9-fo7Cv39yzsKwzsK-f3MNssK
+-f36Owr9-co7CsQ7Cv39zjbKCv39_TsK-f3JOwrGOwr9-c82yAr9-fo7Cv39xzsKxzsK-f3SNsUK
+-f36Owr9-cY7Csg7Cv391TbCCv39_jsK-f3FOwrJOwr9-dY7NsAK-f36Owr9-cQ7Css7Cv391jsK
+-f38OwrCFcEK-fAuCsY7Csw7Cv391jvACv39_xXEChUK-fAuwArEOwrNOwr9-dc7Cv399xXJCv3w
+LsIKwjsKzjsK-f3XO8AKwDsK-f3wFcwK-fAuwwrAOwrQOwrW-n4lU8MK-fg7wAo7wAr9-fAVywr9
+7y7ECjsK0TsK1i3GCv31O8AKO8EK-f3wFckK-fAuxQrSOwrXLcgK-fM7xAr9-e8VyQr97y7GCtI7
+Ctctywr98DvGCv397hXICv3vLscK0jsK1i3KCv3yO8YK-f3uFcYK-e8uyQrROwrXLcgK-fM7xwr9
+-e4VxQr97y7KCtA7Ctctxwr98zvJCv397hXEOwr97S7LCtA7CtY7LcYK-fM7ywr9-ew7ChXDCjsK
+-ewuyzsK0DsK0zvACi3GCv3yO80K-f3rOwrAFcEKwTsK-eouCi7LO8AKzjsK0TvACsItxAr98jvM
+Cv397DsKwhUKwzsK-ekuxQrAOwrFO8AKzDsKzzvACsQtwwr98jvLCv397jsKyTvACv3rOwrDOwrG
+O8EKyTsKzTvACsYtwgr98jvLCv397jsKzDsK-eo7CsM7Csk7wArIOwrDI8AKwzvACsktwAr99TvJ
+Cv397jsKzTsK-eg7CsU7Cso7wArGOwrAI8EKIwrBO8AKyy0K-fc7yQr9-ew7Cs87Cv3nOwrFOwrM
+O8AKwyPGCsA7wArNOwr99jvACsM7wQo7Cv397DsK0DsK-eU7Csc7Cs07wCPJO8AKzzsK-fU7wArH
+O8AK-f3rOwrSOwr95DsKxzsKzSPLCtA7Cv31O8AK-f33OwrTOwr94jsKyTsKzSPKCtA7Cv30O8AK
+-f33OwrVOwr94TsKyTsKziPICtE7Cv3zO8AK-f34OwrWOwr93zshCso7Cs4jxwrROwr98jvACv39
+_DsK2DsK-dwhwgrKOwrPI8YK0DsK-fI7wAr9-fk7Ctk7Cv3ZIcQKyzsKziPFCtE7Cv3yOwr9-fk7
+Cts7Cv3WIcYKyzsKzjsKI8M7CtA7Cv3xOwr9-fo7Ctw7Cv3TIcgKzDsKzDsKwCPDCjsKzzsK-fA7
+Cv39_jsK3jsK-dEhyQrMOwrLOwrCI8IKwDsKzTsK-fA7Cv39_zsK3zsK-c4hywrNOwrJOwrFIwrC
+OwrMOwr97zsK-f37OwrhOwr9ziHKCs07CsH_ZUaICsQ7CsYjCsM7Css7Cv3lOgrGOwr9-fM5xQrA
+OwriOwrz-v8ATQrVO8AhyDvACsw7CjoKOgrCOwrOOwrKOwr95TrACsQ7Cv399DkKOcoK3zvACsco
+CucNwArRO8EKwiHGCsA7wQrJOwo6wQrBOwrQOwrIOwr95TrCCsI7Cv3TFcEK-d45ygriOwrFKMAK
+5w3BCs07wQrHIcQKwzvACsg6wwo7CtI7CsMgCsE7Cv3lOsMKwDsK-dQVChXECv3ZOcoK4zsKwyjB
+CuYNwwrKO8AKyyHDCsU7wQrEOsQKOwrTOwrCIMAKwDsK-eQ6xAo7Cv3WFckK-dU5ygrkOwrBKMMK
+5Q3FCsU7wQrOIcIKyDvBCsE6xQrVOwrAIMIKOwr95DrFCv3XFcsK-cQ6Cs05yArmOwooxArlDcYK
+wTvBCtQhCss7wDrGCtY7CiDDCv3lOsYK-dYVygr9xTrBCss5xwroKMUK5Q3HO8AK5zrHCtY7IMQK
+-eM6yAr91hXJCv3FOsIKyDvBOcUK6CjGCuQNyQrnOsgK1iDGCv3iOskK-dUVyAr9xjrDCsU7wgo5
+xQrnKMgK4w3KCuU6ygrVIMYK-eI6yQr91hXFCjvBCv3EOsUKwTvCCsE5xArnKMkK4w3LCuQ6ygrV
+IMgK-d86ywr91RXFCsI7wQrEDcIK9TrGO8IKxDnDCuYoygrjDckK5TrMCtQgyQr93jrMCv3UFcQK
+xjvACsINCg3HCu06yDsKxjnCCuYoywrjDccK6TrBCjrGCtMgygr93TrKCv3XFcMKyTvBCsANzArp
+OsoKxjnACukoyQriDcUK-c8gywr93DrDCsQ7Cv3YFcEKzTvADcsK6jrJCjoKxTkK7SjHCuENCg3B
+Cv3RIMkK-eE7CsY7Cv3YFQrQDcoK6zrKCvk7KMEKKArhDcAK-dMgCiDECv3lOwrHOwr91hXACtEN
+yQrqOzrICvw7CsAowAr9_CDBCv3pOwrJOwr96g3ICuo7CjrGCv3AOwr9-f3sOwrKOwr96g3GCuo7
+Cjs6xAr9wjsK-f396zsKzDsK-ekNxQrpO8IKOgo6wAr9xDsK-f396zsKzTsK-egNxArcIM07CsE6
+wAr9xjsK-f396jsKzzsK-egNwwrdIMsK-c07Cv39-eo7CtA7Cv3nDcIK3iDLCv3NOwr9-f3qOwrQ
+Owr96A3ACuAgygr9zTsK-f396TsK0jsK-ecNCuEgyQr9zjsK-f396TsK0zsK-f3NIMcK-c87Cv39
+-eg7CtU7Cv39zCDHCv3POwr9-f3oOwrWOwr9-cwgxQr90DsK-f395zsK2DsK-f3MIMMK-dI7Cv39
+-d85CsQ7Ctk7Cv39yyDDCv3SOwr9-f3fOcIKwDsK2zsK-f3LIMEK-dM7Cv39-d85xDsK3DsK-f3K
+IAogCv3TOwr9-f3fOcYK3DsK-f3KIAr91DsK-f393znICv39-f3AOwr9-f3fOckK-f39-TsK-f39
+3znLO8kK-f398DsK-f393znKCso7zAr9-f3i-gCyUQr9-f3gOccK-f39-cAmwAr9-f3fOcYK-f39
+-cAmwgr9-f3eOcUK-f39-cAmxAr9-f3dOcMK-f39-cImwwomCv39-dw5wgr9-f39wybFCv39-dw5
+wQr9-f39xCbGCv39-ds5Cv39-f3FJsgK-f39-f39-eImyQr9-f39-f394CbLCv39-f39-f3fJswK
+-f39-f39-d4myQr9-f39-ewoCv3vJjsmxAr9-f39-e8o-v-x6CgK-e4mwQr9-f39-fQoP8AoCv3s
+Owr9-f39-fcoP8EoCv3pO8AK-f39-f34KD-CKAr95zsK-f39-f36KD-AKMAK-ec7Cv39-f39-CjA
+PygK-eY7Cv39-f39-f3qOwr9-f39-f394CgKxjvACv39-f39-f3gKMAKxTsK-f39-f39-eIowQrD
+Owr9-f39-f394ijDCsE7Cv39-f39-f3iKMQKwDsK-f39-f39-eIoxjsK-f39-f39-eMoxgr9-f39
+-f394yjICv39-f39-f3hKMkK-f39-f39-eAoywr9-f39-f393yjLCv39-f39-f3eKMwK-f39-f39
+-eA6KMgKKAr9-f39-f393jrIKMIK-f39-f39-d06yQrBOwr9-f39-f393DrLCsA7Cv39-f39-f3b
+OswKwTsK-f39-f39-d06yQrCOwr9-f39-f394DrEOzoKwjsK-f39-f39-eI7CjrBOzkKwTsK-f39
+-f39-eE7CjsKOcEKwjsK-f39-f39-eE7wDnCOwrCOwr9-f39-f394Ds5xDvACsE7Cv39-f39-f3e
+OcYKwDsKwTsK-f39-f39-dw5xwrBOwrBOwr9-f39-f392jnICsI7wArAOwrEAQr9-f39-f390DnK
+CsQ7CsA7CsIBCgEK-f39-f39-c45CjnJCsU7CjsKwgHBCv39-f39-f3POco7wQrDO8EKwAHDCv39
+-f39-f3QOcgKwTvBCsI7wAoBwwr9-f39-f390jnGCsQ7wArBOwHFCv39-f39-f3TOcQKxjvBCgHF
+Cv39-f39-f3VOcIKyQHHCv39-f39-f3WOcAKyQHICtkPCv39-f39-f3FAcoK2A-ACv39-f39-f3E
+AcoK2A-BCv39-f39-f3CAcsK1w-DCv39-f39-f3BAcwK1g-ECv39-f39-f0BxQreD8UK-f39-f39
+-eUPxgr9-f39-f394w-ICv39-f39-f3iD8kK-f39-f39-eEPygr9-f39xAAAAAAAAAAB
+:: map/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 20:29:44"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/.info.pod
+--[[pod,created="2026-04-16 19:10:37",modified="2026-06-16 20:29:44"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: [eoc]

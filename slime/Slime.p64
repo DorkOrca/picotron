@@ -1,114 +1,160 @@
 picotron cartridge // www.picotron.net
 version 2
 
-:: .info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiIscnVudGltZT0yMCx3b3Jrc3BhY2VzPXt7bG9jYXRpb249Im1haW4ubHVh
-IzQiLHdvcmtzcGFjZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lcy5sdWEjNjEiLHdvcmtzcGFj
-ZV9pbmRleD0xfSx7bG9jYXRpb249InNsaW1lQW5pbWF0aW9ucy5sdWEjOSIsd29ya3NwYWNlX2lu
-ZGV4PTF9fV1d
 :: gfx/
-:: gfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
-:: gfx/0.gfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
-OS0xOCAwMDo0OToyNiIscmV2aXNpb249M11dbHo0AJoDAABPNQAA8yF7WzBdPXtibXA9cHh1AEMg
-EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_APMMZkiQCE4I
-cAgeHxcXDghgCA5NBwhQCB5dDghABgDvDS4tHghQCA4NTghwaDBgAB3-EZZIgBhOGFAILh8XFx4I
-MAg_TQcOCCAIDg0ODW4IMKgQUAAd8A0pKLAIDhcIkAgOLxcHCIAIDj0IgAgeHQ4IgAg_DwD-AA0o
-kAgeCMAYsBjwDgjwCl8AHYEnWHAYDi8XF-EAMC4tBwYBkQgePQgwCAAYAGgAr5AILggwCGAo8FNc
-AB35CTIIAAjgCAAYwAgODxc4gAguDRcIgBgOLccAAF8AT7Ao8CRdAB0ReMgBFGC9AD8eTQfCAQQf
-IFoAHWB0SJAILhekAEA-Fw4YHAIfB1oAAx9AWgAdH2R8Ag4xDg0eYQB-Hg0_CHBoUGEAHR9WYQAC
-IQ5tWwABBgAwDQ5NYACfbghwCA0_CJBIxAAeH0bEAA5ADQ5dDhMAED0fAG8NXghwCE5pACVADg8X
-J2wAJx0nagACjgESB2oAARMAH01pAC7wEEcIcAgvFzcIYAgPDi8XJwhQCB8OPxcnCEAIHw5PFxc-
-ATAPDk5pAjAdPgeMAI89DgcIcAg9DnEAJfAFLxcfDghwCDcPFw8ODxcIYAhHDg82AXJnHghACHcO
-BQC-UAhnCGAIZwhwCEdoACUwDxc-aABQBy8XFw_QATAHTxczATAXXg9kAP4FF14NCEAIJ04NCFAI
-Jy4NCGAINy5uAA8ZAiMBmwERB3UCBgYAQFAIB00dAI8nHR4IcAgnHWkAIR8GGQIkL-A1agAdHxd8
-BQEKugQgCA4EAHENBwigCB4NDwBv0AjgCPAHawAdUQgI4AjQTQCTDxceCKAIBw0OXQAQLoAAQB0e
-CIBuAgMFACAHLX8AIBcOOgUfFmsAHcA8CAAIkBgACHA4DxfFAmEPDhcuCGDkAC0YcJkFHyhfAB0w
-JFiAnwGAFw4NGFAIDk0cARBAMAMQCNoCAFkAAFkGEUBdAE9gCPBRXwAeDxAHBZCQCC4NCKAoDgc4
-Ac8NCMAY8AAY8A8I8AViAB0f8DEA----------2RZkeQB0AHcAdgAgBTUAeAB0AEAH9QB2AHcGcw
-swAeDzEA------------------------------------------------i1BtPTh9fQ==
+:: map/
+:: sfx/
+:: beauty.lua
+--[[pod_format="raw",created="2026-06-04 18:58:37",modified="2026-09-01 23:20:50",revision=111,xstickers={}]]
+ShadeTable = {
+	[0] = {},
+	[1] = {},
+	[2] = {},
+	[3] = {},
+	[4] = {},
+	[5] = {},
+	[6] = {},
+	[7] = {},
+	[8] = {},
+	[9] = {},
+	[10] = {},
+	[11] = {},
+	[12] = {},
+	[13] = {},
+	[14] = {},
+	[15] = {},
+	[16] = {},
+	[17] = {},
+	[18] = {},
+	[19] = {},
+	[20] = {},
+	[21] = {},
+	[22] = {},
+	[23] = {},
+	[24] = {},
+	[25] = {},
+	[26] = {},
+	[27] = {},
+	[28] = {},
+	[29] = {},
+	[30] = {},
+	[31] = {}
+}
+
+greens = {3, 11, 17, 19, 26, 27}
+lightgreens = {11, 26, 27}
+darkgreens = {3, 17, 19}
+warms = {10, 25, 31}
+earths = {4, 20, 31, 5, 20, 22}
+browns = {4, 20, 31}
+grays = {5, 20, 22}
+cools = {5, 20, 22, 1, 21}
+blues = {5, 1, 21}
+
+function generateField(x, y, width, height, density, bladeLength, bladeColors)
+	
+	density = density == nil and 0.5 or density
+	bladeLength = bladeLength == nil and 4 or bladeLength
+	bladeColors = bladeColors == nil and grays or bladeColors
+	
+	local totalSpace = width * height
+	local totalBlades = flr(totalSpace * density)
+	local field = userdata("f64", 5, totalBlades)
+	
+	for i = 0, totalBlades - 1 do
+		local bladeX, bladeY = flr(rnd(width) + x), flr(rnd(height) + y)
+		local bladeColor = bladeColors[flr(rnd(#bladeColors) + 1)]
+		field:set(0, i, bladeX, bladeY, bladeX, bladeY - bladeLength, bladeColor)
+		
+	end
+	
+	return field
+end
+
+function animateField(field, time, mode)
+	
+end
 :: main.lua
---[[pod_format="raw",created="2025-09-18 00:49:08",modified="2025-09-22 22:24:31",revision=77]]
+--[[pod_format="raw",created="2025-09-18 00:49:08",modified="2026-09-02 00:05:27",revision=204,xstickers={}]]
 include("slimes.lua")
+include("beauty.lua")
 
--- 	World functions
+--		Variables
+t = 0
 
-
--- Loops
+-- 	Loops
 function _init()
+	backfieldA = generateField(0, 153, 480, 12, 0.5, 4, warms)
+	backfieldB = generateField(0, 160, 480, 15, 0.5, 4, browns)
+	backfieldC = generateField(0, 175, 480, 25, 0.5, 4, earths)
+	forefieldA = generateField(0, 200, 480, 20, 0.5, 4, grays)
+	forefieldB = generateField(0, 220, 480, 30, 0.5, 4, cools)
+	forefieldC = generateField(0, 250, 480, 20, 0.5, 4, blues)
 	generateSlime()
 end
 
 function _update()
+	t += 1
 	updateSlimes()
 	physics()
 	spawnSlimes()
 end
 
 function _draw()
-	cls(31)
-	rectfill(0,0,480,180,15)
-	rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
-	drawSlimes()
+	if t%2==0 then
+		cls(21)
+		rectfill(0,100,480,160,9)
+		rectfill(0,50,480,100,31)
+		rectfill(0,0,480,50,14)
+		-- rectfill(slimes[1].x - slimes[1].width, slimes[1].y - slimes[1].height, slimes[1].x + slimes[1].width, slimes[1].y	, 7)
+		line(backfieldA)
+		line(backfieldB)
+		line(backfieldC)
+		drawSlimes()
+		line(forefieldA)
+		line(forefieldB)
+		line(forefieldC)
+	end
 end
-:: map/
-:: map/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
-:: map/0.map
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
-MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
-aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
-CgBgdz0xNn19
-:: sfx/
-:: sfx/.info.pod
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTE5IDEzOjMyOjM1Iixtb2RpZmllZD0iMjAyNS0x
-MC0yMyAxODozNjoxMiJdXQ==
-:: sfx/0.sfx
-b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
-MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
-AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
-IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
-H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: slimeAnimations.lua
---[[pod_format="raw",created="2025-09-18 20:12:26",modified="2025-09-19 00:11:21",revision=66]]
-function drawSlimeJump()
+--[[pod_format="raw",created="2025-09-18 20:12:26",modified="2026-06-03 17:51:10",revision=97,xstickers={}]]
+function drawSlimeJump(_slime)
 	if angle and _slime.y < floor then
 		frame = flr((angle - 22.5) / 45) % 8 + 1
 		_slime.sprite = slimeRotation[frame]
 	end
 end
 
-slimeFlopR = {1, 7, 6, 7,}
-slimeFlopL = {1, 6, 7, 6,}
+slimeFlopL = {1, 11, 12, 11,}
+slimeFlopR = {1, 12, 11, 12,}
 slimeBounce = {}
 
-function drawSlimeFlop()
-	if _slime.yLast then
-		if _slime.yLast != _slime.y and _slime.y == floor then
-			_slime.frame = 16
-		end
+function drawSlimeFlop(_slime)
+	if _slime.yLast and _slime.yLast != _slime.y and _slime.y >= floor then
+		_slime.frame = 16
 	end
 	
-	if _slime.frame > 0 and _slime.y >= floor then
-		_slime.frame -= 1
-		if angle > 270 or angle <= 90 then
-			_slime.sprite = slimeFlopR[flr(_slime.frame / 4) + 1]
-		else
-			_slime.sprite = slimeFlopL[flr(_slime.frame / 4) + 1]
-		end
-	elseif _slime.y >= floor then
+	if _slime.frame <= 0 and _slime.y >= floor-1*scale then
 		_slime.sprite = 1
+	elseif _slime.frame > 0 and _slime.y >= floor-1*scale then
+		_slime.frame -= 1
+		local tileset = (angle > 270 or angle <= 90) and slimeFlopR or slimeFlopL
+		_slime.sprite = tileset[flr(_slime.frame/4) + 1]
 	end
 end
 :: slimes.lua
---[[pod_format="raw",created="2025-09-18 20:00:44",modified="2025-09-22 22:24:42",revision=65]]
+--[[pod_format="raw",created="2025-09-18 20:00:44",modified="2026-09-01 23:32:11",revision=286,xstickers={}]]
 include("slimeAnimations.lua")
 
 slimes = {}
+
+slimeVariables = {
+	["Spawn Variables"] = {
+	
+		["Spawn Frequency"] = 180,
+		["Starting Color"] = 0,
+	}
+}
 
 -- Gravity variables
 floor = 180
@@ -118,19 +164,27 @@ dampening = 0.6
 
 dt = 1/60
 
-spawnFrequency = 180
+spawnFrequency = 20
+startingColor = 0
 spawnTimer = spawnFrequency
+
+maxspeed = 3
+minspeed = -3
+maxvel = 5
+minvel = 2
+
+scale = 2
 
 slimeRotation = 
 {
 	3,
 	4,
 	5,
-	18,
-	19,
-	20,
-	21,
-	17,
+	6,
+	7,
+	8,
+	9,
+	10,
 }
 
 nameParts =
@@ -152,6 +206,8 @@ nameParts =
 		"sba","sbi","sbo",
 		"tba","tbi","tbo",
 		"yba","ybi","ybo",
+		"rba", "rbi", "rbo",
+		"gba", "gbi", "gbo",
 	},
 	nameEnd =
 	{
@@ -165,6 +221,15 @@ nameParts =
 	"pa","pi","pu","pe","po",
 	"za","zi","zu","ze","zo",
 	}
+}
+
+palettes = {
+	{8, 14, 23,},
+	{25, 9, 10,},
+	{3, 27, 26,},
+	{30, 29, 26,},
+	{16, 12, 28,},
+	{5, 22, 6,},
 }
 
 function physics()
@@ -183,8 +248,8 @@ function physics()
 			slimes[i].xLast = _slimeX
 			slimes[i].yLast = _slimeY
 			
-			_slimeX += _speed
-			_slimeY += _velocity
+			_slimeX += _speed * scale
+			_slimeY += _velocity * scale
 	
 			-- Ensure that position is above world floor
 			if _slimeY > floor then
@@ -223,6 +288,7 @@ function generateName()
 	for i=1,3 do
 		_name = _name.._nameParts[i] 
 	end
+	
 	return _name
 end
 
@@ -231,7 +297,7 @@ function generateSlime()
 	{
 		name = generateName(),
 		x = flr(rnd(400)) + 40,
-		y = 90,
+		y = -100,
 		xLast = x,
 		yLast = y,
 		sprite = 1,
@@ -240,9 +306,10 @@ function generateSlime()
 		velocity = 0,
 		animFreeze = false,
 		inertia = 100,
-		size = 1,
-		width = 4,
-		height = 7,
+		size = startingColor * 4 + 1,
+		width = 3,
+		height = 6,
+		color = rnd(#palettes),
 	}
 end
 
@@ -250,7 +317,9 @@ function spawnSlimes()
 	spawnTimer -= 1
 	
 	if spawnTimer <= 0 then
-		generateSlime()
+		for i=1,2 do
+			generateSlime()
+		end
 		spawnTimer = spawnFrequency
 	end
 end
@@ -272,8 +341,8 @@ end
 	
 function slimeJump(_slime)
 	if flr(_slime.y) >= 180 and abs(_slime.velocity) < 0.1 then
-		_slime.velocity = -flr(rnd(5) + 2)
-		_slime.speed = flr(rnd(10) - 5)
+		_slime.velocity = -flr(rnd(maxvel - minvel) + minvel)
+		_slime.speed = flr(rnd(maxspeed - minspeed) - maxspeed)
 	end
 end
 
@@ -281,37 +350,183 @@ function slimeMerge()
 	for i=1,#slimes do
 		for j=i,#slimes do
 			if j < #slimes then
-				_slime1 = slimes[j]
+				_slime1 = slimes[i]
 				_slime2 = slimes[j+1]
-			
-				_left = _slime1.x - _slime1.width < _slime2.x + _slime2.width
-				_right = _slime1.x + _slime1.width > _slime2.x - _slime2.width
-				_bottom = _slime1.y > _slime2.y + - _slime2.height
-				_top = _slime1.y - _slime1.height < _slime2.y
 				
-				if _left and _right and _top and _bottom then
-					_slime1.speed += _slime2.speed
-					_slime1.velocity += _slime2.velocity
-					table.remove(slimes, j+1)
+				local slime1 = {}
+				local slime2 = {}
+				
+				if _slime1.size > _slime2.size then
+					slime1 = _slime1
+					slime2 = _slime2
+				else
+					slime1 = _slime2
+					slime2 = _slime1
+				end
+				
+				local s1Color = flr((slime1.size-1) / 4)%6+1
+				local s2Color = flr((slime2.size-1) / 4)%6+1
+				
+				if s1Color == s2Color then
+				
+					_left = slime1.x - slime1.width * scale < slime2.x + slime2.width * scale
+					_right = slime1.x + slime1.width * scale > slime2.x - slime2.width * scale
+					_bottom = slime1.y > slime2.y + - slime2.height * scale
+					_top = slime1.y - slime1.height * scale < slime2.y
+					
+					local sizeMod = (slime1.size-1)%4
+					
+					if _left and _right and _top and _bottom then
+						slime1.speed = slime1.speed * 0.8 + slime2.speed * 0.8
+						slime1.velocity += slime2.velocity
+						slime1.size +=  max(1, slime2.size-1)%4 / (1 + sizeMod)
+						if _slime1.size > _slime2.size then
+							table.remove(slimes, j+1)
+						else
+							table.remove(slimes, i)
+						end
+					end
 				end
 			end
 		end
 	end
 end
 
+function slimePop(_slime)
+	if _slime == nil then
+	error("Slime can't pop: " .. _slime);
+		return false
+	end
+	
+	local slime = slimes[_slime]
+	
+end
+
+function splash()
+	
+end
+
 --		Slime drawing
 function drawSlimes()
-	for i=1,#slimes do
+	for i=#slimes,1,-1 do
 		_slime = slimes[i]
 		
 		if _slime.yLast != nil then
 			angle = (atan2(_slime.yLast - _slime.y, _slime.xLast - _slime.x) * 360)
-		end	
+		end
 		
-		drawSlimeJump()
-		drawSlimeFlop()
-
-		spr(_slime.sprite, _slime.x - 8, _slime.y - 15)
+		drawSlimeJump(_slime)
+		drawSlimeFlop(_slime)
+		
+		local sprSize = min(flr((_slime.size-1)%4), 3) * 12
+		local sprWidth = get_spr(_slime.sprite + sprSize):width()
+		local sprHeight = get_spr(_slime.sprite + sprSize):height()
+		local sprColor = flr((_slime.size-1) / 4)%6+1
+		
+		for i = 1, 3 do
+			pal(palettes[1][i], palettes[sprColor][i])
+		end
+		
+		local slimeY = _slime.y > floor-1 and floor or _slime.y
+		
+		sspr(_slime.sprite + sprSize, 0, 0, sprHeight, sprWidth, (flr(_slime.x/2)*2 - sprWidth) - 2 * scale, (flr(slimeY/2)*2) - sprHeight + 2 * scale, sprWidth * scale, sprHeight * scale)
+		-- print(string.sub(tostring(_slime.size),1,3), _slime.x - 14, _slime.y + 24, 7)
+		-- print(_slime.name, (_slime.x - 52) - print(_slime.name, -100, -100)/2, _slime.y + 36, 7)
 	end
+	
+	pal()
 end
+:: ui.lua
+--[[pod_format="raw",created="2026-06-03 17:44:37",modified="2026-06-03 17:56:08",revision=8,xstickers={}]]
+function uiLoop()
+
+end
+
+function adminMenu()
+	
+end
+
+function saveSettings()
+	spawnFrequency = slimeVariables["Spawn Frequency"]
+end
+:: .info.pod
+--[[pod,created="2025-07-19 13:32:35",lowcol_icon=false,modified="2026-09-02 00:03:36",runtime=27,workspaces={{location="slimes.lua#154,11",workspace_index=1},{location="slimeAnimations.lua#1,1",workspace_index=1},{location="ui.lua#6,2",workspace_index=1},{location="beauty.lua#67,2",workspace_index=1},{location="gfx/0.gfx#192",workspace_index=2}}]]
+:: gfx/.info.pod
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+OS0wMiAwMDowMzozNiIscmV2aXNpb249NTRdXWx6NAD0DAAA8kQAAPMhe1swXT17Ym1wPXB4dQBD
+IBAQBPBWBxAHwBfQF8AHEAfwVixmbGFncz0wLHBhbl94CADbeT0wLHpvb209MTJ9LD8A8wxmSJAI
+TghwCB4fFxcOCGAIDk0HCFAIHl0OCEAGAO8NLi0eCFAIDg1OCHBoMGEAHv8RlkiAGE4YUAguHxcX
+HggwCD5NBw4IIAgODQ4NbggwqBBRAB7wDSkosAgOFwiQCA4vFwcIgAgOPQiACB4dDgiACD4PAP8A
+ByiQCB4IwBiwGPAOCPAKYAAegCdYcBgOLxcX9ABABy4tBwkBkQgePQgwCAAYAGkAr5AILggwCGAo
+8FNdAB75CTIIAAjgCAAYwAgOBziACC4PFxcIgBgOLckAAGAAT7Ao8CReAB7wBAgI4AjQCAcIsAgO
+DxcHCKAIHg0MABQIMQEGZwAMbAAfFmwAHqA8CAAIkBgACHA4awCBcAgPDhcuCGCVAS0YcGAAHyhg
+AB4wJFiAxgCgFw4NGFAIDk0ODYkBcQ49DggeCEBaAACOARFAXgBPYAjwUWAAHw9HAgWBkAguDQig
+KA5HAc8NCMAY8AAY8A8I8AVjAB4fF2MAAQoaAQKdARcNrAFv0AjgCPAHbAAeEXjIAxRgugI-Hk0H
+wgMEHyBbAB5gdEiQCC4XuwBAPxcOGB0EHwdbAAMfQFsAHmRHKKAYLhh_BAe3AGAHCDAIHn0pBAgG
+ADANHl1DBF8NfghQiMgAH6CVaGAYbhgwCD4vigSBEAg_bQcOCACKBF_OCBDIAFEAHhkZ4AERcDwF
+kGAIDl0IYAgePU0F8AAuHQ4IcBg_CHAIDQcOKIBPAs_gCAAYoAgACPANCLBxAB7xBBdYYCg-FxcI
+MBgPDg8XHw4PFw97APIIQBgvDk8XBxhACB8OXxcIYAgfDj8XDw7XBQWEAx9DcAAeEBGpADEACNCx
+BEAPFwdI5wOfDxcvDhcIcBge9QACGHD2Ax8UcgAdQXAI8A-CBABvACEIsG4AUQcIkAgvCAAwgAhP
+WwACcwE-HxcXfgALH1DvAB7AHAgACLAIwBgACGBIcAARYNUEEQ8KBiAtB-sCD_0ACR8ZcAAe8B8T
+WIAIDxcXLihACD4HDw4uDRgQCA1OBx0YMAgNXg0IQBgdPg0IcAgdHg0IkAgtZAAfSmQAHh8UpAIL
+AMIAEB46B1UYkCgODfMEAfQBAIwBD2YDHj9QKLChARMEjwYQPt0AA-wEEcAABU-wDwhw6AAeZVko
+oBgOF0sEYBAYEAgeXd4D-w4HGB5tBxgeDR6NCAAILo0OCBAITk0eCCAYjghQiH4IHxpUaAAA2wAA
+bgDwBAAIDm0HDhgOBxgOjQ4NHhgejR5vAJ9NPgggCI4YQIgbBR-RJjiQGD4YYAgeBw8XF-QGET1A
+CSEObUAJER7KADEefQcHABKNyQTwAB59HhgODS5dHg0YHg2ODSQHjw4dPh0OGDCYLwUfcGVYYChe
+KCCbAjEXJw3PAPAAfQcNDhgenQcOGB6tDhgu5AAvGJ5dACFAcDiQGN0HAOAAES36BREOVQaADg0u
+TQgwCF5uCUEeHS4dBwYQLTMCYDAILh0eDR0GIF4NDgFADgdOGAgIYThgCD4IoPEJL-AJ5AAeFBiI
+ACEwOIgAEBCMBwB_BrEACC4tLk0Ynj0YXocAMQAITocAIhAohwDvUAhODR4IYBg_GJA48BSWAyIV
+H9oE8QIPDjhQCD4PFw4NFxgwCE4tF_8ADxEBDAD9AAyKAA_eCx8SB9kFA2sFQAigCD_eAwBICyIe
+D_ACD6ABCRAtEwBTLR4dCFCNAI9gGC4NGJA4UEsHIgARAVRgOD8OD_EGERcMADAgCB-VCBA-9gJ-
+Dl8XBx4IIBcBHA9OBB8aFKACIDggAAERDggCAHsAcR4dGF49Phh6ADAuDRh6ADE_CBB6ADceKCB6
+AC-wGHsAHRowegAOegEP8gADFB0aA5NQGE4dCHA4LgfICgIaAw_8Ch4fUIcAFgwCAjIIPg2LDQDW
+BVAOCKAIDeMKIA0OhwAP1wofQDdIgBiKAgBBDictFxwK8AqNCAAYLg0eXRguDU49BxgOHS4NLi0O
+GG4N0AZEAAh_HeMFDygKHx80dAAH4CAIHg0uTQ4YAAhuXQcYcwCALg0YPg0eHU4iBCMdTu4FD4gD
+G-ADGBgE8EFY8AAYXhjACC4nDgcetwFBBx8XbioMUC4HDiceSgdRHR4dHjeTAwDlACEtJ5YBAPsB
+Ek2lABENgAIQPSUGAAwAMF4dBwsAkE4NLg0uHS4IIAQHcQ0eLQ4dPhgsBpEdPh1ODQcuGA44ADJO
+DR4NAGEuDT4NDg3mBIIYHg0uHV4tHv0FUQ0uDQ4NaAH-AgggGC4Nfg0uGFAoniigmPAP7wAe8ATl
+OFA4cBg_WD4YQAguF34XLgggDA_SLgcNBw4XPQceTQMxLT5NCgAQDekCAGkMMAAIXnMBMh0_GIoA
+QE4NPg2NBjANHh2dAFAuLQceGLoAgI4XLggAGD4tHgF-PhgwOJ44kKYAIBXAlAEAgwcQLpUBIG0H
+LQlAHg1eJ8sIIK4H6QMA-QxQDQcuDQeQAQCLAEIOHQceDgAiTh2bAzBQCC4kAgG5BlE_DR49Lh4A
+Qg4Nnh09DaAuDT4dLghQCH4d8gcAfgERPi4MMG4YsAECgBjACF4Y4AgObwDwAvABCD4I8AIILgjw
+AwgeCPAEBQBPBRjwAoQBHpJFWOAoXhigGD7eADBwGD7IAEAeCEAYTAExHh0uhwZgPg0_HU4H6QcA
+ZAEgHh0gB2EdDhgeB143AoAHHgcOGD4dXukAAE4NMCg_HZsBAZcCcggwKD4NHg0OBSFeDSIBoZAY
+Hg0_HR4IsAixAa8I0BhOGPABSPBtvwAe4DlY8AEIXjjACD4HTiigsQNAHh0_KPUEACACAKUBUa4I
+gAjerwFgPgcOBw0ufQowDS4NzgAwcAhuWAMgCHCHAEE9Lg0eHAAQDhEDABUAALcAAsQBEYAfDgDi
+BAIMADIuHS4XAFAeDV4dHsUKUQ1OHQcOHAIB1gAVLdQAH0DTAB1AoBjwBc4BEAPiARABgQcgBx5-
+DUFeCOAIvANACNAIDp4DgQjACD4dPgiwnAAxHg0OYgUxDg1ebwVAPg0eB30FAAgDEQdnC0ENfgcO
+CAAxHj0evAAgPl2TDiEODTMAAfEAAIMCQx4HLg0MACItBx0BER7wAADzAkEOHV4NRgBAHi0eLaAE
+zy49LgjAGF4Y8ABYgLwBHvEJSVjQOF4IkChOBz4IYCg_HxceDR4YUBg_XQQxYAiuVwMQ3kEPUQcN
+Dgc_DwBTHg1OBy5wA0EuDQduEwBRLi0HDgd3ElUdTh0OBycFIg0_CgAhLQ7hAADAABEu8QEAUQUh
+Xg25AS8tTrgBAx-QzwAeET0pBCIosCkEAX0CMR1OB8sDIR0uIwMwDS4YlQVQTg0HPg0TDAEgA2Md
+HgcuHR6NBQFLA0FeBx4YDQAgHV7kBAElAIIOBw4dPigACKMFMT4oQFUAEF6CDGsdPgceGKBKAx92
+vwAdHkDnBCJdFyIBEV5SATEeHa5iASAuFzIBE2BYATEHHg29BABvASEdTvsEMk4dHo0BMA0uPYMB
+ABQIIp4NCREhPg1eAnAYPh1_CIAo6gGQDgiwGG4NDgjQswUQCIQAAfYCAGcCIPACAwMQA_UEFwTl
+BA9XBx4egNsAMi0eDd0AAtECEYATBCIHLjsCBvoCChEDBikDADsDFYBLAwFdAyINDm4DEB1tAwA6
+BACQDAEyAAGWAwaiAwC0AxPAwgMT0NIDMOAIXuMDAP4BA9sFEgPsAB_gQwj-sABMCh-wMgAMHzAy
+AP--vJFmR5AHQAdwB2ACAFNQB4AHQAQAf1AHYAdwZzCEAB8PMgD---------------9F8gBADxUP
+FAQgAQ8QDA8cBzAIAPAAEAEPEw8RDxwXIA8VAg8eeByQIA8VDxINDx0GHABgAwsPGgcgCQBRDxsP
+GhBDAGUPHw8PByALAJIgDxUFDxYGBzAIABIABwAiJxAIABIXBwAVN18AICcACwASGN0iFhAMAAJQ
+AFUZCQoXAAsAEwcIABAnpgBjGwsPGicAlAAkFxATACIHEMoAIhcACAAkJxDAACQHAAoAAVMAAmcA
+JRcQigAVB8MAJScACwAfF4kBHw8yAP---------------0L0LCAwBPA3JvAMBhUW8AsGFSbwCmYV
+ZvABZhV28ABWFYbwADYlluAFFiW20EXGwBYV9gCw9gSw9gSg9gaQAwBEQPUHgAMAOHD1CAMASeD2
+B4ADACcIcAMABCYADwMABg-KAAsdNckA-w2eFVbwBkVm8ANVdvABBlWG4BZVltAWRabANhXWuACK
+-wV28Aa28APW8AH2AOD2AtD2AsD2BLEAhQ_WAhIPMgD--------------61QPTEwfX0=
+:: map/.info.pod
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/.info.pod
+--[[pod,created="2025-07-19 13:32:35",modified="2026-09-02 00:03:36"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ5Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+IBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: [eoc]
