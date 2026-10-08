@@ -206,7 +206,7 @@ function Dictionary.new(name)
 	return dictionary
 end
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-08 00:43:57",revision=66,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-08 06:47:33",revision=68,xstickers={}]]
 function try(func, ...)
 	-- Try a function, evaluating results for errors
 	
@@ -220,7 +220,7 @@ function try(func, ...)
 		local getinfo = debug.getinfo(func, "S")
 		-- Verbose error string below - need to find a better way to activate it
 		-- print("Error in " .. tostr(getinfo.short_src) .. ":" .. getinfo.linedefined .. " - " .. tostr(result[2]))
-		print("e:081000000000000088:000818180000180082:00000000080000088n:10000000000000008o:00000000100000107 ERROR: " .. tostr(result[2]))
+		print(" \fe\^:0810000000000000\-8\f8\^:0008181800001800\-8\f2\^:0000000008000008\-8\fn\^:1000000000000000\-8\fo\^:0000000010000010\f7 ERROR: " .. tostr(result[2]))
 		return nil
 	end
 	
@@ -229,7 +229,7 @@ function try(func, ...)
 end
 	
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-08 00:39:23",revision=349,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-08 07:12:26",revision=352,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -269,7 +269,7 @@ end
 
 function Interpreter:run(string)
 	-- Generate a sentence using the given string (and trim whitespace, and make it lowercase)
-	local sentence = Sentence.new(trim(string:lower()), self.dictionary)
+	local sentence = Sentence.new(Sentence.sanitizeString(string:lower()), self.dictionary)
 	-- Interpret the sentence
 	try(sentence.interpret, sentence:interpret(self))
 	-- Print the stack size
@@ -319,7 +319,7 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-08 05:23:38",revision=85,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-08 07:13:33",revision=107,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -352,9 +352,9 @@ function Sentence:test(interpreter, stack)
 	local stack =
 		stack == nil	and	self.testStack
 						or		stack
-	local sentence = Sentence.new(self.testTokens:concat())
+	local sentence = Sentence.new(self.sanitizeString(table.concat(self.testTokens)), interpreter.dictionary)
 	
-	return try(sentence.interpret, sentence.interpret(interpreter, stack))
+	return try(sentence.interpret, sentence:interpret(interpreter, stack))
 end
 
 function Sentence:splitString(string)
@@ -371,6 +371,10 @@ function Sentence:splitString(string)
 	self.tokens = splitStr
 	
 	return true
+end
+
+function Sentence.sanitizeString(inputString)
+	return trim(string.gsub(inputString, "%s+", " "))
 end
 
 function Sentence.new(string, dictionary, mode)
@@ -421,10 +425,10 @@ function Sentence:interpret(interpreter, stack)
 				parseWord = "(" -- ...Then switch to parse mode for '('
 				self.mode = 2
 			elseif token == "t{" then -- If token is the test harness initiator...
-				testStack = {}
+				testStack = {} -- Initialize test mode variables
 				testTokens = {}
 				savedTestStack = {}
-				self.mode = 3
+				self.mode = 3 -- Switch to test mode
 			elseif type(token) == "string" then -- If token is a string...
 				local word = index[token] -- ...Then look it up in the dictionary index
 				if word == nil then -- If the word wasn't found in the index...
@@ -438,10 +442,11 @@ function Sentence:interpret(interpreter, stack)
 			else -- If the word is some other forbidden thing...
 				return false, "Error in Sentence:interpret: word.name wasn't a string or number.  Val: " .. tostr(word.name)
 			end
+			
 		elseif self.mode == 1 then -- If sentence is in compile mode...
 			if token == ";" then -- If the token is a semicolon...
 				self.mode = 0 -- ...Then switch back to interpret mode
-				local compiledDefinition = trim(table.concat(compiledTokens)) -- Concatenate a string from the compiled token table's elements, trimming white space
+				local compiledDefinition = self.sanitizeString(table.concat(compiledTokens)) -- Concatenate a string from the compiled token table's elements, trimming white space
 				local newWord = Word.new(compiledName, compiledDefinition, 3) -- Generate a new word based on the compiled string
 				try(interpreter.dictionary.addWord, interpreter.dictionary:addWord(newWord))-- Add word to dictionary
 				compiledName = "" -- Initialize name string
@@ -454,6 +459,7 @@ function Sentence:interpret(interpreter, stack)
 				add(compiledTokens, token) -- ...Then add the token to the Forth definition
 				add(compiledTokens, " ") -- Add some whitespace to separate this token from the next when string is concatenated from table
 			end
+			
 		elseif self.mode == 2 then -- If sentence is in parse mode...
 			if token == ")" and parseWord == "(" then -- If parsing from open parenthesis, and encountering close parenthesis...
 				self.mode = 0 -- ...Then switch back to interpret mode
@@ -461,30 +467,54 @@ function Sentence:interpret(interpreter, stack)
 				add(parsedTokens, token)
 				add(parsedTokens, " ")
 			end
+			
 		elseif self.mode == 3 then -- If sentence is in test mode...
 			if token == "->" then -- Token "->" executes the first test
 				if #testTokens <= 0 then -- If there are no tokens to test...
+					self.mode = 0
 					return false, "No tokens found, can't run the first test." -- ...Then error out
 				elseif #savedTestStack > 0 then -- If a first test has already been performed...
+					self.mode = 0
 					return false, "Found two '->' tokens in test." -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(testStack)) -- Execute the first test
+				local result = try(self.test, self:test(interpreter, testStack)) -- Execute the first test
 				if result == false then -- If test fails then...
+					self.mode = 0
 					return false, "First test failed." -- ... Error out
 				end -- Otherwise, proceed
 				savedTestStack = testStack -- Save the results of the first test
 			elseif token == "}t" then -- Token '}t' executes the final test
 				if #testTokens <= 0 then -- If there are no tokens to test...
+					self.mode = 0
 					return false, "No tokens found, can't run the final test." -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(testStack)) -- Execute the final test
+				local result = try(self.test, self:test(interpreter)) -- Execute the final test
 				if result == false then -- If final test fails...
+					self.mode = 0
 					return false, "Second test failed." -- ...Then error out
 				elseif #savedTestStack != #testStack then -- If test stacks are different sizes...
+					self.mode = 0
 					return false, -- ...Then error out
 						"Stacks are different sizes.\n" ..
 						"First test's stack: " .. #savedTestStack .. "\n" ..
 						"Second test's stack: " .. #testStack
+				end
+				for i = 1, #testStack do -- Iterate through all values of both stacks
+					local identical = testStack[i] == savedTestStack[i] -- Check if values at same index are identical
+					if identical == false then -- If values are different...
+						self.mode = 0
+						return false, -- Then error out
+							"Values are different sizes.\n" ..
+							"First stack's value: " .. savedTestStack[i] .. "\n" ..
+							"Second stack's value: " .. savedTestStack[i]
+					end
+					print("Test successful!")
+					-- Initialize test mode variables
+					testStack = {}
+					testTokens = {}
+					savedTestStack = {}
+					self.mode = 0 -- Revert to interpret mode
+					return true
 				end
 			else
 				add(testTokens, token)
@@ -655,23 +685,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-08 05:23:38",runtime=27,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#42,25",workspace_index=1},{location="dictionary.lua#125,44",workspace_index=1},{location="word.lua#69,36",workspace_index=1},{location="stack.lua#62,80",workspace_index=1},{location="sentence.lua#134,7",workspace_index=1},{location="errorhandler.lua#14,120",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-08 07:13:33",runtime=26,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#40,40",workspace_index=1},{location="dictionary.lua#125,44",workspace_index=1},{location="word.lua#69,36",workspace_index=1},{location="stack.lua#62,80",workspace_index=1},{location="sentence.lua#55,14",workspace_index=1},{location="errorhandler.lua#14,11",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 05:23:38"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
