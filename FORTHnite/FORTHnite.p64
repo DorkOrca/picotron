@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: dictionary.lua
---[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-08 00:13:08",revision=35,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-09 00:45:38",revision=43,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 --[[
@@ -84,8 +84,6 @@ function Dictionary:generateWords(wordList)
 end
 
 function Dictionary:initialize(interpreter)
-	local stack = interpreter.stack
-	
 	-- Forth 2012 Standard dictionary (WIP)
 	if DICT_STANDARD == nil then
 		DICT_STANDARD = {
@@ -96,7 +94,7 @@ function Dictionary:initialize(interpreter)
 				return false, "Word '(' should not be runnable. Something is terribly wrong!"
 			end},
 		
-			{name = "*", id = "6.1.0090", val = function()
+			{name = "*", id = "6.1.0090", val = function(stack)
 				local _, y = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -108,7 +106,7 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(x * y))
 			end},
 			
-			{name = "*/", id = "6.1.0100", val = function()
+			{name = "*/", id = "6.1.0100", val = function(stack)
 				local _, n3 = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -133,7 +131,7 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(n4));
 			end},
 			
-			{name = "+", id = "6.1.0120", val = function() 
+			{name = "+", id = "6.1.0120", val = function(stack) 
 				local _, y = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -145,7 +143,7 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(x + y))
 			end},
 			
-			{name = "-", id = "6.1.0160", val = function()
+			{name = "-", id = "6.1.0160", val = function(stack)
 				local _, y = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -157,7 +155,7 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(x - y))
 			end},
 			
-			{name = ".", id = "6.1.0180", val = function()
+			{name = ".", id = "6.1.0180", val = function(stack)
 				local _, i = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -166,7 +164,7 @@ function Dictionary:initialize(interpreter)
 				return true
 			end},
 			
-			{name = "/", id = "6.1.0230", val = function()
+			{name = "/", id = "6.1.0230", val = function(stack)
 				local _, y = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -178,11 +176,11 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(x / y))
 			end},
 			
-			{name = "2drop", id = "6.1.0370", val = function()
+			{name = "2drop", id = "6.1.0370", val = function(stack)
 				return try(stack.drop, stack:drop(2))
 			end},
 			
-			{name = "drop", id = "6.1.1260", val = function()
+			{name = "drop", id = "6.1.1260", val = function(stack)
 				return try(stack.drop, stack:drop())
 			end},
 			
@@ -206,7 +204,132 @@ function Dictionary.new(name)
 	return dictionary
 end
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-08 06:47:33",revision=68,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-09 00:35:55",revision=136,xstickers={}]]
+ERRORS = {
+	-- Errors
+	[-1] = {
+		name = "INTERPRET:word_not_found",
+		desc = function(word)
+			return tostr(word) .. "?"
+		end
+	},
+	[-2] = {
+		name = "INTERPRET:word_failed",
+		desc = function(vars)
+			local counter = vars.counter
+			local token = vars.token
+			return "Word " .. counter .. ", '" .. token .. "' returned false, aborting."
+		end
+	},
+	[-3] = {
+		name = "INTERPRET:weird_word",
+		desc = function(name)
+			return "Word.name wasn't a string or number.  Val: " .. name
+		end
+	},
+	[-11] = {
+		name = "INTERPRET:wrong_semicolon",
+		desc = function()
+			return "Semicolon detected while in interpret mode, aborting."
+		end
+	},
+	[-12] = {
+		name = "COMPILE:wrong_colon",
+		desc = function()
+			return "Colon detected while in compile mode, aborting."
+		end
+	},
+	[-21] = {
+		name = "SENTENCE:parse_open",
+		desc = function()
+			return "Parse never closed."
+		end
+	},
+	[-22] = {
+		name = "SENTENCE:test_open",
+		desc = function()
+			return "Test never closed."
+		end
+	},
+	[-101] = {
+		name = "TEST:first_tokens_missing",
+		desc = function()
+			return "No tokens found, can't run the first test. Aborting."
+		end
+	},
+	[-102] = {
+		name = "TEST:dup_next",
+		desc = function()
+			return "Found two or more '->' tokens in test, aborting."
+		end
+	},
+	[-103] = {
+		name = "TEST:first_failed",
+		desc = function()
+			return "First test failed, aborting."
+		end
+	},
+	[-104] = {
+		name = "TEST:first_missed",
+		desc = function()
+			return "First test was never performed, aborting."
+		end
+	},
+	[-105] = {
+		name = "TEST:last_tokens_missing",
+		desc = function()
+			return "No tokens found, can't run the final test, aborting."
+		end
+	},
+	[-106] = {
+		name = "TEST:second_failed",
+		desc = function()
+			return "Second test failed, aborting."
+		end
+	},
+	[-801] = {
+		name = "SENTENCE:failed_interpret",
+		desc = function(vars)
+			return "Sentence failed to interpret."
+		end
+	},
+	[-998] = {
+		name = "SENTENCE:mode_not_found",
+		desc = function(mode)
+			return "Sentence is in unknown mode " .. mode .. ", aborting."
+		end	
+	},
+	[-999] = {
+		name = "error_not_found",
+		desc = function(code) 
+			return "Error code '" .. tostr(code) .. "' not found."
+		end
+	},
+	
+	-- Notices
+	[7357] = {
+		name = "TEST:stack_size_mismatch",
+		desc = function(args)
+			local savedTestStack = args.savedTestStack.values
+			local testStack = args.testStack.values
+			return "Test failed.\nStacks are different sizes, aborting.\n" ..
+				"First test's stack: " .. #savedTestStack .. "\n" ..
+				"Second test's stack: " .. #testStack
+		end
+	},
+	[7358] = {
+		name = "TEST:stack_val_mismatch",
+		desc = function(args)
+			local savedTestStack = args.savedTestStack.values
+			local testStack = args.testStack.values
+			local i = args.i
+			return "Test failed.\nValue " .. i .. " on stacks don't match, aborting.\n" ..
+				"First stack's value: " .. savedTestStack[i] .. "\n" ..
+				"Second stack's value: " .. testStack[i]
+		end
+	},
+}
+
 function try(func, ...)
 	-- Try a function, evaluating results for errors
 	
@@ -225,11 +348,31 @@ function try(func, ...)
 	end
 	
 	-- If not flagged, then the results are returned as they were received
-	return unpack(result)
+	return table.unpack(result)
+end
+
+function throw(code, ...)
+	local vars = {...}
+	
+	if ERRORS[code] == nil then
+		throw(-999)
+		return false
+	end
+	
+	local error = ERRORS[code]
+	local errorDesc = error.desc(table.unpack(vars))
+	
+	local icon =
+		code > 0 and " 4:3c428100000000008p:000000811818180089:000000008181423c85:003c42000000000081:00002442000000008a:00000018666624008m:00001824000000007 CODE "
+		or " \fe\^:0810000000000000\-8\f8\^:0008181800001800\-8\f2\^:0000000008000008\-8\fn\^:1000000000000000\-8\fo\^:0000000010000010\f7 ERROR "
+	
+	print(
+		icon .. tostr(code) .. ": " .. errorDesc
+	)
 end
 	
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-08 07:12:26",revision=352,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-09 00:57:34",revision=366,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -268,10 +411,15 @@ function Interpreter.new(dictionary, stack)
 end
 
 function Interpreter:run(string)
+	-- local strings =	-- TODO: Split by asldfkjasdf
 	-- Generate a sentence using the given string (and trim whitespace, and make it lowercase)
 	local sentence = Sentence.new(Sentence.sanitizeString(string:lower()), self.dictionary)
 	-- Interpret the sentence
-	try(sentence.interpret, sentence:interpret(self))
+	local _, result = try(sentence.interpret, sentence:interpret(self))
+	if _ == nil then
+		throw(-801)
+	end
+	
 	-- Print the stack size
 	print("Stack size: " .. #self.stack.values)
 end
@@ -319,7 +467,7 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-08 07:13:33",revision=107,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-09 00:48:37",revision=315,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -344,17 +492,26 @@ Sentence = {
 	mode = 0, -- 0: interpret, 1: compile, 2: parse, 3: test
 	
 	-- Test variables - used for t{ -> }t tests
-	testStack = {},
+	testStack = Stack.new(),
 	testTokens = {}
 }
 
-function Sentence:test(interpreter, stack)
-	local stack =
-		stack == nil	and	self.testStack
-						or		stack
-	local sentence = Sentence.new(self.sanitizeString(table.concat(self.testTokens)), interpreter.dictionary)
+function Sentence:test(interpreter, tokens)
+	local sentence = Sentence.new(nil, interpreter.dictionary)
+	sentence.tokens = 
+		tokens == nil	and	self.testTokens
+							or		tokens	
 	
-	return try(sentence.interpret, sentence:interpret(interpreter, stack))
+	-- print("Test tokens to be processed (" .. #sentence.tokens .. "): " .. table.concat(sentence.tokens, ", "))
+	result = try(sentence.interpret, sentence:interpret(interpreter, self.testStack))
+	return result
+end
+
+function Sentence:initializeTest()
+	self.testStack = Stack.new()
+	self.testTokens = {}
+	
+	return true
 end
 
 function Sentence:splitString(string)
@@ -373,15 +530,28 @@ function Sentence:splitString(string)
 	return true
 end
 
+function Sentence:dupTestStack()
+	local origStack = self.testStack.values
+	local newStack = {values = {}}
+	for index, val in ipairs(origStack) do
+		add(newStack.values, val, index)
+	end
+	return newStack
+end
+
 function Sentence.sanitizeString(inputString)
+	-- Returns string with whitespace condensed and trimmed
 	return trim(string.gsub(inputString, "%s+", " "))
 end
 
 function Sentence.new(string, dictionary, mode)
+	-- Generate a new sentence
 	local sentence = {}
 	setmetatable(sentence, {__index = Sentence})
 	
-	try(sentence.splitString, sentence:splitString(string))
+	if string != nil then
+		try(sentence.splitString, sentence:splitString(string))
+	end
 	
 	sentence.dictionary =
 		dictionary == nil	and	Dictionary.new()
@@ -393,24 +563,20 @@ function Sentence.new(string, dictionary, mode)
 	return sentence
 end
 
-function Sentence:interpret(interpreter, stack)
+function Sentence:interpret(interpreter, externStack)
 	local tokens = self.tokens
 	local index = interpreter.dictionary.index
-	local stack = 
-		stack == nil	and	interpreter.stack
-						or		stack
+	local stack = externStack == nil and interpreter.stack or externStack
 	
 	local parseWord = "" -- The word that initiated the parse
 	local parsedTokens = {} -- The table containing values to be concatenated in the parsed string
 	local compiledName = "" -- The first word interpreted after entering compilation mode
 	local compiledTokens = {} -- All subsequent words interpreted after entering compilation mode
 	
-	local testStack = self.testStack
-	local testTokens = self.testTokens
-	
-	local savedTestStack = {}
+	local savedTestStack = Stack.new()
 	
 	for counter, token in ipairs(tokens) do
+	
 		if keyp("ctrl") and keyp("c") then
 			print("Ctrl + C: Ending sentence interpretation early.")
 			break
@@ -420,27 +586,31 @@ function Sentence:interpret(interpreter, stack)
 			if token == ":" then -- If token is a colon...
 				self.mode = 1 -- ...Then switch to compile mode
 			elseif token == ";" then -- If token is a semicolon...
-				return false, "Semicolon detected while in interpret mode, aborting." -- Then something is wrong
+				throw(-11) -- Then throw an error
+				break
 			elseif token == "(" then -- If token is an open parenthesis...
 				parseWord = "(" -- ...Then switch to parse mode for '('
 				self.mode = 2
 			elseif token == "t{" then -- If token is the test harness initiator...
-				testStack = {} -- Initialize test mode variables
-				testTokens = {}
+				self:initializeTest()
 				savedTestStack = {}
 				self.mode = 3 -- Switch to test mode
 			elseif type(token) == "string" then -- If token is a string...
 				local word = index[token] -- ...Then look it up in the dictionary index
 				if word == nil then -- If the word wasn't found in the index...
-					return false, token .. "?"
+					throw(-1, token)
+					break
 				end -- If word was found in the index...
-				if (try(word.interpret, word:interpret(interpreter)) == nil) then -- ...Then interpret the word. If the word's function returns nil, then try() will return nil as well
-					return false, "Word " .. counter .. ", '" .. token .. "' returned false, aborting." -- If the word returned nil, then stop interpreting the sentence and return an error
+				if (try(word.interpret, word:interpret(interpreter, stack)) == nil) then -- ...Then interpret the word. If the word's function returns nil, then try() will return nil as well
+					local errorArgs = {counter=counter, token=token}
+					throw(-2, errorArgs)
+					break -- If the word returned nil, then stop interpreting the sentence and return an error
 				end
 			elseif type(token) == "number" then -- If word represents a number...
 				try(stack.push, stack:push(token)) -- ...Then push the number to the stack
 			else -- If the word is some other forbidden thing...
-				return false, "Error in Sentence:interpret: word.name wasn't a string or number.  Val: " .. tostr(word.name)
+				throw(-3, tostr(word.name))
+				break
 			end
 			
 		elseif self.mode == 1 then -- If sentence is in compile mode...
@@ -452,7 +622,9 @@ function Sentence:interpret(interpreter, stack)
 				compiledName = "" -- Initialize name string
 				compiledTokens = {} -- Initialize table of compiled tokens
 			elseif token == ":" then -- If the token is a colon...
-				return false, "Colon detected while in compile mode, aborting." -- ...Then error out
+				self.mode = -1
+				throw(-12)
+				break -- ...Then error out
 			elseif compiledName == "" then -- If name hasn't been set yet...
 				compiledName = token -- ...Then set the name to the token
 			else -- If any other kind of token has been provided...
@@ -469,76 +641,107 @@ function Sentence:interpret(interpreter, stack)
 			end
 			
 		elseif self.mode == 3 then -- If sentence is in test mode...
+			-- print("Test tokens in queue: " .. #self.testTokens)
 			if token == "->" then -- Token "->" executes the first test
-				if #testTokens <= 0 then -- If there are no tokens to test...
-					self.mode = 0
-					return false, "No tokens found, can't run the first test." -- ...Then error out
-				elseif #savedTestStack > 0 then -- If a first test has already been performed...
-					self.mode = 0
-					return false, "Found two '->' tokens in test." -- ...Then error out
+				if #self.testTokens <= 0 then -- If there are no tokens to test...
+					self.mode = -1
+					throw(-101)
+					break -- ...Then error out
+				elseif savedTestStack.values != nil and #savedTestStack.values > 0 then -- If a first test has already been performed...
+					self.mode = -1
+					throw(-102)
+					break -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(interpreter, testStack)) -- Execute the first test
-				if result == false then -- If test fails then...
-					self.mode = 0
-					return false, "First test failed." -- ... Error out
+				local result = try(self.test, self:test(interpreter, self.testTokens)) -- Execute the first test
+				if result == nil then -- If test fails then...
+					self.mode = -1
+					throw(-103)
+					break -- ... Then error out
 				end -- Otherwise, proceed
-				savedTestStack = testStack -- Save the results of the first test
+				savedTestStack = self:dupTestStack() -- Save the test stack in a new table
+				self:initializeTest()
 			elseif token == "}t" then -- Token '}t' executes the final test
-				if #testTokens <= 0 then -- If there are no tokens to test...
-					self.mode = 0
-					return false, "No tokens found, can't run the final test." -- ...Then error out
+				if (savedTestStack.values == nil or #savedTestStack.values == 0) then -- If a first test hasn't been performed...
+					self.mode = -1
+					throw(-104)
+					break -- ... Then error out
+				elseif self.testTokens == nil or #self.testTokens <= 0 then -- If there are no tokens to test...
+					self.mode = -1
+					throw(-105)
+					break -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(interpreter)) -- Execute the final test
+				local result = try(self.test, self:test(interpreter, self.testTokens)) -- Execute the final test
 				if result == false then -- If final test fails...
-					self.mode = 0
-					return false, "Second test failed." -- ...Then error out
-				elseif #savedTestStack != #testStack then -- If test stacks are different sizes...
-					self.mode = 0
-					return false, -- ...Then error out
-						"Stacks are different sizes.\n" ..
-						"First test's stack: " .. #savedTestStack .. "\n" ..
-						"Second test's stack: " .. #testStack
+					self.mode = -1
+					throw(-106)
+					break -- ...Then error out
+				elseif #savedTestStack.values != #self.testStack.values then -- If test stacks are different sizes...
+					self.mode = -1
+					local errorArgs = {
+						savedTestStack = savedTestStack,
+						testStack = self.testStack
+					}
+					throw(7357, errorArgs) -- ...Then fail the test
+					break
 				end
-				for i = 1, #testStack do -- Iterate through all values of both stacks
-					local identical = testStack[i] == savedTestStack[i] -- Check if values at same index are identical
+				
+				local identical = true
+				for i = 1, #self.testStack.values do -- Iterate through all values of both stacks
+					identical = self.testStack.values[i] == savedTestStack.values[i] -- Check if values at same index are identical
 					if identical == false then -- If values are different...
-						self.mode = 0
-						return false, -- Then error out
-							"Values are different sizes.\n" ..
-							"First stack's value: " .. savedTestStack[i] .. "\n" ..
-							"Second stack's value: " .. savedTestStack[i]
+						self.mode = -1
+						local args = {
+							savedTestStack = savedTestStack,
+							testStack = self.testStack,
+							i = i
+						}
+						throw(7358, args)
+						break -- ...Then fail the test
 					end
-					print("Test successful!")
-					-- Initialize test mode variables
-					testStack = {}
-					testTokens = {}
-					savedTestStack = {}
-					self.mode = 0 -- Revert to interpret mode
-					return true
 				end
+				
+				if identical == false then
+					break
+				end
+				local smug = " 1:0000ff660000000085:000000810000000089:3c4200008181423c8a:003c00187e5a24008p:00000000002418007 "
+				print(smug .. "Test successful!")
+				-- Initialize test mode variables
+				self:initializeTest()
+				savedTestStack = Stack.new()
+				self.mode = -1
+				return true
 			else
-				add(testTokens, token)
+				add(self.testTokens, token)
 			end
 		else -- If sentence is in an unknown mode...
-			return false, "Sentence is in unknown mode " .. self.mode .. ", aborting."
+			throw(-998, self.mode)
+			break
+		end
+		
+		if self.mode == -1 then -- -1 = cleanup test data
+			self:initializeTest()
 		end
 	end -- End of for loop
 	
-	if self.mode == 2 and parseWord != "(" then
-		return false, "Parse never closed."
-	elseif self.mode == 3 then
-		return false, "Test never closed."
+	if self.mode == 2 and parseWord != "(" then -- If parsing ended early (and not during a comment)...
+		throw(-21) -- ...Then throw an error...
+		self.mode = -1 -- ...And clean up
+	elseif self.mode == 3 then -- If testing ended early...
+		throw(-22) -- ...Then throw an error...
+		self.mode = -1 -- ...And clean up
+	end
+	
+	if self.mode == -1 then -- -1 = cleanup test data
+		self:initializeTest()
 	end
 	
 	self.mode = 0 -- Revert to interpret mode
 	self.tokens = {} -- Initialize table of tokens
-	self.testStack = {}
-	self.testTokens = {}
 	
 	return true
 end
 :: stack.lua
---[[pod_format="raw",created="2026-10-07 22:36:45",modified="2026-10-07 23:26:58",revision=6,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:36:45",modified="2026-10-09 00:43:11",revision=13,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Stack
@@ -568,6 +771,16 @@ function Stack.new(values, pointer)
 		 type(pointer) != "number")	and	Stack.pointer
 												or		pointer
 												
+	return stack
+end
+
+function Stack:clone()
+
+	local stack = Stack.new()
+	for key, value in ipairs(self.values) do
+		add(stack.values, value, key)
+	end
+	
 	return stack
 end
 
@@ -609,8 +822,13 @@ function Stack:drop(i)
 	
 	return true
 end
+
+function Stack:empty()
+	self.values = {}
+	return true
+end
 :: word.lua
---[[pod_format="raw",created="2026-10-07 22:33:36",modified="2026-10-08 00:34:31",revision=2,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:33:36",modified="2026-10-09 00:47:57",revision=15,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Word
@@ -672,11 +890,15 @@ function Word:validate()
 	return nameIsValid and modeIsValid and valIsValid
 end
 
-function Word:interpret(interpreter)
-	local values = interpreter.stack.values
+function Word:interpret(interpreter, stack)
+	local stack = 
+		(stack == nil				or
+		type(stack) != "table" 	or
+		stack.values == nil) 		and	interpreter.stack
+										or 	stack
 	
 	if self.mode == 1 then
-		return self.val(values)
+		return self.val(stack)
 	elseif self.mode == 3 then
 		local sentence = Sentence.new(self.val, interpreter.dictionary)
 		try(sentence.interpret, sentence.interpret(interpreter))
@@ -685,23 +907,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-08 07:13:33",runtime=26,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#40,40",workspace_index=1},{location="dictionary.lua#125,44",workspace_index=1},{location="word.lua#69,36",workspace_index=1},{location="stack.lua#62,80",workspace_index=1},{location="sentence.lua#55,14",workspace_index=1},{location="errorhandler.lua#14,11",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-09 00:57:34",runtime=27,workspaces={{location="main.lua#32,26",workspace_index=1},{location="interpreter.lua#38,27",workspace_index=1},{location="dictionary.lua#127",workspace_index=1},{location="word.lua#67,20",workspace_index=1},{location="stack.lua#37,19",workspace_index=1},{location="sentence.lua#99,71",workspace_index=1},{location="errorhandler.lua#163,34",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 00:57:34"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 00:57:34"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-08 07:13:33"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 00:57:34"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
