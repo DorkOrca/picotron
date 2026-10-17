@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: dictionary.lua
---[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-09 09:49:12",revision=65,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-17 00:57:21",revision=96,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 --[[
@@ -50,9 +50,7 @@ function Dictionary:clone(name)
 		dictionary.words[key] = self.words[key]
 	end
 	
-	for key, value in pairs(self.index) do
-		dictionary.index[key] = dictionary.words[key]
-	end
+	try(dictionary.buildIndex, dictionary:buildIndex())
 	
 	return dictionary
 end
@@ -61,7 +59,6 @@ function Dictionary:buildIndex()
 	local words = self.words
 	
 	if #words <= 0 then
-		--TODO:Error handling
 		return false, "Dictionary has no words."
 	end
 	
@@ -220,6 +217,27 @@ function Dictionary:initialize(interpreter)
 				return try(stack.drop, stack:drop())
 			end},
 			
+			{name = "fm/mod", id = "6.1.1561", val = function(interpreter)
+				local stack = interpreter.stack
+				local _, n1 = try(stack.pop, stack:pop())
+				if _ == nil then
+					return false
+				end
+				local _, d1Most = try(stack.pop, stack:pop()) -- Most significant bit of double cell int
+				if _ == nil then
+					return false
+				end
+				local _, d1Least = try(stack.pop, stack:pop()) -- Least significant bit of double cell int
+				if _ == nil then
+					return false
+				end
+				if n1 == 0 then
+					return false, "Tried to divide by zero."
+				end
+				local n2 = flr(d1 / n1)
+				--TODO: Finish fm/mod definition
+			end},
+			
 			{name = "r>", id = "6.1.2060", val = function(interpreter)
 				local stack = interpreter.stack
 				local returnStack = interpreter.returnStack
@@ -231,10 +249,42 @@ function Dictionary:initialize(interpreter)
 				return try(stack.push, stack:push(x)) -- Put it on the main stack
 			end},
 			
+			{name = "s>d", id = "6.1.2170", val = function(interpreter)
+				-- Converts single-cell int on stack to double-cell int. The top number on the stack represents the most significant bit.
+				local stack = interpreter.stack
+				local _, x = try(stack.get, stack:get())
+				if _ == nil then
+					return false
+				end
+				
+				_ = try(stack.push, stack:push(x))
+				if _ == nil then
+					return false
+				end
+				
+				if x < 0 then
+					return try(stack.push, stack:push(-1))
+				end
+				return try(stack.push, stack:push(0))
+			end},
+			
+			{name = "sm/rem", id = "6.1.2214", val = function(interpreter)
+				-- ( d1 n1 -- n2 n3 )
+			end},
+			
 			{name = "[", id = "6.1.2500", val = function()
 				-- '[' is immediately handled in sentence.lua via Sentence:interpret().
 				-- This function shouldn't ever actually run.
 				return false, "Word '(' should not be runnable. Something is terribly wrong!"
+			end},
+			
+			{name = "pick", id = "6.2.2030", val = function(interpreter)
+				local stack = interpreter.stack
+				local _, n = try(stack.pop, stack:pop())
+				if _ == nil then
+					return false
+				end
+				return try(stack.pick, stack:pick(n+1)) -- n is 0-indexed in Forth's "pick", but Lua tables are 1-indexed. The stack object's "pick" function treats tables as 1-indexed, as we're currently programming in Lua and not Forth.
 			end},
 			
 			{name = "exit", id = "", val = function()
@@ -257,7 +307,7 @@ function Dictionary.new(name)
 	return dictionary
 end
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-09 06:17:40",revision=138,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-16 20:22:47",revision=144,xstickers={}]]
 ERRORS = {
 	-- Errors
 	[-1] = {
@@ -342,8 +392,14 @@ ERRORS = {
 	},
 	[-801] = {
 		name = "SENTENCE:failed_interpret",
-		desc = function(vars)
+		desc = function()
 			return "Sentence failed to interpret."
+		end
+	},
+	[-997] = {
+		name = "SENTENCE:already_testing",
+		desc = function()
+			return "Attempted to start a test inside of a test.\nOnly one test can be run at a time. Aborting."
 		end
 	},
 	[-998] = {
@@ -365,7 +421,7 @@ ERRORS = {
 		desc = function(args)
 			local savedTestStack = args.savedTestStack.values
 			local testStack = args.testStack.values
-			return "Test failed.\nStacks are different sizes, aborting.\n" ..
+			return "Test failed.\nStacks are different sizes.\n" ..
 				"First test's stack: " .. #savedTestStack .. "\n" ..
 				"Second test's stack: " .. #testStack
 		end
@@ -376,7 +432,7 @@ ERRORS = {
 			local savedTestStack = args.savedTestStack.values
 			local testStack = args.testStack.values
 			local i = args.i
-			return "Test failed.\nValue " .. i .. " on stacks don't match, aborting.\n" ..
+			return "Test failed.\nValue " .. i .. " on stacks don't match.\n" ..
 				"First stack's value: " .. savedTestStack[i] .. "\n" ..
 				"Second stack's value: " .. testStack[i]
 		end
@@ -408,7 +464,7 @@ function throw(code, ...)
 	local vars = {...}
 	
 	if ERRORS[code] == nil then
-		throw(-999)
+		throw(-999, code)
 		return false
 	end
 	
@@ -425,7 +481,7 @@ function throw(code, ...)
 end
 	
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-09 09:49:45",revision=400,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-16 20:15:41",revision=409,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -449,9 +505,17 @@ Interpreter = {
 function Interpreter.new(dictionary, stack, returnStack)
 	local interpreter = {}
 	setmetatable(interpreter, {__index = Interpreter})
-	interpreter.dictionary =
-		dictionary == nil	and	Dictionary.new()
-								or		dictionary
+	
+	if dictionary == nil then
+		interpreter.dictionary = Dictionary.new()
+		local result = interpreter.dictionary:initialize(interpreter)
+		local initalizeResult, wordCount = interpreter.dictionary:buildIndex()
+		if result != nil then
+			print("Dictionary initialized. Words: " .. wordCount)
+		end
+	else
+		interpreter.dictionary = dictionary
+	end
 	
 	interpreter.stack =
 		stack == nil			and	Stack.new()
@@ -460,19 +524,15 @@ function Interpreter.new(dictionary, stack, returnStack)
 	interpreter.returnStack =
 		returnStack == nil	and	Stack.new()
 								or		returnStack
-								
-	interpreter.dictionary:initialize(interpreter)
-	
-	local initalizeResult, wordCount = interpreter.dictionary:buildIndex()
 	
 	
 	interpreter.testInterpreter = interpreter:clone()
 	
-	print("Dictionary loaded. Words: " .. wordCount)
 	return interpreter
 end
 
 function Interpreter:clone()
+	-- Clones the interpreter WITHOUT test variables
 	local interpreter = {}
 	setmetatable(interpreter, {__index = Interpreter})
 	interpreter.dictionary = self.dictionary:clone()
@@ -517,7 +577,7 @@ function trim(s)
    return s:match("^%s*(.-)%s*$")
 end
 :: main.lua
---[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-09 05:50:55",revision=49,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-16 19:26:43",revision=52,xstickers={}]]
 function logo()
 	print([[
 
@@ -532,7 +592,6 @@ function logo()
 				 ForthNITE
 	A Forth interpreter for zoomers
      by DorkOrca / gachapon.party
-
             Version 0.01
 
 ------------------------------------
@@ -552,11 +611,12 @@ logo()
 forth = Interpreter.new()
 
 while true do
+	print("OK")
 	local string = input(" > ")
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-09 09:47:01",revision=340,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-16 20:38:45",revision=396,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -585,14 +645,16 @@ Sentence = {
 	testTokens = {}
 }
 
-function Sentence:test(interpreter, tokens)
-	local sentence = Sentence.new(nil, interpreter.testInterpreter.dictionary)
+function Sentence:executeTest(interpreter, tokens)
+	local testInterpreter = interpreter.testInterpreter
+	
+	local sentence = Sentence.new(nil, testInterpreter.dictionary)
 	sentence.tokens = 
 		tokens == nil	and	self.testTokens
 							or		tokens	
-	
 	-- print("Test tokens to be processed (" .. #sentence.tokens .. "): " .. table.concat(sentence.tokens, ", "))
-	result = try(sentence.interpret, sentence:interpret(interpreter, interpreter.testInterpreter.stack))
+	result = try(sentence.interpret, sentence:interpret(testInterpreter))
+	
 	return result
 end
 
@@ -640,7 +702,7 @@ function Sentence.new(string, dictionary, mode)
 		mode == nil			and	Sentence.mode
 								or		mode
 	
-	sentence.testInterpreter = Interpreter.new(sentence.dictionary)
+	sentence.testInterpreter = Interpreter.new(sentence.dictionary:clone())
 		
 	
 	return sentence
@@ -656,10 +718,19 @@ function Sentence:interpret(interpreter, externStack)
 	local compiledName = "" -- The first word interpreted after entering compilation mode
 	local compiledTokens = {} -- All subsequent words interpreted after entering compilation mode
 	
-	local testInterpreter = interpreter.testInterpreter
-	local testStack = testInterpreter.stack
+	-- Test interpreters don't have test interpreters of their own.
+	-- This variable checks if the sentence being run is part of a test.
+	local testing =
+		interpreter.testInterpreter != nil
+		
+	local testInterpreter = {}
+	local savedTestStack = {}
 	
-	local savedTestStack = Stack.new()
+	-- If the sentence isn't testing, then we set up all the testing variables for later use.
+	if testing == false then
+		testInterpreter = interpreter.testInterpreter
+		local savedTestStack = Stack.new()
+	end
 	
 	for counter, token in ipairs(tokens) do
 	
@@ -729,7 +800,9 @@ function Sentence:interpret(interpreter, externStack)
 			end
 			
 		elseif self.mode == 3 then -- If sentence is in test mode...
-			-- print("Test tokens in queue: " .. #self.testTokens)
+			if testing == true then -- If this sentence was already part of a test, then...
+				
+			end
 			if token == "->" then -- Token "->" executes the first test
 				if #self.testTokens <= 0 then -- If there are no tokens to test...
 					self.mode = -1
@@ -740,16 +813,18 @@ function Sentence:interpret(interpreter, externStack)
 					throw(-102)
 					break -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(interpreter, self.testTokens)) -- Execute the first test
+				local result = try(self.executeTest, self:executeTest(interpreter, self.testTokens)) -- Execute the first test
 				if result == nil then -- If test fails then...
 					self.mode = -1
 					throw(-103)
 					break -- ... Then error out
 				end -- Otherwise, proceed
+				local testStack = interpreter.testInterpreter.stack
 				savedTestStack = testStack:clone() -- Save the test stack in a new table
-				self:initializeTest()
+				savedTestStack.tested = true
+				self:initializeTest(interpreter)
 			elseif token == "}t" then -- Token '}t' executes the final test
-				if (savedTestStack.values == nil or #savedTestStack.values == 0) then -- If a first test hasn't been performed...
+				if (savedTestStack.tested != true) then -- If a first test hasn't been performed...
 					self.mode = -1
 					throw(-104)
 					break -- ... Then error out
@@ -758,7 +833,8 @@ function Sentence:interpret(interpreter, externStack)
 					throw(-105)
 					break -- ...Then error out
 				end -- Otherwise, proceed
-				local result = try(self.test, self:test(interpreter, self.testTokens)) -- Execute the final test
+				local result = try(self.executeTest, self:executeTest(interpreter, self.testTokens)) -- Execute the final test
+				local testStack = interpreter.testInterpreter.stack
 				if result == false then -- If final test fails...
 					self.mode = -1
 					throw(-106)
@@ -778,12 +854,12 @@ function Sentence:interpret(interpreter, externStack)
 					identical = testStack.values[i] == savedTestStack.values[i] -- Check if values at same index are identical
 					if identical == false then -- If values are different...
 						self.mode = -1
-						local args = {
+						local errorArgs = {
 							savedTestStack = savedTestStack,
 							testStack = testStack,
 							i = i
 						}
-						throw(7358, args)
+						throw(7358, errorArgs)
 						break -- ...Then fail the test
 					end
 				end
@@ -794,7 +870,7 @@ function Sentence:interpret(interpreter, externStack)
 				local smug = " \f1\^:0000ff6600000000\-8\f5\^:0000008100000000\-8\f9\^:3c4200008181423c\-8\fa\^:003c00187e5a2400\-8\fp\^:0000000000241800\f7 "
 				print(smug .. "Test successful!")
 				-- Initialize test mode variables
-				self:initializeTest()
+				self:initializeTest(interpreter)
 				savedTestStack = Stack.new()
 				self.mode = -1
 				return true
@@ -807,7 +883,7 @@ function Sentence:interpret(interpreter, externStack)
 		end
 		
 		if self.mode == -1 then -- -1 = cleanup test data
-			self:initializeTest()
+			self:initializeTest(interpreter)
 		end
 	end -- End of for loop
 	
@@ -829,7 +905,7 @@ function Sentence:interpret(interpreter, externStack)
 	return true
 end
 :: stack.lua
---[[pod_format="raw",created="2026-10-07 22:36:45",modified="2026-10-09 07:06:04",revision=15,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:36:45",modified="2026-10-16 23:07:08",revision=29,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Stack
@@ -891,8 +967,40 @@ function Stack:push(val)
 	return true
 end
 
+function Stack:get(n)
+	-- Return the nth value on the stack without altering the stack
+	n =
+		(type(n) != "number" or n == nil or n < 1)	and	1
+																or		n
+	
+	local values = self.values
+	
+	if n > #values then
+		return false, "Stack is less than n. Stack size: " .. #values .. ", n: " .. n
+	end
+	
+	return true, values[n]
+end
+	
+
+function Stack:pick(n)
+	-- Get the nth value on the stack and place it on top of the stack
+	n =
+		(type(n) != "number" or n == nil or n < 1)	and	1
+																or		n
+	local values = self.values
+	
+	if n > #values then
+		return false, "Stack is less than n. Stack size: " .. #values .. ", n: " .. n
+	end
+	
+	local cell = #values - (n - 1)
+	
+	return try(self.push, self:push(values[cell]))
+end
+
 function Stack:drop(i)
-	local i =
+	i =
 		(type(i) != "number" or i == nil)	and		1
 														or 	i
 	local values = self.values
@@ -992,23 +1100,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-09 09:49:46",runtime=27,workspaces={{location="main.lua#12,7",workspace_index=1},{location="interpreter.lua#79,19",workspace_index=1},{location="dictionary.lua#39,41",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#58,26",workspace_index=1},{location="sentence.lua#264,34",workspace_index=1},{location="errorhandler.lua#1,11",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-17 00:57:21",runtime=27,workspaces={{location="main.lua#34,13",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#221,8",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#205,33",workspace_index=1},{location="errorhandler.lua#9,5",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 09:49:46"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 09:49:46"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-09 09:49:46"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
