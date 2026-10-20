@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: dictionary.lua
---[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-17 00:57:21",revision=96,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-20 02:03:03",revision=98,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 --[[
@@ -231,7 +231,7 @@ function Dictionary:initialize(interpreter)
 				if _ == nil then
 					return false
 				end
-				if n1 == 0 then
+				if (n1 == 0 or d1Least == 0) then
 					return false, "Tried to divide by zero."
 				end
 				local n2 = flr(d1 / n1)
@@ -307,13 +307,14 @@ function Dictionary.new(name)
 	return dictionary
 end
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-16 20:22:47",revision=144,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-20 01:59:46",revision=150,xstickers={}]]
 ERRORS = {
-	-- Errors
+	-- Errors -1 through -79 are defined by forth-standard.org:
+	-- https://forth-standard.org/standard/exception#table:throw
 	[-1] = {
-		name = "INTERPRET:word_not_found",
-		desc = function(word)
-			return tostr(word) .. "?"
+		name = "INTERPRET:abort",
+		desc = function()
+			-- The word "abort" empties the data stack and performs the function of QUIT without displaying a message.
 		end
 	},
 	[-2] = {
@@ -331,15 +332,21 @@ ERRORS = {
 		end
 	},
 	[-11] = {
-		name = "INTERPRET:wrong_semicolon",
+		name = "MATH:out_of_range",
 		desc = function()
-			return "Semicolon detected while in interpret mode, aborting."
+			return "Value out of range."
 		end
 	},
 	[-12] = {
 		name = "COMPILE:wrong_colon",
 		desc = function()
 			return "Colon detected while in compile mode, aborting."
+		end
+	},
+	[-13] = {
+		name = "INTERPRET:undefined_word",
+		desc = function(word)
+			return tostr(word) .. "?"
 		end
 	},
 	[-21] = {
@@ -352,6 +359,18 @@ ERRORS = {
 		name = "SENTENCE:test_open",
 		desc = function()
 			return "Test never closed."
+		end
+	},
+	[-43] = {
+		name = "MATH:floating_point_out_of_range",
+		desc = function()
+			return "Floating point out of range."
+		end
+	},
+	[-91] = {
+		name = "INTERPRET:wrong_semicolon",
+		desc = function()
+			return "Semicolon detected while in interpret mode, aborting."
 		end
 	},
 	[-101] = {
@@ -577,7 +596,7 @@ function trim(s)
    return s:match("^%s*(.-)%s*$")
 end
 :: main.lua
---[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-16 19:26:43",revision=52,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-20 01:56:37",revision=53,xstickers={}]]
 function logo()
 	print([[
 
@@ -589,7 +608,7 @@ function logo()
 	 		****  **   **  ***  
     		* ** ****  **  ****
 
-				 ForthNITE
+				ForthNITE 32
 	A Forth interpreter for zoomers
      by DorkOrca / gachapon.party
             Version 0.01
@@ -616,7 +635,7 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-16 20:38:45",revision=396,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-20 02:00:53",revision=425,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -681,6 +700,20 @@ function Sentence:splitString(string)
 	return true
 end
 
+function Sentence.convert64to32(num)
+	local bits = 32
+	local range = 2^bits
+	local upperLimit = range / 2 - 1
+	local lowerLimit = (upperLimit * -1) - 1
+	
+	if (num > upperLimit or num < lowerLimit) then
+		throw(-11)
+		return (num % range) - abs(lowerLimit)
+	end
+	
+	return num
+end
+
 function Sentence.sanitizeString(inputString)
 	-- Returns string with whitespace condensed and trimmed
 	return trim(string.gsub(inputString, "%s+", " "))
@@ -743,7 +776,7 @@ function Sentence:interpret(interpreter, externStack)
 			if token == ":" then -- If token is a colon...
 				self.mode = 1 -- ...Then switch to compile mode
 			elseif token == ";" then -- If token is a semicolon...
-				throw(-11) -- Then throw an error
+				throw(-91) -- Then throw an error
 				break
 			elseif token == "(" then -- If token is an open parenthesis...
 				parseWord = "(" -- ...Then switch to parse mode for '('
@@ -755,7 +788,7 @@ function Sentence:interpret(interpreter, externStack)
 			elseif type(token) == "string" then -- If token is a string...
 				local word = index[token] -- ...Then look it up in the dictionary index
 				if word == nil then -- If the word wasn't found in the index...
-					throw(-1, token)
+					throw(-13, token)
 					break
 				end -- If word was found in the index...
 				if (try(word.interpret, word:interpret(interpreter)) == nil) then -- ...Then interpret the word. If the word's function returns nil, then try() will return nil as well
@@ -764,6 +797,7 @@ function Sentence:interpret(interpreter, externStack)
 					break -- If the word returned nil, then stop interpreting the sentence and return an error
 				end
 			elseif type(token) == "number" then -- If word represents a number...
+				token = self.convert64to32(token)
 				try(stack.push, stack:push(token)) -- ...Then push the number to the stack
 			else -- If the word is some other forbidden thing...
 				throw(-3, tostr(word.name))
@@ -1100,23 +1134,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-17 00:57:21",runtime=27,workspaces={{location="main.lua#34,13",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#221,8",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#205,33",workspace_index=1},{location="errorhandler.lua#9,5",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-20 02:03:03",runtime=27,workspaces={{location="main.lua#12,5",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#112,8",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#84,1",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-17 00:57:21"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
