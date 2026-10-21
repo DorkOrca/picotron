@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: dictionary.lua
---[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-20 02:03:03",revision=98,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-21 00:58:27",revision=102,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 --[[
@@ -219,6 +219,7 @@ function Dictionary:initialize(interpreter)
 			
 			{name = "fm/mod", id = "6.1.1561", val = function(interpreter)
 				local stack = interpreter.stack
+				-- Git me bits
 				local _, n1 = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -231,11 +232,20 @@ function Dictionary:initialize(interpreter)
 				if _ == nil then
 					return false
 				end
-				if (n1 == 0 or d1Least == 0) then
+				-- Combine most and least significant bits of double into a 64-bit integer
+				d1Most = d1Most << 32
+				local d1 = d1Most | d1Least
+				if n1 == 0 then
 					return false, "Tried to divide by zero."
 				end
-				local n2 = flr(d1 / n1)
-				--TODO: Finish fm/mod definition
+				-- Do da math
+				local n2 = d1 % n1
+				local n3 = flr(d1 / n1)
+				local _ = try(stack.push, stack:push(n2))
+				if _ == nil then
+					return false
+				end
+				return try(stack.push, stack:push(n3))
 			end},
 			
 			{name = "r>", id = "6.1.2060", val = function(interpreter)
@@ -252,7 +262,7 @@ function Dictionary:initialize(interpreter)
 			{name = "s>d", id = "6.1.2170", val = function(interpreter)
 				-- Converts single-cell int on stack to double-cell int. The top number on the stack represents the most significant bit.
 				local stack = interpreter.stack
-				local _, x = try(stack.get, stack:get())
+				local _, x = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
 				end
@@ -635,7 +645,7 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-20 02:00:53",revision=425,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-21 00:34:34",revision=427,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -708,7 +718,7 @@ function Sentence.convert64to32(num)
 	
 	if (num > upperLimit or num < lowerLimit) then
 		throw(-11)
-		return (num % range) - abs(lowerLimit)
+		return math.tointeger((num % range) - abs(lowerLimit))
 	end
 	
 	return num
@@ -797,7 +807,7 @@ function Sentence:interpret(interpreter, externStack)
 					break -- If the word returned nil, then stop interpreting the sentence and return an error
 				end
 			elseif type(token) == "number" then -- If word represents a number...
-				token = self.convert64to32(token)
+				token = self.convert64to32(token) -- (convert 64-bit integer to 32-bit)
 				try(stack.push, stack:push(token)) -- ...Then push the number to the stack
 			else -- If the word is some other forbidden thing...
 				throw(-3, tostr(word.name))
@@ -1134,23 +1144,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-20 02:03:03",runtime=27,workspaces={{location="main.lua#12,5",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#112,8",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#84,1",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-21 00:58:27",runtime=27,workspaces={{location="main.lua#12,5",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#257,42",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#73,57",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-20 02:03:03"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
