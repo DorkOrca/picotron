@@ -5,7 +5,7 @@ version 2
 :: map/
 :: sfx/
 :: dictionary.lua
---[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-21 00:58:27",revision=102,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:32:59",modified="2026-10-23 05:32:51",revision=105,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 --[[
@@ -183,18 +183,7 @@ function Dictionary:initialize(interpreter)
 				return true
 			end},
 			
-			{name = "/", id = "6.1.0230", val = function(interpreter)
-				local stack = interpreter.stack
-				local _, y = try(stack.pop, stack:pop())
-				if _ == nil then
-					return false
-				end
-				local _, x = try(stack.pop, stack:pop())
-				if _ == nil then
-					return false
-				end
-				return try(stack.push, stack:push(x / y))
-			end},
+			{name = "/", id = "6.1.0230", val = ">r s>d r> fm/mod swap drop"},
 			
 			{name = "2drop", id = "6.1.0370", val = function(interpreter)
 				local stack = interpreter.stack
@@ -219,7 +208,7 @@ function Dictionary:initialize(interpreter)
 			
 			{name = "fm/mod", id = "6.1.1561", val = function(interpreter)
 				local stack = interpreter.stack
-				-- Git me bits
+				-- Git tha bits
 				local _, n1 = try(stack.pop, stack:pop())
 				if _ == nil then
 					return false
@@ -286,6 +275,28 @@ function Dictionary:initialize(interpreter)
 				-- '[' is immediately handled in sentence.lua via Sentence:interpret().
 				-- This function shouldn't ever actually run.
 				return false, "Word '(' should not be runnable. Something is terribly wrong!"
+			end},
+			
+			{name = "swap", id = "6.1.2260", val = function(interpreter)
+				-- ( x1 x2 -- x2 x1 )
+				local stack = interpreter.stack
+				
+				local _, x2 = try(stack.pop, stack:pop())
+				if _ == nil then
+					return false
+				end
+				
+				local _, x1 = try(stack.pop, stack:pop())
+				if _ == nil then
+					return false
+				end
+				
+				_ = try(stack.push, stack:push(x2))
+				if _ == nil then
+					return false
+				end
+				
+				return try(stack.push, stack:push(x1))
 			end},
 			
 			{name = "pick", id = "6.2.2030", val = function(interpreter)
@@ -510,7 +521,7 @@ function throw(code, ...)
 end
 	
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-16 20:15:41",revision=409,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-23 05:55:03",revision=410,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -521,7 +532,7 @@ Class: Interpreter
 
 Elements:
  - dictionary: A Dictionary with words in it
-
+ - stack: 
 
 ]]
 Interpreter = {
@@ -1065,7 +1076,7 @@ function Stack:empty()
 	return true
 end
 :: word.lua
---[[pod_format="raw",created="2026-10-07 22:33:36",modified="2026-10-09 06:50:11",revision=16,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:33:36",modified="2026-10-23 06:14:19",revision=17,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Word
@@ -1138,29 +1149,29 @@ function Word:interpret(interpreter)
 		return self.val(interpreter)
 	elseif self.mode == 3 then
 		local sentence = Sentence.new(self.val, interpreter.dictionary)
-		try(sentence.interpret, sentence.interpret(interpreter))
+		try(sentence.interpret, sentence:interpret(interpreter))
 	else
 		return false, "Couldn't interpret word " .. self.name .. ". Word had mode " .. self.mode
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-21 00:58:27",runtime=27,workspaces={{location="main.lua#12,5",workspace_index=1},{location="interpreter.lua#51,2",workspace_index=1},{location="dictionary.lua#257,42",workspace_index=1},{location="word.lua#62,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#73,57",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-23 06:14:19",runtime=27,workspaces={{location="main.lua#12,5",workspace_index=1},{location="interpreter.lua#11,11",workspace_index=1},{location="dictionary.lua#176,9",workspace_index=1},{location="word.lua#73,36",workspace_index=1},{location="stack.lua#89,32",workspace_index=1},{location="sentence.lua#108",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-23 06:14:19"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-23 06:14:19"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-21 00:58:27"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-23 06:14:19"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
