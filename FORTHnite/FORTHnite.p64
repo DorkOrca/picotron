@@ -541,7 +541,7 @@ function throw(code, ...)
 end
 	
 :: interpreter.lua
---[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-24 06:03:34",revision=423,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:54:46",modified="2026-10-27 01:19:12",revision=428,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -603,7 +603,7 @@ function Interpreter:clone()
 end
 
 function Interpreter.separateSentences(string)
-	-- Separate a user-provided string into sentences, to be ran sequentially
+	-- Separate a user-provided string into sentences, separated by chr(10) AKA \n
 	local splitStr = split(string, chr(10), false)
 	
 	if splitStr == nil then
@@ -618,6 +618,7 @@ function Interpreter.separateSentences(string)
 end
 
 function Interpreter:run(string)
+	--Convert a string into sentences, then interpret the sentences
 	local strings = self.separateSentences(string)
 	if strings == false then
 		strings = {string}
@@ -625,7 +626,7 @@ function Interpreter:run(string)
 	
 	for index, evalString in pairs(strings) do
 		-- Generate a sentence using the given string (and trim whitespace, and make it lowercase)
-		local sentence = Sentence.new(Sentence.sanitizeString(evalString:lower()), self.dictionary)
+		local _, sentence = Sentence.new(evalString, self.dictionary)
 		-- Interpret the sentence
 		local _, result = try(sentence.interpret, sentence:interpret(self))
 		if _ == nil then
@@ -680,23 +681,25 @@ while true do
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-24 05:32:39",revision=432,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-27 01:22:46",revision=448,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
 include("stack.lua")
+include("token.lua")
 
 --[[
 Class: Sentence
 
 Elements:
+ - string: The original string that the sentence parses
  - tokens: String split() into a table by spaces
  - dictionary: A Dictionary with words in it
  - mode: Whether sentence is being interpreted or compiled
  
 Functions:
  - new: Return a new Sentence
- - splitString: Split string into table by spaces
+ - splitStringIntoTokens: Split string into table by spaces
  - interpret: Iterate through tokens, executing or compiling depending on mode
  - parseComment: 
 ]]
@@ -730,7 +733,9 @@ function Sentence:initializeTest(interpreter)
 	return true
 end
 
-function Sentence:splitString(string)
+function Sentence:splitStringIntoTokens(string)
+	
+	--[[
 	local splitStr = split(string, " ", true)
 	
 	if splitStr == nil then
@@ -742,6 +747,7 @@ function Sentence:splitString(string)
 	end
 	
 	self.tokens = splitStr
+	--]]
 	
 	return true
 end
@@ -758,7 +764,7 @@ function Sentence.new(string, dictionary, mode)
 	
 	if string != nil then
 		sentence.string = string
-		try(sentence.splitString, sentence:splitString(string))
+		try(sentence.splitStringIntoTokens, sentence:splitStringIntoTokens(string))
 	end
 	
 	sentence.dictionary =
@@ -868,7 +874,7 @@ function Sentence:interpret(interpreter, externStack)
 				parsedTokens = {}
 				self.mode = 0 -- ...Then clear the parsed tokens and switch back to interpret mode
 			elseif token == "\"" and parseWord == ".\"" then -- If parsing from dot-quote, and encountering quote...
-				local parsedString = table.concat(parsedTokens, 
+				
 			else -- Otherwise, shovel it all into a table called parsedTokens
 				add(parsedTokens, token)
 				add(parsedTokens, " ")
@@ -1110,32 +1116,42 @@ function Stack.convert64to32(num)
 	return num
 end
 :: token.lua
---[[pod_format="raw",created="2026-10-24 05:28:37",modified="2026-10-24 06:09:25",revision=16,xstickers={}]]
+--[[pod_format="raw",created="2026-10-24 05:28:37",modified="2026-10-27 01:14:18",revision=20,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Token
 
 Elements:
- - phrase: Split token (without spaces)
+ - value: Split token (without spaces)
+ - word: Value converted to lowercase with white space trimmed
  - start: Int representing token's starting position in its parent string
 
 Functions:
  - new: Create a new token
- - separate: Separate a user-provided string into a table of tokens
 --]]
 
 Token = {
-	phrase = "",
+	value = "",
+	word = "",
 	start = -1
 }
 
-function Token:new(phrase, start)
+function Token.sanitizeString(inputString)
+	-- Returns string converted to lowercase with whitespace condensed and trimmed
+	return trim(string.gsub(inputString:lower(), "%s+", " "))
+end
+
+function Token:new(value, start)
 	local token = {}
 	setmetatable(token, {__index = Token})
 	
-	token.phrase =
-		phrase == nil	and	Token.phrase
-							or		phrase
+	token.value =
+		value == nil	and	Token.value
+						or		value
+	
+	token.word =
+		value == nil	and	Token.word
+						or		token.sanitizeString(value)
 	
 	local startIsValidInt =
 		start != nil and
@@ -1147,10 +1163,6 @@ function Token:new(phrase, start)
 										or		start
 										
 	return token	
-end
-
-function Token:separate(string)
-	
 end
 :: word.lua
 --[[pod_format="raw",created="2026-10-07 22:33:36",modified="2026-10-23 20:26:39",revision=18,xstickers={}]]
@@ -1232,23 +1244,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-24 06:09:25",runtime=27,workspaces={{location="main.lua#35,29",workspace_index=1},{location="interpreter.lua#62,75",workspace_index=1},{location="dictionary.lua#163,62",workspace_index=1},{location="token.lua#8,1",workspace_index=1},{location="word.lua#73,10",workspace_index=1},{location="stack.lua#116,15",workspace_index=1},{location="sentence.lua#77,27",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-27 01:22:46",runtime=27,workspaces={{location="main.lua#35,29",workspace_index=1},{location="interpreter.lua#85,64",workspace_index=1},{location="dictionary.lua#163,62",workspace_index=1},{location="token.lua#40,12",workspace_index=1},{location="word.lua#73,10",workspace_index=1},{location="stack.lua#116,15",workspace_index=1},{location="sentence.lua#53,2",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-24 06:09:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-27 01:22:46"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-24 06:09:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-27 01:22:46"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-24 06:09:25"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-27 01:22:46"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
