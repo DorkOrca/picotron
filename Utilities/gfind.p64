@@ -1,0 +1,171 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: gfx/
+:: map/
+:: sfx/
+:: gfind.lua
+--[[pod_format="raw",created="2026-10-27 22:52:39",modified="2026-10-28 00:12:46",revision=35,xstickers={}]]
+
+--[[--[[--[[--[[--[[--[[--[[--[[
+
+
+--[] Custom Iterator: gfind []--
+
+
+--[[--[[--[[--[[--[[--[[--[[--[[
+
+Description: 
+
+This is an iterator to be used in for loops.
+
+This function returns a function which iteratively
+searches through a string for a pattern, returning
+the first matched substring as well as the substring's
+starting and ending indices.
+
+Parameters:
+
+ - targetString: A string to execute gfind on.
+ - patternString: A pattern, as defined in Lua 5.4 $6.4.1:
+ 	https://www.lua.org/manual/5.4/manual.html#6.4.1
+ - offset: The starting index (defaults to 1, and values lower clamp to 1)
+
+Returns:
+
+ - A function "gfindNext" which iterates through the targetString
+   by matching with the patternString starting at the offset every
+   time it's called.
+   
+Iteration:
+
+ - Starting at offset, find patternString in targetString
+ 
+ - If a match for the pattern is found, then return...
+   1. A substring matching the pattern, located at / after the offset index
+   2. The starting index of the matched substring
+   3. The ending index of the matched substring
+ - Additionally, update offset so that the next search won't include the last result
+   
+ - If a match for the pattern is not found, then return...
+   1. nil
+   
+Considerations:
+
+ - Captures after the first match are dropped.
+   Because of this, you can't use this iterator to capture key/value pairs like
+   you can with string.gmatch.
+   
+   I just didn't need them!
+   
+* Note on Lua's string.find:
+*  - Empty matches have an ending index equal to the starting index minus one.
+   
+--]]--]]--]]--]]--]]--]]--]]--]]
+
+
+function gfind(targetString, patternString, offset)
+	if type(targetString) != "string" then
+		error("Input string isn't valid.")
+	end
+	if type(patternString) != "string" then
+		error("Pattern isn't valid.")
+	end
+	
+	offset = 
+		offset == nil	and	1	or
+		offset < 1 		and	1	or
+									offset
+	
+	local gfindNext = function()
+		
+		if offset <= #targetString + 1 then
+			local matchStart, matchEnd = string.find(targetString, patternString, offset)
+			
+			if matchStart == nil then
+				return nil
+			end
+			
+			local match = string.sub(targetString, matchStart, matchEnd)
+			
+			if matchEnd < matchStart then
+				offset = matchStart + 1
+			else
+				offset = matchEnd + 1
+			end
+			
+			
+			return match, matchStart, matchEnd
+		end
+		return nil
+	end
+	
+	return gfindNext
+end
+:: main.lua
+--[[pod_format="raw",created="2026-10-27 01:35:37",modified="2026-10-28 00:50:44",revision=76,xstickers={}]]
+include("gfind.lua")
+
+while true do
+	local quit = false
+	print("\x0c")
+	print("the String.gfind of my dreams\n")
+	local targetString = input("Enter your input string:", 0x1)
+	print(targetString)
+	local patternString = input("Enter your pattern:", 0x1)
+	print(patternString .. "\n")
+	
+	print("Executing gfind...\n")
+	
+	local iteration = 0
+	
+	for segment, startIndex in gfind(targetString, patternString, -2) do
+		print("At index " .. startIndex .. " with length " .. #segment .. ":")
+		print("\"" .. segment .. "\"")
+		
+		iteration += 1
+		if iteration % 10 == 0 then
+			local continue = ""
+			print("")
+			while continue != "y" and continue != "n" do
+				continue = input("Continue? (y / n)", 0x3):lower()
+			end
+			if continue == "n" then
+				print("Quitting early.")
+				quit = true
+				break
+			end
+		end
+	end
+	print("")
+	if quit != true then
+		print("Reached end of results.")
+	end
+	input("Press any button to restart.", 0x3)
+	print("\n")
+end
+:: .info.pod
+--[[pod,created="2026-05-26 21:14:32",icon=userdata("u8",16,16,"0000000000000c0c0c0c000000000000000000000c0c000000000000000706000000000c000000000000000000060d0000000c00000000000000000706000000000c000000000c0c0c0c00060d000000000c0000000c1c1c1c1c0c00000000000c0000000c1c070707071c0c0000000c0c0000000c1c070707071c0c0000000c0c0000000c1c070707071c0c0000000c0c0000000c1c070707071c0c0000000c000c0000000c1c1c1c1c0c0000000c00000c000000000c0c0c0c000000000c0000000c000000000000000000000c00000000000c00000000000000000c000000000000000c0c000000000c0c000000000000000000000c0c0c0c000000000000"),modified="2026-10-28 00:50:44",runtime=27,workspaces={{location="main.lua#18,32",workspace_index=1},{location="gfind.lua#51,28",workspace_index=1}}]]
+:: gfx/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-28 00:50:44"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
+-----------------------------------------------------------XUG09OH19
+:: map/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-28 00:50:44"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: sfx/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-28 00:50:44"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: [eoc]
