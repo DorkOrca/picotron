@@ -348,7 +348,7 @@ function Dictionary.new(name)
 	return dictionary
 end
 :: errorhandler.lua
---[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-20 01:59:46",revision=150,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 19:12:47",modified="2026-10-29 00:55:06",revision=151,xstickers={}]]
 ERRORS = {
 	-- Errors -1 through -79 are defined by forth-standard.org:
 	-- https://forth-standard.org/standard/exception#table:throw
@@ -362,8 +362,8 @@ ERRORS = {
 		name = "INTERPRET:word_failed",
 		desc = function(vars)
 			local counter = vars.counter
-			local token = vars.token
-			return "Word " .. counter .. ", '" .. token .. "' returned false, aborting."
+			local phrase = vars.phrase
+			return "Word " .. counter .. ", '" .. phrase .. "' returned false, aborting."
 		end
 	},
 	[-3] = {
@@ -541,7 +541,7 @@ function throw(code, ...)
 end
 	
 :: gfind.lua
---[[pod_format="raw",created="2026-10-27 22:52:39",modified="2026-10-28 00:02:21",revision=31,xstickers={}]]
+--[[pod_format="raw",created="2026-10-27 22:52:39",modified="2026-10-29 00:31:39",revision=33,xstickers={}]]
 
 --[[--[[--[[--[[--[[--[[--[[--[[
 
@@ -736,7 +736,7 @@ function trim(s)
    return s:match("^%s*(.-)%s*$")
 end
 :: main.lua
---[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-28 00:19:07",revision=59,xstickers={}]]
+--[[pod_format="raw",created="2026-10-06 08:16:31",modified="2026-10-29 00:29:17",revision=62,xstickers={}]]
 function logo()
 	print([[
 
@@ -771,11 +771,11 @@ forth = Interpreter.new()
 
 while true do
 	print("OK")
-	local string = input(" > \0")
+	local string = input(" > ")
 	forth:run(string)
 end
 :: sentence.lua
---[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-28 00:55:04",revision=461,xstickers={}]]
+--[[pod_format="raw",created="2026-10-07 22:37:38",modified="2026-10-29 00:54:55",revision=481,xstickers={}]]
 include("errorhandler.lua")
 include("word.lua")
 include("dictionary.lua")
@@ -829,13 +829,24 @@ function Sentence:initializeTest(interpreter)
 end
 
 function Sentence:splitStringIntoTokens(string)
-	for match, matchStart in gfind(string, "%g+%s+") do
+	-- Split spring using gfind pattern %g+%s% and convert matches to tokens
+	local lastEnd = 0 -- Document last end point for final word
+	for match, matchStart, matchEnd in gfind(string, "%g+%s+") do -- This isolates all substrings that contain non-spaces followed by spaces
 		local token = Token.new(match, matchStart)
+		self.tokens[#self.tokens + 1] = token
+		lastEnd = matchEnd + 1
+	end
+	-- If the last word in a string isn't followed by spaces, then the former pattern will not match with it
+	-- Get a substring of any characters not captured by gfind, converting it to a token if it exists
+	local lastWord = sub(string, lastEnd) 
+	if #lastWord > 0 then
+		local token = Token.new(lastWord, lastEnd)
 		self.tokens[#self.tokens + 1] = token
 	end
 	
 	return true
 	--[[
+	-- Old splitString function from before tokens were given a dedicated object
 	local splitStr = split(string, " ", true)
 	
 	if splitStr == nil then
@@ -862,6 +873,7 @@ function Sentence.new(string, dictionary, mode)
 	
 	if string != nil then
 		sentence.string = string
+		sentence.tokens = {}
 		try(sentence.splitStringIntoTokens, sentence:splitStringIntoTokens(string))
 	else
 		sentence.string = ""
@@ -906,6 +918,8 @@ function Sentence:interpret(interpreter, externStack)
 	end
 	
 	for counter, token in ipairs(tokens) do
+	
+	local phrase = token.phrase
 		
 		if keyp("ctrl") and keyp("c") then
 			print("Ctrl + C: Ending sentence interpretation early.")
@@ -913,68 +927,68 @@ function Sentence:interpret(interpreter, externStack)
 		end
 		
 		if self.mode == 0 then -- If sentence is in interpret mode
-			if token.word == ":" then -- If token is a colon...
+			if phrase == ":" then -- If token is a colon...
 				self.mode = 1 -- ...Then switch to compile mode
-			elseif token.word == ";" then -- If token is a semicolon...
+			elseif phrase == ";" then -- If token is a semicolon...
 				throw(-91) -- Then throw an error
 				break
-			elseif token.word == ".\"" then -- If token is a dot-quote...
+			elseif phrase == ".\"" then -- If token is a dot-quote...
 				parseWord = ".\"" -- ...Then switch to parse mode for '."'
 				self.mode = 2 
-			elseif token.word == "(" then -- If token is an open parenthesis...
+			elseif phrase == "(" then -- If token is an open parenthesis...
 				parseWord = "(" -- ...Then switch to parse mode for '('
 				self.mode = 2
-			elseif token.word == "t{" then -- If token is the test harness initiator...
+			elseif phrase == "t{" then -- If token is the test harness initiator...
 				self:initializeTest(interpreter)
 				savedTestStack = {}
 				self.mode = 3 -- Switch to test mode
-			elseif token.word == "\\" then -- if token is Forth Standard word 6.2.2535 (parse and discard)...
+			elseif phrase == "\\" then -- if token is Forth Standard word 6.2.2535 (parse and discard)...
 				break -- ...Parse and discard (breaking stops processing the rest of the sentence)
-			elseif type(token.word) == "string" then -- If token is a string...
-				local word = index[token.word] -- ...Then look it up in the dictionary index
+			elseif type(phrase) == "string" then -- If token is a string...
+				local word = index[phrase] -- ...Then look it up in the dictionary index
 				if word == nil then -- If the word wasn't found in the index...
-					throw(-13, token.word)
+					throw(-13, phrase)
 					break
 				end -- If word was found in the index...
 				if (try(word.interpret, word:interpret(interpreter)) == nil) then -- ...Then interpret the word. If the word's function returns nil, then try() will return nil as well
-					local errorArgs = {counter=counter, token=token.word}
+					local errorArgs = {counter=counter, phrase=phrase}
 					throw(-2, errorArgs)
 					break -- If the word returned nil, then stop interpreting the sentence and return an error
 				end
-			elseif type(token.word) == "number" then -- If word represents a number...
-				token.word = stack.convert64to32(token.word) -- (convert 64-bit integer to 32-bit)
-				try(stack.push, stack:push(token.word)) -- ...Then push the number to the stack
+			elseif type(phrase) == "number" then -- If word represents a number...
+				phrase = stack.convert64to32(phrase) -- (convert 64-bit integer to 32-bit)
+				try(stack.push, stack:push(phrase)) -- ...Then push the number to the stack
 			else -- If the word is some other forbidden thing...
 				throw(-3, tostr(word.name))
 				break
 			end
 			
 		elseif self.mode == 1 then -- If sentence is in compile mode...
-			if token.word == ";" then -- If the token is a semicolon...
+			if phrase == ";" then -- If the token is a semicolon...
 				self.mode = 0 -- ...Then switch back to interpret mode
 				local compiledDefinition = self.sanitizeString(table.concat(compiledTokens)) -- Concatenate a string from the compiled token table's elements, trimming white space
 				local newWord = Word.new(compiledName, compiledDefinition, 3) -- Generate a new word based on the compiled string
 				try(interpreter.dictionary.addWord, interpreter.dictionary:addWord(newWord))-- Add word to dictionary
 				compiledName = "" -- Initialize name string
 				compiledTokens = {} -- Initialize table of compiled tokens
-			elseif token.word == ":" then -- If the token is a colon...
+			elseif phrase == ":" then -- If the token is a colon...
 				self.mode = -1 -- ...Then error out
 				throw(-12)
 				break
-			elseif token.word == "[" then -- If the token is an open bracket...
+			elseif phrase == "[" then -- If the token is an open bracket...
 				self.mode = 0 -- ...Then immediately return to execute mode
 			elseif compiledName == "" then -- If name hasn't been set yet...
-				compiledName = token.word -- ...Then set the name to the token
+				compiledName = phrase -- ...Then set the name to the token
 			else -- If any other kind of token has been provided...
-				add(compiledTokens, token.word) -- ...Then add the token to the Forth definition
+				add(compiledTokens, phrase) -- ...Then add the token to the Forth definition
 				add(compiledTokens, " ") -- Add some whitespace to separate this token from the next when string is concatenated from table
 			end
 			
 		elseif self.mode == 2 then -- If sentence is in parse mode...
-			if token.word == ")" and parseWord == "(" then -- If parsing from open parenthesis, and encountering close parenthesis...
+			if phrase == ")" and parseWord == "(" then -- If parsing from open parenthesis, and encountering close parenthesis...
 				parsedTokens = {}
 				self.mode = 0 -- ...Then clear the parsed tokens and switch back to interpret mode
-			elseif token.word == "\"" and parseWord == ".\"" then -- If parsing from dot-quote, and encountering quote...
+			elseif phrase == "\"" and parseWord == ".\"" then -- If parsing from dot-quote, and encountering quote...
 				
 			else -- Otherwise, shovel it all into a table called parsedTokens
 				add(parsedTokens, token)
@@ -985,7 +999,7 @@ function Sentence:interpret(interpreter, externStack)
 			if testing == true then -- If this sentence was already part of a test, then...
 				
 			end
-			if token.word == "->" then -- Token "->" executes the first test
+			if phrase == "->" then -- Token "->" executes the first test
 				if #self.testTokens <= 0 then -- If there are no tokens to test...
 					self.mode = -1
 					throw(-101)
@@ -1005,7 +1019,7 @@ function Sentence:interpret(interpreter, externStack)
 				savedTestStack = testStack:clone() -- Save the test stack in a new table
 				savedTestStack.tested = true
 				self:initializeTest(interpreter)
-			elseif token.word == "}t" then -- Token '}t' executes the final test
+			elseif phrase == "}t" then -- Token '}t' executes the final test
 				if (savedTestStack.tested != true) then -- If a first test hasn't been performed...
 					self.mode = -1
 					throw(-104)
@@ -1217,7 +1231,7 @@ function Stack.convert64to32(num)
 	return num
 end
 :: token.lua
---[[pod_format="raw",created="2026-10-24 05:28:37",modified="2026-10-28 00:57:29",revision=24,xstickers={}]]
+--[[pod_format="raw",created="2026-10-24 05:28:37",modified="2026-10-29 00:59:53",revision=37,xstickers={}]]
 include("errorhandler.lua")
 --[[
 Class: Token
@@ -1233,20 +1247,24 @@ Functions:
 
 Token = {
 	value = "",
-	word = "",
+	phrase = "",
 	start = -1
 }
 
 function Token.sanitizeString(inputString)
 	-- Returns string converted to lowercase with whitespace condensed and trimmed
 	if type(inputString) == "string" then
-		return trim(string.gsub(inputString:lower(), "%s+", " "))
+		local sanitizedString = trim(string.gsub(inputString:lower(), "%s+", " "))
+		local sanitizedValue =
+			tonumber(sanitizedString) != nil	and	tonumber(sanitizedString)	or
+																sanitizedString
+		return sanitizedValue
 	end
 	
 	return inputString
 end
 
-function Token:new(value, start)
+function Token.new(value, start)
 	local token = {}
 	setmetatable(token, {__index = Token})
 	
@@ -1254,11 +1272,10 @@ function Token:new(value, start)
 		value == nil	and	Token.value
 						or		value
 	
-	token.word =
-		value == nil					and	Token.word	or
-		type(value) == "number"	and	value			or
-												token.sanitizeString(value):lower()
-	
+	token.phrase =
+		value == nil						and	Token.phrase	or
+													token.sanitizeString(value)
+												
 	local startIsValidInt =
 		start != nil and
 		type(start) == "number" and
@@ -1350,23 +1367,23 @@ function Word:interpret(interpreter)
 	end
 end
 :: .info.pod
---[[pod,created="2026-04-16 19:10:37",file_item={},icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-28 00:57:29",runtime=27,workspaces={{location="main.lua#35,30",workspace_index=1},{location="interpreter.lua#87",workspace_index=1},{location="dictionary.lua#338,23",workspace_index=1},{location="token.lua#43,19",workspace_index=1},{location="word.lua#73,10",workspace_index=1},{location="stack.lua#116,15",workspace_index=1},{location="sentence.lua#103,15",workspace_index=1},{location="errorhandler.lua#29,4",workspace_index=1}}]]
+--[[pod,created="2026-04-16 19:10:37",file_item={},icon=userdata("u8",16,16,"0000000d1d1c1a1a0a0917080000000000120d1c07070707070707090e080000000d07070707070707070707070e0000120710100c0c07070710100c0c0708000d071313030307070713130303070e001d0701011313070707010113130717001d0706060606070707060606060717001d0707070707070707070707070717001d0710100c0c07070710100c0c0717001d0713130303070707131303030717000d070101131307070701011313070e0012070606060607070706011306070800000d07070707070707011306070e000000120d1c07070707070606090e0800000000000d1d1c1a1a0a0917080000000000000000000000000000000000000000"),modified="2026-10-29 01:00:09",runtime=27,workspaces={{location="main.lua#35,27",workspace_index=1},{location="interpreter.lua#87",workspace_index=1},{location="dictionary.lua#338,23",workspace_index=1},{location="token.lua#27,24",workspace_index=1},{location="word.lua#73,10",workspace_index=1},{location="stack.lua#116,15",workspace_index=1},{location="sentence.lua#176,48",workspace_index=1},{location="errorhandler.lua#15,48",workspace_index=1},{location="gfind.lua#70,38",workspace_index=1}}]]
 :: gfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-28 00:57:29"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-29 01:00:09"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249Ml1dbHo0AH4AAAASMQAA8yF7WzBdPXtibXA9cHh1AEMg
 EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AB-wMQD-----
 -----------------------------------------------------------XUG09OH19
 :: map/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-28 00:57:29"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-29 01:00:09"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: sfx/.info.pod
---[[pod,created="2026-04-16 19:10:37",modified="2026-10-28 00:57:29"]]
+--[[pod,created="2026-04-16 19:10:37",modified="2026-10-29 01:00:09"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
